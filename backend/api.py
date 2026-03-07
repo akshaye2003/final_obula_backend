@@ -1340,216 +1340,14 @@ def _load_prep_data(prep_id: str) -> tuple:
     return (None, None, None)
 
 
-def _run_pipeline(input_video: str, output_video: str, options: dict, progress_cb=None, cancel_check=None) -> dict:
-    """Calls Viral Caption pipeline with options from the frontend."""
-    from scripts.pipeline import Pipeline
-
-    preset        = options.get("preset", "dynamic_smart")
-    use_whisper   = options.get("whisper", True)
-    # Use styled_words/timed_captions — prefer prep file when from_prep_id (avoids payload size limits)
-    styled_words  = options.get("styled_words")
-    timed_captions = options.get("timed_captions")
-    transcript    = options.get("transcript_text") or options.get("user_prompt") or options.get("transcript") or None
-    from_prep_id  = options.get("from_prep_id")
-
-    # Diagnostic: log what we received
-    sw_len = len(styled_words) if styled_words else 0
-    tc_len = len(timed_captions) if timed_captions else 0
-    print(f"[Pipeline] Incoming: from_prep_id={from_prep_id!r}, styled_words={sw_len}, timed_captions={tc_len}")
-
-    # CRITICAL: Prefer request payload (user's current edits from EditClip) over prep file.
-    # EditClip sends styled_words + timed_captions in the payload — these are the user's latest edits.
-    # Only fall back to prep when request has no caption data (e.g. ExportMobile).
-    request_has_captions = bool(styled_words and timed_captions and len(styled_words) > 0 and len(timed_captions) > 0)
-
-    if request_has_captions:
-        print(f"[Pipeline] Using request payload (user edits): {len(styled_words)} words, {len(timed_captions)} caption groups")
-    elif from_prep_id:
-        loaded_sw, loaded_tc, loaded_tx = _load_prep_data(from_prep_id)
-        if loaded_sw:
-            styled_words = loaded_sw
-            timed_captions = loaded_tc if (loaded_tc and len(loaded_tc) > 0) else []
-            if loaded_tx and not transcript:
-                transcript = loaded_tx
-            print(f"[Pipeline] Using prep {from_prep_id}: {len(styled_words)} words, {len(timed_captions) if timed_captions else 0} caption groups")
-        else:
-            prep_path = PREP_DIR / f"{from_prep_id}.json"
-            exists = prep_path.exists()
-            print(f"[Pipeline] Prep {from_prep_id}: file_exists={exists}, loaded_sw={bool(loaded_sw)} ({len(loaded_sw) if loaded_sw else 0}), loaded_tc={bool(loaded_tc)} ({len(loaded_tc) if loaded_tc else 0})")
-            if not styled_words or not timed_captions:
-                print(f"[Pipeline] Will use Whisper (no caption data from request or prep)")
-    enable_broll  = options.get("enable_broll") if options.get("enable_broll") is not None else options.get("broll", False)
-    noise_isolate = options.get("enable_noise_isolation") if options.get("enable_noise_isolation") is not None else options.get("noise_isolate", False)
-    add_intro     = options.get("intro", True)
-    instagram     = options.get("export_instagram") if options.get("export_instagram") is not None else options.get("instagram", True)
-    rounded       = options.get("rounded_corners") or "medium"
-    aspect_ratio  = options.get("aspect_ratio") or None
-    
-    # Watermark options
-    enable_watermark = options.get("enable_watermark", False)
-    watermark_text   = options.get("watermark_text") if enable_watermark else None
-    watermark_image  = options.get("watermark_image") if enable_watermark else None
-    watermark_position = options.get("watermark_position", "bottom-right")
-    watermark_opacity  = options.get("watermark_opacity", 0.6)
-
-    # LUT: frontend sends color_grade_lut (e.g. "vintage") or legacy "lut" (filename)
-    color_grade   = (options.get("color_grade_lut") or "").strip()
-    lut_name      = options.get("lut") or (COLOR_GRADE_TO_LUT.get(color_grade) if color_grade else None)
-    if not lut_name:
-        lut_name = "02_Film LUTs_Vintage.cube"
-    lut_path      = str(BASE_DIR / "color_grading" / lut_name) if lut_name else None
-
-    # Load preset config
-    preset_path = BASE_DIR / "presets" / f"{preset}.json"
-    config = {}
-    if preset_path.exists():
-        with open(preset_path) as f:
-            config = json.load(f)
-
-    # Merge user layout options from frontend into config (so preview matches final output)
-    if options.get("font_size") is not None:
-        config["font_size"] = int(options["font_size"])
-    if options.get("position") is not None:
-        config["position"] = str(options["position"])
-    if options.get("y_position") is not None:
-        config["y_position"] = float(options["y_position"])
-    if options.get("words_per_line") is not None:
-        config["words_per_line"] = int(options["words_per_line"])
-    if options.get("caption_color"):
-        rgb = _hex_to_rgb(str(options["caption_color"]))
-        if rgb:
-            config["color"] = rgb
-    if options.get("hook_color"):
-        rgb = _hex_to_rgb(str(options["hook_color"]))
-        if rgb:
-            config["highlight_color"] = rgb
-            config["hook_color"] = rgb  # Also store as hook_color for clarity
-    if options.get("emphasis_color"):
-        rgb = _hex_to_rgb(str(options["emphasis_color"]))
-        if rgb:
-            config["emphasis_color"] = rgb
-    if options.get("regular_color"):
-        rgb = _hex_to_rgb(str(options["regular_color"]))
-        if rgb:
-            config["regular_color"] = rgb
-    if options.get("scroll_speed") is not None and preset == "marquee":
-        if "marquee_settings" not in config:
-            config["marquee_settings"] = {}
-        config["marquee_settings"]["scroll_speed"] = float(options["scroll_speed"])
-    if options.get("caption_position") is not None and preset not in ("viral", "marquee", "split"):
-        # caption_position maps to y_position for classic presets (top/center/bottom)
-        pos_map = {"top": 0.15, "center": 0.5, "bottom": 0.85}
-        config["y_position"] = pos_map.get(str(options["caption_position"]).lower(), config.get("y_position", 0.72))
-    # Red hooks (giant background text) — enable_red_hook from frontend
-    if options.get("enable_red_hook") is not None:
-        if options["enable_red_hook"]:
-            hook_size = options.get("hook_size", 1.0)
-            config["max_hook_words"] = max(1, int(hook_size)) if isinstance(hook_size, (int, float)) else 1
-            config["exclusive_hooks"] = True
-        else:
-            config["max_hook_words"] = 0
-            config["exclusive_hooks"] = False
-
-    try:
-        pipeline = Pipeline(api_key=os.environ.get("OPENAI_API_KEY", ""), config=config)
-        
-        # Attach cancel check function to pipeline for use in long-running operations
-        pipeline.cancel_check = cancel_check
-
-        # Hook progress updates into pipeline; check cancel at each progress tick
-        if progress_cb or cancel_check:
-            original_update = pipeline._update_progress
-            def patched_update(stage, pct):
-                if cancel_check and cancel_check():
-                    raise _PipelineCancelled()
-                original_update(stage, pct)
-                if progress_cb:
-                    stage_weights = {
-                        "orientation": 5, "masks": 15, "transcription": 20,
-                        "captions": 40, "broll": 10, "intro": 5,
-                        "instagram": 2, "rounded_corners": 3, "watermark": 2,
-                    }
-                    progress_cb(stage, pct, stage_weights.get(stage, 5))
-            pipeline._update_progress = patched_update
-
-        success = pipeline.process(
-            input_video=input_video,
-            output_video=output_video,
-            transcript=transcript,
-            use_whisper=use_whisper and not transcript and styled_words is None,
-            enable_broll=enable_broll,
-            noise_isolate=noise_isolate,
-            add_intro=add_intro,
-            instagram_export=instagram,
-            lut_path=lut_path if lut_path and Path(lut_path).exists() else None,
-            rounded_corners=rounded,
-            aspect_ratio=aspect_ratio,
-            watermark_text=watermark_text,
-            watermark_image=watermark_image,
-            watermark_position=watermark_position,
-            watermark_opacity=watermark_opacity,
-            styled_words=styled_words,
-            timed_captions=timed_captions,
-        )
-        return {"success": success}
-    except _PipelineCancelled:
-        return {"success": False, "cancelled": True}
-    except Exception as e:
-        import traceback
-        return {"success": False, "error": str(e), "traceback": traceback.format_exc()}
-
 # =============================================================================
 # RUNPOD INTEGRATION
 # =============================================================================
-
-import httpx
+# RUNPOD CONFIG
+# =============================================================================
 
 RUNPOD_API_KEY = os.getenv("RUNPOD_API_KEY")
 RUNPOD_ENDPOINT_ID = os.getenv("RUNPOD_ENDPOINT_ID")
-
-async def send_to_runpod(job_payload: dict) -> str:
-    """Send job to RunPod serverless endpoint."""
-    if not RUNPOD_API_KEY or not RUNPOD_ENDPOINT_ID:
-        raise HTTPException(status_code=503, detail="RunPod not configured")
-    
-    url = f"https://api.runpod.ai/v2/{RUNPOD_ENDPOINT_ID}/run"
-    headers = {"Authorization": f"Bearer {RUNPOD_API_KEY}"}
-    
-    async with httpx.AsyncClient() as client:
-        r = await client.post(url, json={"input": job_payload}, headers=headers, timeout=30)
-        if r.status_code != 200:
-            raise HTTPException(status_code=500, detail=f"RunPod submission failed: {r.text}")
-        return r.json()["id"]
-
-async def get_runpod_status(runpod_job_id: str) -> dict:
-    """Get status of a RunPod job."""
-    if not RUNPOD_API_KEY or not RUNPOD_ENDPOINT_ID:
-        raise HTTPException(status_code=503, detail="RunPod not configured")
-    
-    url = f"https://api.runpod.ai/v2/{RUNPOD_ENDPOINT_ID}/status/{runpod_job_id}"
-    headers = {"Authorization": f"Bearer {RUNPOD_API_KEY}"}
-    
-    async with httpx.AsyncClient() as client:
-        r = await client.get(url, headers=headers, timeout=10)
-        if r.status_code != 200:
-            return {"status": "FAILED", "error": f"RunPod API error: {r.status_code}"}
-        data = r.json()
-        
-        # Map RunPod statuses to our statuses
-        status_map = {
-            "IN_QUEUE": "queued",
-            "IN_PROGRESS": "processing",
-            "COMPLETED": "completed",
-            "FAILED": "failed",
-            "CANCELLED": "cancelled",
-            "TIMED_OUT": "failed",
-        }
-        
-        return {
-            "status": status_map.get(data.get("status"), "unknown"),
-            "output": data.get("output"),
-            "error": data.get("error"),
-        }
 
 # =============================================================================
 # JOBS
@@ -1679,114 +1477,189 @@ async def create_job(request: Request, body: ProcessBody, user: dict = Depends(r
             "settings": settings,  # Store all user settings for restoration
         }
 
-def _run_with_runpod(job_id: str, body, user: dict) -> None:
-    """Offload video processing to RunPod GPU worker."""
-    import asyncio
-    
-    sb_url = os.environ.get("SUPABASE_URL", "").strip()
-    sb_key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY", "").strip()
-    
-    with JOB_LOCK:
-        JOBS[job_id].update(message="Sending to GPU worker...")
-    
-    # Build webhook URL for completion callback
-    railway_domain = os.environ.get("RAILWAY_PUBLIC_DOMAIN", "")
-    webhook_url = f"https://{railway_domain}/api/webhooks/runpod" if railway_domain else ""
-    
-    # Get prep data (styled words, captions, etc.)
-    prep_data = {}
-    if body.from_prep_id:
-        loaded_sw, loaded_tc, loaded_tx = _load_prep_data(body.from_prep_id)
-        if loaded_sw:
-            prep_data = {
-                "styled_words": loaded_sw,
-                "timed_captions": loaded_tc,
-                "transcript_text": loaded_tx,
-            }
-    
-    # Build payload for RunPod
-    job_payload = {
-        "job_id": job_id,
-        "video_id": body.video_id,
-        "user_id": user["id"],
-        "settings": body.model_dump(),
-        "prep_data": prep_data,
-        "webhook_url": webhook_url,
-        "supabase_url": sb_url,
-        "supabase_key": sb_key,
-    }
-    
-    # Submit to RunPod
-    runpod_job_id = asyncio.run(send_to_runpod(job_payload))
-    
-    with JOB_LOCK:
-        JOBS[job_id]["runpod_job_id"] = runpod_job_id
-        JOBS[job_id].update(message="Processing on GPU...", progress=10)
-    
-    # Poll for completion
-    while True:
-        time.sleep(5)
-        status = asyncio.run(get_runpod_status(runpod_job_id))
-        
-        with JOB_LOCK:
-            if JOBS.get(job_id, {}).get("cancel_requested"):
-                JOBS[job_id].update(status="cancelled", stage="cancelled", message="Cancelled")
-                return
-            
-            runpod_status = status.get("status")
-            
-            if runpod_status == "completed":
-                output = status.get("output", {})
-                JOBS[job_id].update(
-                    status="completed",
-                    stage="done",
-                    message="Done!",
-                    progress=100,
-                    output_video_url=output.get("video_url"),
-                    thumbnail_url=output.get("thumbnail_url"),
-                )
-                return
-            elif runpod_status in ["failed", "error"]:
-                raise Exception(status.get("error", "RunPod processing failed"))
-            else:
-                # Still processing - update progress
-                progress = min(95, JOBS[job_id].get("progress", 10) + 2)
-                JOBS[job_id].update(progress=progress)
-
     def run():
-        input_path  = _find_upload(body.video_id)
-        out_name    = f"processed_{body.video_id}_{uuid.uuid4().hex[:8]}.mp4"
-        output_path = OUTPUT_DIR / out_name
-
-        with JOB_LOCK:
-            JOBS[job_id].update(status="processing", stage="starting", progress=5, message="Starting pipeline...")
+        """Submit job to RunPod GPU worker - Railway NEVER processes videos locally."""
+        import asyncio
         
-        # Check if RunPod is configured for GPU offloading
-        if RUNPOD_API_KEY and RUNPOD_ENDPOINT_ID:
-            try:
-                _run_with_runpod(job_id, body, user)
-                return
-            except Exception as e:
-                print(f"[Job {job_id}] RunPod failed, falling back to local: {e}")
-                with JOB_LOCK:
-                    JOBS[job_id].update(message="GPU worker failed, running locally...")
-        
-        def progress_cb(stage, pct, weight):
+        # Verify RunPod is configured
+        if not RUNPOD_API_KEY or not RUNPOD_ENDPOINT_ID:
+            print(f"[Job {job_id}] ERROR: RunPod not configured")
             with JOB_LOCK:
-                if not JOBS.get(job_id):
-                    return
                 JOBS[job_id].update(
-                    stage=stage,
-                    message=f"{stage.replace('_', ' ').title()}... {pct:.0f}%",
-                    progress=min(95, JOBS[job_id].get("progress", 5) + (pct / 100 * weight)),
+                    status="failed",
+                    stage="failed",
+                    message="Video processing service not configured. Please contact support.",
+                    progress=0,
                 )
-
-        def cancel_check():
+            return
+        
+        try:
             with JOB_LOCK:
-                return JOBS.get(job_id, {}).get("cancel_requested", False)
-
-        def release_lock_on_failure():
-            """Release credit lock on failure/cancellation (credits were not deducted yet)."""
+                JOBS[job_id].update(status="processing", stage="starting", progress=5, message="Preparing job...")
+            
+            # Get the uploaded video and upload to Supabase storage for RunPod access
+            input_path = _find_upload(body.video_id)
+            
+            with JOB_LOCK:
+                JOBS[job_id].update(progress=10, message="Uploading to cloud storage...")
+            
+            # Upload video to Supabase storage so RunPod can access it
+            sb_url = os.environ.get("SUPABASE_URL", "").strip()
+            sb_key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY", "").strip()
+            
+            storage_path = f"jobs/{job_id}/input.mp4"
+            video_url = None
+            
+            try:
+                with open(input_path, "rb") as f:
+                    upload_resp = requests.post(
+                        f"{sb_url}/storage/v1/object/videos/{storage_path}",
+                        headers={
+                            "apikey": sb_key,
+                            "Authorization": f"Bearer {sb_key}",
+                            "Content-Type": "video/mp4",
+                            "x-upsert": "true",
+                        },
+                        data=f,
+                        timeout=300,
+                    )
+                
+                if upload_resp.ok:
+                    # Get public URL for the uploaded video
+                    video_url = f"{sb_url}/storage/v1/object/public/videos/{storage_path}"
+                    print(f"[Job {job_id}] Uploaded to Supabase: {video_url}")
+                else:
+                    raise Exception(f"Upload failed: {upload_resp.status_code}")
+                    
+            except Exception as e:
+                print(f"[Job {job_id}] Supabase upload error: {e}")
+                # Fallback: Use direct file path if upload fails
+                video_url = None
+            
+            with JOB_LOCK:
+                JOBS[job_id].update(progress=15, message="Sending to GPU worker...")
+            
+            # Get prep data (styled words, captions, transcript)
+            prep_data = {}
+            if body.from_prep_id:
+                loaded_sw, loaded_tc, loaded_tx = _load_prep_data(body.from_prep_id)
+                if loaded_sw:
+                    prep_data = {
+                        "styled_words": loaded_sw,
+                        "timed_captions": loaded_tc,
+                        "transcript_text": loaded_tx,
+                    }
+            
+            # Build webhook URL for RunPod callback
+            railway_domain = os.environ.get("RAILWAY_PUBLIC_DOMAIN", "")
+            webhook_url = f"https://{railway_domain}/api/webhooks/runpod" if railway_domain else ""
+            
+            # Build job payload for RunPod
+            job_payload = {
+                "input": {
+                    "job_id": job_id,
+                    "video_id": body.video_id,
+                    "user_id": user["id"],
+                    "video_url": video_url,
+                    "storage_path": storage_path if video_url else None,
+                    "supabase_url": sb_url,
+                    "supabase_key": sb_key,
+                    "webhook_url": webhook_url,
+                    "settings": body.model_dump(),
+                    "prep_data": prep_data,
+                }
+            }
+            
+            # Submit job to RunPod
+            runpod_resp = requests.post(
+                f"https://api.runpod.ai/v2/{RUNPOD_ENDPOINT_ID}/run",
+                headers={
+                    "Authorization": f"Bearer {RUNPOD_API_KEY}",
+                    "Content-Type": "application/json",
+                },
+                json=job_payload,
+                timeout=30,
+            )
+            
+            if runpod_resp.status_code != 200:
+                raise Exception(f"RunPod submission failed: {runpod_resp.text}")
+            
+            runpod_job_id = runpod_resp.json()["id"]
+            
+            with JOB_LOCK:
+                JOBS[job_id]["runpod_job_id"] = runpod_job_id
+                JOBS[job_id].update(progress=20, message="Processing on GPU...")
+            
+            print(f"[Job {job_id}] Submitted to RunPod: {runpod_job_id}")
+            
+            # Poll for completion (RunPod will also call webhook)
+            poll_count = 0
+            while True:
+                time.sleep(10)  # Poll every 10 seconds
+                poll_count += 1
+                
+                with JOB_LOCK:
+                    if JOBS.get(job_id, {}).get("cancel_requested"):
+                        # Cancel RunPod job
+                        try:
+                            requests.post(
+                                f"https://api.runpod.ai/v2/{RUNPOD_ENDPOINT_ID}/cancel/{runpod_job_id}",
+                                headers={"Authorization": f"Bearer {RUNPOD_API_KEY}"},
+                                timeout=10,
+                            )
+                        except:
+                            pass
+                        JOBS[job_id].update(status="cancelled", stage="cancelled", message="Cancelled")
+                        return
+                
+                # Check status
+                status_resp = requests.get(
+                    f"https://api.runpod.ai/v2/{RUNPOD_ENDPOINT_ID}/status/{runpod_job_id}",
+                    headers={"Authorization": f"Bearer {RUNPOD_API_KEY}"},
+                    timeout=10,
+                )
+                
+                if status_resp.status_code != 200:
+                    continue
+                
+                status_data = status_resp.json()
+                runpod_status = status_data.get("status")
+                
+                # Update progress based on status
+                progress = min(95, 20 + poll_count * 2)
+                
+                with JOB_LOCK:
+                    if runpod_status == "IN_QUEUE":
+                        JOBS[job_id].update(progress=progress, message="Waiting in GPU queue...")
+                    elif runpod_status == "IN_PROGRESS":
+                        JOBS[job_id].update(progress=progress, message="Processing on GPU...")
+                    elif runpod_status == "COMPLETED":
+                        output = status_data.get("output", {})
+                        JOBS[job_id].update(
+                            status="completed",
+                            stage="done",
+                            message="Done!",
+                            progress=100,
+                            output_video_url=output.get("video_url"),
+                            thumbnail_url=output.get("thumbnail_url"),
+                        )
+                        print(f"[Job {job_id}] Completed via RunPod")
+                        return
+                    elif runpod_status in ["FAILED", "CANCELLED", "TIMED_OUT"]:
+                        error_msg = status_data.get("error", "GPU processing failed")
+                        raise Exception(error_msg)
+                        
+        except Exception as e:
+            error_msg = str(e)
+            print(f"[Job {job_id}] ERROR: {error_msg}")
+            with JOB_LOCK:
+                JOBS[job_id].update(
+                    status="failed",
+                    stage="failed",
+                    message=error_msg,
+                    progress=0,
+                )
+            # Release credits on failure
             if body.lock_id:
                 try:
                     requests.post(
@@ -1795,89 +1668,8 @@ def _run_with_runpod(job_id: str, body, user: dict) -> None:
                         json={"lock_id": body.lock_id},
                         timeout=5,
                     )
-                except Exception as e:
-                    print(f"[Job {job_id}] Failed to release lock: {e}")
-        
-        try:
-            if cancel_check():
-                with JOB_LOCK:
-                    JOBS[job_id].update(status="cancelled", stage="cancelled", message="Cancelled")
-                release_lock_on_failure()
-                return
-
-            result = _run_pipeline(
-                input_video=str(input_path),
-                output_video=str(output_path),
-                options=body.model_dump(),
-                progress_cb=progress_cb,
-                cancel_check=cancel_check,
-            )
-
-            if result.get("cancelled") or cancel_check():
-                output_path.unlink(missing_ok=True)
-                with JOB_LOCK:
-                    JOBS[job_id].update(status="cancelled", stage="cancelled", message="Cancelled")
-                release_lock_on_failure()
-                return
-
-            with JOB_LOCK:
-                if result.get("success"):
-                    JOBS[job_id].update(
-                        status="completed",
-                        stage="done",
-                        message="Done!",
-                        progress=100,
-                        output_video_url=f"/api/output/{out_name}",
-                        thumbnail_url=f"/api/output/{out_name}.jpg",
-                    )
-                else:
-                    error_msg = result.get("error", "Processing failed")
-                    print(f"[Job {job_id}] FAILED: {error_msg}")
-                    if result.get("traceback"):
-                        print(f"[Job {job_id}] Traceback:\n{result['traceback']}")
-                    JOBS[job_id].update(
-                        status="failed",
-                        stage="failed",
-                        message=error_msg,
-                        progress=0,
-                    )
-                    release_lock_on_failure()
-
-            # Generate thumbnail for the output video
-            if result.get("success"):
-                try:
-                    thumb_path = OUTPUT_DIR / f"{out_name}.jpg"
-                    import cv2
-                    cap = cv2.VideoCapture(str(output_path))
-                    if cap.isOpened():
-                        # Get video duration and seek to 1 second or 10%
-                        fps = cap.get(cv2.CAP_PROP_FPS)
-                        total_frames = cap.get(cv2.CAP_PROP_FRAME_COUNT)
-                        target_frame = min(int(fps * 1), int(total_frames * 0.1))
-                        cap.set(cv2.CAP_PROP_POS_FRAMES, target_frame)
-                        ret, frame = cap.read()
-                        if ret and frame is not None:
-                            # Resize to thumbnail size
-                            h, w = frame.shape[:2]
-                            thumb_h = 360
-                            thumb_w = int(w * (thumb_h / h))
-                            frame = cv2.resize(frame, (thumb_w, thumb_h))
-                            cv2.imwrite(str(thumb_path), frame)
-                            print(f"[Job {job_id}] Generated thumbnail: {thumb_path}")
-                        cap.release()
-                except Exception as e:
-                    print(f"[Job {job_id}] Thumbnail generation error: {e}")
-            
-            # Note: We don't auto-save to My Videos here
-            # Videos are only saved to My Videos if download fails (handled in frontend)
-
-        except Exception as e:
-            import traceback
-            print(f"[Job {job_id}] EXCEPTION: {e}")
-            print(f"[Job {job_id}] Traceback:\n{traceback.format_exc()}")
-            with JOB_LOCK:
-                JOBS[job_id].update(status="failed", stage="failed", message=str(e), progress=0)
-            release_lock_on_failure()
+                except:
+                    pass
 
     threading.Thread(target=run, daemon=True).start()
     return {"job_id": job_id}
