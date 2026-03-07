@@ -17,6 +17,9 @@ slowapi>=0.1.9
 # HTTP Client
 requests>=2.31.0
 
+# OpenAI (for transcription - cloud API, no local ML)
+openai>=1.0.0
+
 # Payments (Optional)
 razorpay>=1.4.0
 
@@ -24,4 +27,4 @@ razorpay>=1.4.0
 supabase>=2.0.0
 
 # Note: Video processing (cv2, mediapipe, whisper, torch) runs on RunPod GPU workers
-# Railway only handles API, auth, and job orchestration
+# Railway handles API, auth, transcription (via OpenAI API), and job orchestration

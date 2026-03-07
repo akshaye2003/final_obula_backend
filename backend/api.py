@@ -574,27 +574,91 @@ async def create_prep_background(body: CreatePrepBody, user: dict = Depends(requ
         }, f, indent=2)
     
     def run_background_prep():
-        """Prep now just saves video metadata - transcription happens on RunPod GPU."""
+        """Prep with transcription via OpenAI API (cloud-based, no local ML)."""
+        import openai
+        
+        transcript_text = ""
+        styled_words = []
+        timed_captions = []
+        
         try:
-            # Just update status - actual transcription done on RunPod
             with _prep_jobs_lock:
-                _prep_jobs[prep_id]["status"] = "completed"
-                _prep_jobs[prep_id]["progress"] = 100
+                _prep_jobs[prep_id]["status"] = "transcribing"
+                _prep_jobs[prep_id]["progress"] = 10
             
-            # Save minimal prep data
+            # Step 1: Transcribe using OpenAI Whisper API (cloud, not local)
+            try:
+                client = openai.OpenAI(api_key=os.environ.get("OPENAI_API_KEY", ""))
+                with open(input_path, "rb") as audio_file:
+                    transcript = client.audio.transcriptions.create(
+                        model="whisper-1",
+                        file=audio_file,
+                        response_format="verbose_json",
+                        timestamp_granularities=["word"]
+                    )
+                
+                # Extract transcript text
+                transcript_text = transcript.text or ""
+                
+                # Convert words to styled_words format
+                if hasattr(transcript, 'words') and transcript.words:
+                    for word_info in transcript.words:
+                        styled_words.append({
+                            "text": word_info.word,
+                            "start": word_info.start,
+                            "end": word_info.end,
+                            "style": "regular",
+                            "color": [200, 220, 240]
+                        })
+                
+                # Build timed_captions from sentences
+                if transcript_text:
+                    sentences = transcript_text.replace("! ", "!.").replace("? ", "?.").split(". ")
+                    current_time = 0
+                    for sentence in sentences:
+                        sentence = sentence.strip()
+                        if not sentence:
+                            continue
+                        # Estimate timing (3 words per second)
+                        word_count = len(sentence.split())
+                        duration = word_count / 3.0
+                        timed_captions.append([
+                            current_time,
+                            current_time + duration,
+                            [sentence]
+                        ])
+                        current_time += duration
+                
+                print(f"[Prep BG] Transcribed {len(styled_words)} words")
+                
+            except Exception as e:
+                print(f"[Prep BG] Transcription error: {e}")
+                transcript_text = ""
+                styled_words = []
+                timed_captions = []
+            
+            with _prep_jobs_lock:
+                _prep_jobs[prep_id]["status"] = "saving"
+                _prep_jobs[prep_id]["progress"] = 90
+            
+            # Step 2: Save prep data
             with open(prep_path, "w", encoding="utf-8") as f:
                 json.dump({
                     "input_video": str(input_path),
                     "video_id": body.video_id,
                     "user_id": user["id"],
                     "status": "completed",
-                    "transcript_text": "",
-                    "styled_words": [],
-                    "timed_captions": [],
+                    "transcript_text": transcript_text,
+                    "styled_words": styled_words,
+                    "timed_captions": timed_captions,
                     "broll_placements": [],
                 }, f, indent=2)
+            
+            with _prep_jobs_lock:
+                _prep_jobs[prep_id]["status"] = "completed"
+                _prep_jobs[prep_id]["progress"] = 100
                 
-            print(f"[Prep BG] Completed (minimal): {prep_id}")
+            print(f"[Prep BG] Completed: {prep_id} ({len(styled_words)} words)")
             
         except Exception as e:
             import traceback
@@ -643,25 +707,75 @@ async def get_prep_status(prep_id: str, user: dict = Depends(require_auth)):
 
 @app.post("/api/prep")
 async def create_prep(body: CreatePrepBody, user: dict = Depends(require_auth)):
-    """Create a prep session from uploaded video. Runs transcription + styling + B-roll planning, saves to prep dir."""
+    """Create a prep session with transcription via OpenAI API."""
+    import openai
+    
     input_path = _find_upload(body.video_id)
     prep_id = str(uuid.uuid4())
     prep_path = PREP_DIR / f"{prep_id}.json"
-
-    # Simplified prep - no local transcription (done on RunPod GPU)
-    # Just save the video path for EditClip
+    
+    transcript_text = ""
+    styled_words = []
+    timed_captions = []
+    
+    # Transcribe using OpenAI Whisper API
+    try:
+        client = openai.OpenAI(api_key=os.environ.get("OPENAI_API_KEY", ""))
+        with open(input_path, "rb") as audio_file:
+            transcript = client.audio.transcriptions.create(
+                model="whisper-1",
+                file=audio_file,
+                response_format="verbose_json",
+                timestamp_granularities=["word"]
+            )
+        
+        transcript_text = transcript.text or ""
+        
+        # Convert words to styled_words
+        if hasattr(transcript, 'words') and transcript.words:
+            for word_info in transcript.words:
+                styled_words.append({
+                    "text": word_info.word,
+                    "start": word_info.start,
+                    "end": word_info.end,
+                    "style": "regular",
+                    "color": [200, 220, 240]
+                })
+        
+        # Build timed_captions
+        if transcript_text:
+            sentences = transcript_text.replace("! ", "!.").replace("? ", "?.").split(". ")
+            current_time = 0
+            for sentence in sentences:
+                sentence = sentence.strip()
+                if not sentence:
+                    continue
+                word_count = len(sentence.split())
+                duration = word_count / 3.0
+                timed_captions.append([
+                    current_time,
+                    current_time + duration,
+                    [sentence]
+                ])
+                current_time += duration
+        
+        print(f"[Prep] Transcribed {len(styled_words)} words for {prep_id}")
+        
+    except Exception as e:
+        print(f"[Prep] Transcription error: {e}")
+    
+    # Save prep data
     with open(prep_path, "w", encoding="utf-8") as f:
         json.dump({
             "input_video": str(input_path),
             "video_id": body.video_id,
             "user_id": user["id"],
-            "transcript_text": "",
-            "styled_words": [],
-            "timed_captions": [],
+            "transcript_text": transcript_text,
+            "styled_words": styled_words,
+            "timed_captions": timed_captions,
             "broll_placements": [],
         }, f, indent=2)
     
-    print(f"[Prep] Created minimal prep {prep_id} - transcription will happen on RunPod")
     return {"prep_id": prep_id, "video_id": body.video_id}
 
 def _extract_video_id_from_path(input_path: str) -> str:
