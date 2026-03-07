@@ -1,0 +1,271 @@
+You are helping me prepare a FastAPI + React video SaaS app for production deployment.
+
+My folder structure is:
+final_mvp_backend/
+├── backend/          ← FastAPI app
+├── frontend/         ← React/Vite app
+├── runpod-worker/    ← RunPod worker (may already exist)
+├── supabase/         ← SQL files
+└── venv/
+
+Make ALL of the following changes:
+
+─────────────────────────────────────
+1. FONT PATHS — backend/scripts/config.py and backend/scripts/font_manager.py
+─────────────────────────────────────
+I have exactly these 2 font files in backend/fonts/:
+- Coolvetica Rg.otf
+- Runethia.otf
+
+Update config.py and font_manager.py to use relative paths:
+
+import os
+FONTS_DIR = os.path.join(os.path.dirname(__file__), '..', 'fonts')
+
+Replace ALL font path references with:
+- Anything referencing Coolvetica → os.path.join(FONTS_DIR, 'Coolvetica Rg.otf')
+- Anything referencing Runethia → os.path.join(FONTS_DIR, 'Runethia.otf')
+- Any other font path (Montserrat, Segoe, Impact, etc.) → replace with os.path.join(FONTS_DIR, 'Coolvetica Rg.otf') as fallback
+
+Remove ALL hardcoded C:/Windows/Fonts/ paths completely.
+
+─────────────────────────────────────
+2. DISABLE DEV TOKEN — backend/api.py
+─────────────────────────────────────
+Find the dev-token-xyz auth bypass.
+Wrap it so it only works when ENV=development:
+
+ENV = os.getenv("ENV", "development")
+
+if ENV == "development" and token == "dev-token-xyz":
+    # allow through
+else:
+    # normal JWT verification
+
+─────────────────────────────────────
+3. CORS — backend/api.py
+─────────────────────────────────────
+Replace existing allow_origins with:
+
+if ENV == "production":
+    allow_origins = ["https://obula.io", "https://www.obula.io"]
+else:
+    allow_origins = ["*"]
+
+─────────────────────────────────────
+4. RATE LIMITING — backend/api.py
+─────────────────────────────────────
+Add slowapi rate limiting:
+
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
+
+limiter = Limiter(key_func=get_remote_address)
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+Apply these limits:
+@limiter.limit("10/minute") on POST /api/upload
+@limiter.limit("5/minute") on POST /api/jobs
+@limiter.limit("10/minute") on POST /api/payments/create-order
+@limiter.limit("3/minute") on POST /api/contact
+
+─────────────────────────────────────
+5. FILE UPLOAD SECURITY — backend/api.py
+─────────────────────────────────────
+In POST /api/upload:
+- Read first 12 bytes of file to check magic bytes
+- Allow only MP4, MOV, WEBM, AVI, MKV
+- Generate UUID filename, never use original filename
+- Reject files over MAX_UPLOAD_MB
+
+─────────────────────────────────────
+6. ENV VARIABLE — backend/api.py
+─────────────────────────────────────
+Add at the top of api.py:
+ENV = os.getenv("ENV", "development")
+
+─────────────────────────────────────
+7. PROCFILE — create backend/Procfile
+─────────────────────────────────────
+web: uvicorn api:app --host 0.0.0.0 --port $PORT
+
+─────────────────────────────────────
+8. GITIGNORE — create root .gitignore
+─────────────────────────────────────
+.env
+.env.local
+backend/.env
+frontend/.env.local
+backend/uploads/
+backend/outputs/
+backend/data/
+backend/masks_generated/
+__pycache__/
+*.pyc
+node_modules/
+.DS_Store
+*.mp4
+*.mov
+*.webm
+venv/
+
+─────────────────────────────────────
+9. VERCEL CONFIG — create frontend/vercel.json
+─────────────────────────────────────
+{
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {"key": "X-Content-Type-Options", "value": "nosniff"},
+        {"key": "X-Frame-Options", "value": "DENY"},
+        {"key": "X-XSS-Protection", "value": "1; mode=block"},
+        {"key": "Referrer-Policy", "value": "strict-origin-when-cross-origin"}
+      ]
+    }
+  ]
+}
+
+─────────────────────────────────────
+10. RUNPOD HANDLER — create backend/runpod_handler.py
+─────────────────────────────────────
+import runpod
+import os
+import requests
+from supabase import create_client
+from scripts.pipeline import Pipeline
+
+def handler(job):
+    job_input = job["input"]
+    video_id = job_input["video_id"]
+    user_id = job_input["user_id"]
+    input_url = job_input["input_url"]
+    options = job_input.get("options", {})
+
+    supabase = create_client(
+        os.environ["SUPABASE_URL"],
+        os.environ["SUPABASE_SERVICE_ROLE_KEY"]
+    )
+
+    try:
+        local_path = f"/tmp/{video_id}.mp4"
+        r = requests.get(input_url)
+        with open(local_path, 'wb') as f:
+            f.write(r.content)
+
+        pipeline = Pipeline()
+        output_path = pipeline.process(local_path, **options)
+
+        filename = f"{video_id}_output.mp4"
+        storage_path = f"outputs/{user_id}/{filename}"
+        with open(output_path, 'rb') as f:
+            supabase.storage.from_("videos").upload(storage_path, f)
+
+        video_url = supabase.storage.from_("videos").get_public_url(storage_path)
+
+        from datetime import datetime, timedelta
+        expires_at = (datetime.utcnow() + timedelta(minutes=30)).isoformat()
+
+        supabase.table("videos").update({
+            "status": "completed",
+            "storage_path": storage_path,
+            "expires_at": expires_at
+        }).eq("id", video_id).execute()
+
+        return {"status": "completed", "video_url": video_url, "expires_at": expires_at}
+
+    except Exception as e:
+        supabase.rpc("refund_credit", {"p_user_id": user_id}).execute()
+        supabase.table("videos").update({"status": "failed"}).eq("id", video_id).execute()
+        return {"status": "failed", "error": str(e)}
+
+runpod.serverless.start({"handler": handler})
+
+─────────────────────────────────────
+11. RUNPOD INTEGRATION — backend/api.py
+─────────────────────────────────────
+Update POST /api/jobs to send to RunPod instead of running locally:
+
+import httpx
+
+RUNPOD_API_KEY = os.getenv("RUNPOD_API_KEY")
+RUNPOD_ENDPOINT_ID = os.getenv("RUNPOD_ENDPOINT_ID")
+
+async def send_to_runpod(job_payload: dict):
+    url = f"https://api.runpod.io/v2/{RUNPOD_ENDPOINT_ID}/run"
+    headers = {"Authorization": f"Bearer {RUNPOD_API_KEY}"}
+    async with httpx.AsyncClient() as client:
+        r = await client.post(url, json={"input": job_payload}, headers=headers)
+        return r.json()["id"]
+
+Update GET /api/jobs/{job_id} to poll RunPod:
+
+async def get_runpod_status(runpod_job_id: str):
+    url = f"https://api.runpod.io/v2/{RUNPOD_ENDPOINT_ID}/status/{runpod_job_id}"
+    headers = {"Authorization": f"Bearer {RUNPOD_API_KEY}"}
+    async with httpx.AsyncClient() as client:
+        r = await client.get(url, headers=headers)
+        return r.json()
+
+Map RunPod statuses:
+IN_QUEUE → queued
+IN_PROGRESS → processing
+COMPLETED → completed
+FAILED → failed
+
+─────────────────────────────────────
+12. DOCKERFILE — create backend/Dockerfile
+─────────────────────────────────────
+FROM python:3.10-slim
+
+RUN apt-get update && apt-get install -y \
+    ffmpeg \
+    libsm6 \
+    libxext6 \
+    libgl1-mesa-glx \
+    libglib2.0-0 \
+    wget \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN pip install torch torchvision torchaudio \
+    --index-url https://download.pytorch.org/whl/cu121
+
+COPY requirements.txt .
+RUN pip install -r requirements.txt
+RUN pip install runpod supabase
+
+COPY . .
+
+CMD ["python", "runpod_handler.py"]
+
+─────────────────────────────────────
+13. RAILWAY INTEGRATION — backend/api.py
+─────────────────────────────────────
+Railway serves the FastAPI app. Make sure:
+
+- App reads PORT from environment: port = int(os.getenv("PORT", 8000))
+- Health check endpoint exists at GET /api/health returning {"status": "ok"}
+- All file uploads save to backend/uploads/ (Railway has persistent volume)
+- All processed outputs save to backend/outputs/
+- Add startup event to create these directories if they don't exist:
+
+@app.on_event("startup")
+async def startup_event():
+    os.makedirs("uploads", exist_ok=True)
+    os.makedirs("outputs", exist_ok=True)
+    os.makedirs("data/prep", exist_ok=True)
+
+- Make sure uvicorn is NOT hardcoded to a port anywhere in the code
+- Procfile already handles port via $PORT
+
+
+─────────────────────────────────────
+AFTER ALL CHANGES:
+─────────────────────────────────────
+Show me:
+1. Every file modified (with what changed)
+2. Every file created
+3. Anything you couldn't do automatically
+4. Terminal commands to run next
