@@ -1,0 +1,19 @@
+{
+  "name": "Minimal Clean",
+  "description": "Clean professional captions without effects. Best for corporate or educational content.",
+  "font_size": 68,
+  "transparency": 0.98,
+  "color": [255, 255, 255],
+  "position": "center",
+  "animation": "hard_cut_fade_out",
+  "words_per_line": 5,
+  "max_hook_words": 0,
+  "exclusive_hooks": false,
+  "hw_encode": false,
+  "mask_frame_skip": 5,
+  "smart_placement": true,
+  "font_regular": "fonts/Coolvetica Rg.otf",
+  "font_emphasis": "fonts/Runethia.otf",
+  "gpt_correction": true,
+  "adaptive_erosion": true
+}

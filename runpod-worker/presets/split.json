@@ -1,0 +1,28 @@
+{
+  "name": "Split Word-by-Word",
+  "description": "Dynamic left/right split captions with word highlighting. Text appears behind person.",
+  "font_size": 65,
+  "transparency": 0.95,
+  "color": [255, 255, 255],
+  "highlight_color": [255, 232, 138],
+  "position": "center",
+  "animation": "split_caption",
+  "words_per_line": 6,
+  "max_hook_words": 5,
+  "exclusive_hooks": false,
+  "hw_encode": false,
+  "mask_frame_skip": 5,
+  "smart_placement": true,
+  "font_regular": "fonts/Coolvetica Rg.otf",
+  "font_emphasis": "fonts/Runethia.otf",
+  "split_caption_mode": true,
+  "split_settings": {
+    "caption_padding": 14,
+    "y_position": 0.42,
+    "left_zone_start": 0.08,
+    "left_zone_end": 0.38,
+    "right_zone_start": 0.62,
+    "sample_every_n_frames": 10,
+    "use_locked_zones": true
+  }
+}

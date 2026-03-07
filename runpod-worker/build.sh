@@ -1,59 +1,94 @@
 #!/bin/bash
-# Build script for RunPod Worker Docker image
+# Build and push RunPod Docker image
 
 set -e
 
-echo "Building RunPod Worker for Obula..."
-echo "===================================="
-
 # Configuration
 IMAGE_NAME="obula-runpod-worker"
-IMAGE_TAG="latest"
-RUNPOD_REGISTRY="docker.io/YOUR_USERNAME"  # Change this
+DOCKER_USERNAME=${DOCKER_USERNAME:-"your-docker-username"}
+VERSION=${VERSION:-"latest"}
 
-# Step 1: Copy required backend scripts
-echo "[1/4] Copying backend scripts..."
+# Full image name
+FULL_IMAGE_NAME="$DOCKER_USERNAME/$IMAGE_NAME:$VERSION"
 
-mkdir -p scripts
-mkdir -p presets
-mkdir -p color_grading
-mkdir -p fonts
-mkdir -p movie_clips
-mkdir -p movie_clips_portrait
+echo "=========================================="
+echo "Building RunPod Worker Docker Image"
+echo "=========================================="
+echo "Image: $FULL_IMAGE_NAME"
+echo ""
 
-# Copy pipeline scripts
-cp ../backend/scripts/*.py scripts/ 2>/dev/null || echo "Warning: Could not copy scripts"
+# Ensure all files are present
+echo "Checking required files..."
 
-# Copy presets
-cp ../backend/presets/*.json presets/ 2>/dev/null || echo "Warning: Could not copy presets"
+required_files=(
+    "handler.py"
+    "requirements.txt"
+    "Dockerfile"
+    "scripts/pipeline.py"
+    "scripts/video_utils.py"
+    "scripts/caption_renderer.py"
+    "scripts/mask_utils.py"
+    "scripts/font_manager.py"
+    "scripts/config.py"
+    "scripts/broll_engine.py"
+    "scripts/watermark.py"
+    "scripts/animator.py"
+    "scripts/caption_formatter.py"
+    "scripts/hook_renderer.py"
+    "scripts/styled_text_renderer.py"
+    "scripts/text_effects.py"
+    "scripts/noise_isolator.py"
+    "scripts/post_processor.py"
+)
 
-# Copy LUTs
-cp ../backend/color_grading/*.cube color_grading/ 2>/dev/null || echo "Warning: Could not copy LUTs"
+for file in "${required_files[@]}"; do
+    if [ ! -f "$file" ]; then
+        echo "ERROR: Missing required file: $file"
+        exit 1
+    fi
+    echo "  ✓ $file"
+done
 
-# Copy fonts
-cp -r ../backend/fonts/* fonts/ 2>/dev/null || echo "Warning: Could not copy fonts"
+# Check asset directories
+echo ""
+echo "Checking asset directories..."
 
-echo "[2/4] Building Docker image..."
+if [ ! -d "presets" ] || [ -z "$(ls -A presets/*.json 2>/dev/null)" ]; then
+    echo "ERROR: presets/ directory is empty or missing"
+    exit 1
+fi
+echo "  ✓ presets/ ($(ls presets/*.json | wc -l) files)"
 
-docker build -t ${IMAGE_NAME}:${IMAGE_TAG} .
+if [ ! -d "color_grading" ] || [ -z "$(ls -A color_grading/*.cube 2>/dev/null)" ]; then
+    echo "ERROR: color_grading/ directory is empty or missing"
+    exit 1
+fi
+echo "  ✓ color_grading/ ($(ls color_grading/*.cube | wc -l) files)"
 
-echo "[3/4] Tagging for registry..."
-
-docker tag ${IMAGE_NAME}:${IMAGE_TAG} ${RUNPOD_REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}
-
-echo "[4/4] Pushing to registry..."
-
-docker push ${RUNPOD_REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}
+if [ ! -d "fonts" ] || [ -z "$(ls -A fonts/* 2>/dev/null)" ]; then
+    echo "ERROR: fonts/ directory is empty or missing"
+    exit 1
+fi
+echo "  ✓ fonts/ ($(ls fonts/* | wc -l) files)"
 
 echo ""
-echo "===================================="
-echo "Build complete!"
-echo "Image: ${RUNPOD_REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}"
+echo "All files present! Building Docker image..."
 echo ""
-echo "Next steps:"
-echo "1. Update RUNPOD_REGISTRY in this script"
-echo "2. Login to Docker Hub: docker login"
-echo "3. Run this script to push image"
-echo "4. Create RunPod Serverless Endpoint"
-echo "5. Configure endpoint with your image"
-echo "===================================="
+
+# Build the Docker image
+docker build -t "$IMAGE_NAME:$VERSION" .
+
+# Tag with full name
+docker tag "$IMAGE_NAME:$VERSION" "$FULL_IMAGE_NAME"
+
+echo ""
+echo "=========================================="
+echo "Build successful!"
+echo "=========================================="
+echo ""
+echo "To push to Docker Hub:"
+echo "  docker push $FULL_IMAGE_NAME"
+echo ""
+echo "To test locally:"
+echo "  docker run --gpus all -e OPENAI_API_KEY=xxx -e SUPABASE_URL=xxx -e SUPABASE_SERVICE_ROLE_KEY=xxx -it --rm $IMAGE_NAME:$VERSION"
+echo ""

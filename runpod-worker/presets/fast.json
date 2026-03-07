@@ -1,0 +1,21 @@
+{
+  "name": "Fast Preview",
+  "description": "Quick render mode for testing. Lower quality but 5x faster. Use with manual transcript.",
+  "font_size": 60,
+  "transparency": 0.95,
+  "color": [255, 255, 255],
+  "position": "center",
+  "animation": "hard_cut_fade_out",
+  "words_per_line": 4,
+  "max_hook_words": 0,
+  "exclusive_hooks": false,
+  "hw_encode": false,
+  "mask_frame_skip": 10,
+  "smart_placement": true,
+  "preview_mode": true,
+  "preview_scale": 0.5,
+  "preview_quality": "fast",
+  "gpt_correction": false,
+  "font_regular": "fonts/Coolvetica Rg.otf",
+  "font_emphasis": "fonts/Runethia.otf"
+}

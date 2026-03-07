@@ -1,0 +1,28 @@
+{
+  "name": "B-Roll Heavy",
+  "description": "Maximum B-roll coverage with stock footage inserts. Best for storytelling content.",
+  "font_size": 85,
+  "transparency": 0.92,
+  "color": [255, 255, 255],
+  "position": "center",
+  "animation": "hard_cut_fade_out",
+  "words_per_line": 4,
+  "max_hook_words": 0,
+  "exclusive_hooks": false,
+  "hw_encode": false,
+  "mask_frame_skip": 5,
+  "smart_placement": true,
+  "font_regular": "fonts/Coolvetica Rg.otf",
+  "font_emphasis": "fonts/Runethia.otf",
+  "broll_enabled": true,
+  "broll_max_segments": 3,
+  "broll_crossfade_duration": 0.5,
+  "broll_settings": {
+    "min_segment_duration": 1.5,
+    "max_segment_duration": 3.0,
+    "avoid_first_seconds": 2,
+    "avoid_last_seconds": 2,
+    "theme_matching": true,
+    "emotion_matching": true
+  }
+}

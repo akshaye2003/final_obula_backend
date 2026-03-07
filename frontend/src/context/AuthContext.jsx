@@ -139,6 +139,11 @@ export function AuthProvider({ children }) {
   // True when user is logged in but hasn't linked a phone yet (blocks access until added)
   const needsPhone = isAuthenticated && !loading && profile !== null && !profile?.phone;
 
+  // Debug output for auth state
+  useEffect(() => {
+    console.log('[AuthContext] State changed:', { isAuthenticated, user: user?.email, loading, sessionExists: !!session });
+  }, [isAuthenticated, user, loading, session]);
+
   const value = {
     session,
     user,

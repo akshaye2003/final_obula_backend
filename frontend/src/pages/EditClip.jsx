@@ -1670,44 +1670,79 @@ export default function EditClip() {
                     <div className="mt-4 pt-4 border-t border-white/[0.06]">
                       <span className="text-[11px] text-white/45 uppercase tracking-widest font-medium block mb-3">Style colors</span>
                       <div className="grid grid-cols-3 gap-2">
-                        <label className="flex flex-col items-center gap-2 p-3 rounded-xl border border-white/[0.08] bg-white/[0.02] hover:bg-white/[0.04] transition-colors cursor-pointer group touch-manipulation">
-                          <div className="relative w-11 h-11 sm:w-10 sm:h-10">
-                            <input type="color" value={hookColor} onChange={(e) => setHookColor(e.target.value.toUpperCase())} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" />
-                            <div className="absolute inset-0 w-11 h-11 sm:w-10 sm:h-10 rounded-xl border-2 border-white/20 group-hover:border-white/30 transition-colors shadow-inner flex items-center justify-center" style={{ backgroundColor: hookColor }}>
-                              <svg className="w-5 h-5 text-white/60 mix-blend-difference opacity-0 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
-                              </svg>
-                            </div>
+                        {/* Hook Color */}
+                        <button 
+                          onClick={() => document.getElementById('hook-color-input').click()}
+                          className="flex flex-col items-center gap-2 p-3 rounded-xl border border-white/[0.08] bg-white/[0.02] active:bg-white/[0.06] transition-colors cursor-pointer touch-manipulation"
+                        >
+                          <input 
+                            id="hook-color-input"
+                            type="color" 
+                            value={hookColor} 
+                            onChange={(e) => setHookColor(e.target.value.toUpperCase())} 
+                            className="sr-only" 
+                          />
+                          <div 
+                            className="w-12 h-12 rounded-xl border-2 border-white/30 shadow-inner flex items-center justify-center"
+                            style={{ backgroundColor: hookColor }}
+                          >
+                            <svg className="w-5 h-5 text-white/80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
+                            </svg>
                           </div>
                           <span className="text-xs font-medium text-white/70">Hook</span>
                           <span className="text-[10px] text-white/40">{hookCount} words</span>
-                        </label>
-                        <label className="flex flex-col items-center gap-2 p-3 rounded-xl border border-white/[0.08] bg-white/[0.02] hover:bg-white/[0.04] transition-colors cursor-pointer group touch-manipulation">
-                          <div className="relative w-11 h-11 sm:w-10 sm:h-10">
-                            <input type="color" value={emphasisColor} onChange={(e) => setEmphasisColor(e.target.value.toUpperCase())} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" />
-                            <div className="absolute inset-0 w-11 h-11 sm:w-10 sm:h-10 rounded-xl border-2 border-white/20 group-hover:border-white/30 transition-colors shadow-inner flex items-center justify-center" style={{ backgroundColor: emphasisColor }}>
-                              <svg className="w-5 h-5 text-white/60 mix-blend-difference opacity-0 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
-                              </svg>
-                            </div>
+                        </button>
+                        
+                        {/* Emphasis Color */}
+                        <button 
+                          onClick={() => document.getElementById('emphasis-color-input').click()}
+                          className="flex flex-col items-center gap-2 p-3 rounded-xl border border-white/[0.08] bg-white/[0.02] active:bg-white/[0.06] transition-colors cursor-pointer touch-manipulation"
+                        >
+                          <input 
+                            id="emphasis-color-input"
+                            type="color" 
+                            value={emphasisColor} 
+                            onChange={(e) => setEmphasisColor(e.target.value.toUpperCase())} 
+                            className="sr-only" 
+                          />
+                          <div 
+                            className="w-12 h-12 rounded-xl border-2 border-white/30 shadow-inner flex items-center justify-center"
+                            style={{ backgroundColor: emphasisColor }}
+                          >
+                            <svg className="w-5 h-5 text-white/80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
+                            </svg>
                           </div>
                           <span className="text-xs font-medium text-white/70">Emphasis</span>
                           <span className="text-[10px] text-white/40">{emphasisCount} words</span>
-                        </label>
-                        <label className="flex flex-col items-center gap-2 p-3 rounded-xl border border-white/[0.08] bg-white/[0.02] hover:bg-white/[0.04] transition-colors cursor-pointer group touch-manipulation">
-                          <div className="relative w-11 h-11 sm:w-10 sm:h-10">
-                            <input type="color" value={regularColor} onChange={(e) => setRegularColor(e.target.value.toUpperCase())} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" />
-                            <div className="absolute inset-0 w-11 h-11 sm:w-10 sm:h-10 rounded-xl border-2 border-white/20 group-hover:border-white/30 transition-colors shadow-inner flex items-center justify-center" style={{ backgroundColor: regularColor }}>
-                              <svg className="w-5 h-5 text-white/60 mix-blend-difference opacity-0 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
-                              </svg>
-                            </div>
+                        </button>
+                        
+                        {/* Regular Color */}
+                        <button 
+                          onClick={() => document.getElementById('regular-color-input').click()}
+                          className="flex flex-col items-center gap-2 p-3 rounded-xl border border-white/[0.08] bg-white/[0.02] active:bg-white/[0.06] transition-colors cursor-pointer touch-manipulation"
+                        >
+                          <input 
+                            id="regular-color-input"
+                            type="color" 
+                            value={regularColor} 
+                            onChange={(e) => setRegularColor(e.target.value.toUpperCase())} 
+                            className="sr-only" 
+                          />
+                          <div 
+                            className="w-12 h-12 rounded-xl border-2 border-white/30 shadow-inner flex items-center justify-center"
+                            style={{ backgroundColor: regularColor }}
+                          >
+                            <svg className="w-5 h-5 text-white/80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
+                            </svg>
                           </div>
                           <span className="text-xs font-medium text-white/70">Regular</span>
                           <span className="text-[10px] text-white/40">{regularCount} words</span>
-                        </label>
+                        </button>
                       </div>
-                      <p className="text-[10px] text-white/35 mt-2">Click a swatch to change its color</p>
+                      <p className="text-[10px] text-white/35 mt-2">Tap a swatch to change its color</p>
                     </div>
 
                   </div>

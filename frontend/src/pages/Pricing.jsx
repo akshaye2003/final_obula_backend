@@ -173,6 +173,11 @@ function AnimatedPrice({ price, inView }) {
 export default function Pricing() {
   const { isAuthenticated, user, profile, refreshProfile } = useAuth();
   const navigate = useNavigate();
+  
+  // Debug auth state
+  useEffect(() => {
+    console.log('[Pricing] Auth state:', { isAuthenticated, user: user?.email, credits: profile?.credits });
+  }, [isAuthenticated, user, profile]);
   const isMobile = useMobile();
   const [buying, setBuying] = useState(null);
   const [success, setSuccess] = useState(null);

@@ -1,0 +1,1147 @@
+{
+  "input_video": "C:\\Users\\aksha\\Downloads\\final_mvp_backend_final\\final_mvp_backend\\backend\\uploads\\74fafa135806.mp4",
+  "video_id": "74fafa135806",
+  "user_id": "b11c686b-e8e3-4752-9a11-5e0731f084f9",
+  "status": "completed",
+  "transcript_text": "I genuinely thought this was fake There's no way you can just type what you want and the video comes out edited So I tried it Recorded this Uploaded to Obula Typed a vibe Left my phone Came back and it was done I haven't edited manually since It cost me less than a movie ticket btw Creators should create Comment 99 for access",
+  "styled_words": [
+    {
+      "word": "I",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 1.0199999809265137,
+      "end": 1.6200000047683716
+    },
+    {
+      "word": "genuinely",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 1.6200000047683716,
+      "end": 2.119999885559082
+    },
+    {
+      "word": "thought",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 2.119999885559082,
+      "end": 2.4200000762939453
+    },
+    {
+      "word": "this",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 2.4200000762939453,
+      "end": 2.619999885559082
+    },
+    {
+      "word": "was",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 2.619999885559082,
+      "end": 2.9200000762939453
+    },
+    {
+      "word": "fake",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 2.9200000762939453,
+      "end": 3.1600000858306885
+    },
+    {
+      "word": "There's",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 3.7200000286102295,
+      "end": 3.940000057220459
+    },
+    {
+      "word": "no",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 3.940000057220459,
+      "end": 4.340000152587891
+    },
+    {
+      "word": "way",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 4.340000152587891,
+      "end": 4.5
+    },
+    {
+      "word": "you",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 4.5,
+      "end": 4.639999866485596
+    },
+    {
+      "word": "can",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 4.639999866485596,
+      "end": 4.760000228881836
+    },
+    {
+      "word": "just",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 4.760000228881836,
+      "end": 5.059999942779541
+    },
+    {
+      "word": "type",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 5.059999942779541,
+      "end": 5.139999866485596
+    },
+    {
+      "word": "what",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 5.139999866485596,
+      "end": 5.340000152587891
+    },
+    {
+      "word": "you",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 5.340000152587891,
+      "end": 5.460000038146973
+    },
+    {
+      "word": "want",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 5.460000038146973,
+      "end": 5.71999979019165
+    },
+    {
+      "word": "and",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 5.71999979019165,
+      "end": 6.0
+    },
+    {
+      "word": "the",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 6.0,
+      "end": 6.199999809265137
+    },
+    {
+      "word": "video",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 6.199999809265137,
+      "end": 6.320000171661377
+    },
+    {
+      "word": "comes",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 6.320000171661377,
+      "end": 6.599999904632568
+    },
+    {
+      "word": "out",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 6.599999904632568,
+      "end": 7.260000228881836
+    },
+    {
+      "word": "edited",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 7.260000228881836,
+      "end": 7.260000228881836
+    },
+    {
+      "word": "So",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 7.820000171661377,
+      "end": 7.940000057220459
+    },
+    {
+      "word": "I",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 7.940000057220459,
+      "end": 8.079999923706055
+    },
+    {
+      "word": "tried",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 8.079999923706055,
+      "end": 8.319999694824219
+    },
+    {
+      "word": "it",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 8.319999694824219,
+      "end": 8.760000228881836
+    },
+    {
+      "word": "Recorded",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 9.520000457763672,
+      "end": 9.65999984741211
+    },
+    {
+      "word": "this",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 9.65999984741211,
+      "end": 10.039999961853027
+    },
+    {
+      "word": "Uploaded",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 10.779999732971191,
+      "end": 10.779999732971191
+    },
+    {
+      "word": "to",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 10.779999732971191,
+      "end": 11.0
+    },
+    {
+      "word": "Obula",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 11.0,
+      "end": 11.420000076293945
+    },
+    {
+      "word": "Typed",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 12.279999732971191,
+      "end": 12.520000457763672
+    },
+    {
+      "word": "a",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 12.520000457763672,
+      "end": 12.960000038146973
+    },
+    {
+      "word": "vibe",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 12.960000038146973,
+      "end": 13.039999961853027
+    },
+    {
+      "word": "Left",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 13.640000343322754,
+      "end": 13.65999984741211
+    },
+    {
+      "word": "my",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 13.65999984741211,
+      "end": 13.960000038146973
+    },
+    {
+      "word": "phone",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 13.960000038146973,
+      "end": 14.359999656677246
+    },
+    {
+      "word": "Came",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 15.65999984741211,
+      "end": 15.779999732971191
+    },
+    {
+      "word": "back",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 15.779999732971191,
+      "end": 15.9399995803833
+    },
+    {
+      "word": "and",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 15.9399995803833,
+      "end": 16.079999923706055
+    },
+    {
+      "word": "it",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 16.079999923706055,
+      "end": 16.219999313354492
+    },
+    {
+      "word": "was",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 16.219999313354492,
+      "end": 16.360000610351562
+    },
+    {
+      "word": "done",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 16.360000610351562,
+      "end": 16.600000381469727
+    },
+    {
+      "word": "I",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 17.31999969482422,
+      "end": 17.700000762939453
+    },
+    {
+      "word": "haven't",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 17.700000762939453,
+      "end": 18.139999389648438
+    },
+    {
+      "word": "edited",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 18.139999389648438,
+      "end": 18.65999984741211
+    },
+    {
+      "word": "manually",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 18.65999984741211,
+      "end": 19.399999618530273
+    },
+    {
+      "word": "since",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 19.399999618530273,
+      "end": 20.020000457763672
+    },
+    {
+      "word": "It",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 21.139999389648438,
+      "end": 21.600000381469727
+    },
+    {
+      "word": "cost",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 21.600000381469727,
+      "end": 21.600000381469727
+    },
+    {
+      "word": "me",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 21.600000381469727,
+      "end": 21.899999618530273
+    },
+    {
+      "word": "less",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 21.899999618530273,
+      "end": 22.020000457763672
+    },
+    {
+      "word": "than",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 22.020000457763672,
+      "end": 22.15999984741211
+    },
+    {
+      "word": "a",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 22.15999984741211,
+      "end": 22.299999237060547
+    },
+    {
+      "word": "movie",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 22.299999237060547,
+      "end": 22.459999084472656
+    },
+    {
+      "word": "ticket",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 22.459999084472656,
+      "end": 22.719999313354492
+    },
+    {
+      "word": "btw",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 22.719999313354492,
+      "end": 23.239999771118164
+    },
+    {
+      "word": "Creators",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 24.299999237060547,
+      "end": 24.780000686645508
+    },
+    {
+      "word": "should",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 24.780000686645508,
+      "end": 25.1200008392334
+    },
+    {
+      "word": "create",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 25.1200008392334,
+      "end": 25.3799991607666
+    },
+    {
+      "word": "Comment",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 26.239999771118164,
+      "end": 26.399999618530273
+    },
+    {
+      "word": "99",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 26.399999618530273,
+      "end": 26.81999969482422
+    },
+    {
+      "word": "for",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 26.81999969482422,
+      "end": 27.040000915527344
+    },
+    {
+      "word": "access",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 27.040000915527344,
+      "end": 27.399999618530273
+    }
+  ],
+  "timed_captions": [
+    [
+      1.0199999809265137,
+      2.4200000762939453,
+      [
+        "I genuinely thought"
+      ]
+    ],
+    [
+      2.4200000762939453,
+      3.1600000858306885,
+      [
+        "this was fake"
+      ]
+    ],
+    [
+      3.7200000286102295,
+      4.5,
+      [
+        "There's no way"
+      ]
+    ],
+    [
+      4.5,
+      5.059999942779541,
+      [
+        "you can just"
+      ]
+    ],
+    [
+      5.059999942779541,
+      5.460000038146973,
+      [
+        "type what you"
+      ]
+    ],
+    [
+      5.460000038146973,
+      6.199999809265137,
+      [
+        "want and the"
+      ]
+    ],
+    [
+      6.199999809265137,
+      7.260000228881836,
+      [
+        "video comes out"
+      ]
+    ],
+    [
+      7.260000228881836,
+      8.079999923706055,
+      [
+        "edited So I"
+      ]
+    ],
+    [
+      8.079999923706055,
+      9.65999984741211,
+      [
+        "tried it Recorded"
+      ]
+    ],
+    [
+      9.65999984741211,
+      11.0,
+      [
+        "this Uploaded to"
+      ]
+    ],
+    [
+      11.0,
+      12.960000038146973,
+      [
+        "Obula Typed a"
+      ]
+    ],
+    [
+      12.960000038146973,
+      13.960000038146973,
+      [
+        "vibe Left my"
+      ]
+    ],
+    [
+      13.960000038146973,
+      15.9399995803833,
+      [
+        "phone Came back"
+      ]
+    ],
+    [
+      15.9399995803833,
+      16.360000610351562,
+      [
+        "and it was"
+      ]
+    ],
+    [
+      16.360000610351562,
+      18.139999389648438,
+      [
+        "done I haven't"
+      ]
+    ],
+    [
+      18.139999389648438,
+      20.020000457763672,
+      [
+        "edited manually since"
+      ]
+    ],
+    [
+      21.139999389648438,
+      21.899999618530273,
+      [
+        "It cost me"
+      ]
+    ],
+    [
+      21.899999618530273,
+      22.299999237060547,
+      [
+        "less than a"
+      ]
+    ],
+    [
+      22.299999237060547,
+      23.239999771118164,
+      [
+        "movie ticket btw"
+      ]
+    ],
+    [
+      24.299999237060547,
+      25.3799991607666,
+      [
+        "Creators should create"
+      ]
+    ],
+    [
+      26.239999771118164,
+      27.040000915527344,
+      [
+        "Comment 99 for"
+      ]
+    ],
+    [
+      27.040000915527344,
+      27.399999618530273,
+      [
+        "access"
+      ]
+    ]
+  ],
+  "broll_placements": [
+    {
+      "timestamp_seconds": 6.0,
+      "duration": 2,
+      "theme": "using AI for video editing",
+      "emotion": "neutral",
+      "description": "",
+      "enabled": true,
+      "selected_index": 0,
+      "clip_options": [
+        {
+          "clip_id": "movie_clips_60",
+          "filename": "movie_clips_60.mp4",
+          "description": "",
+          "emotion": "energetic",
+          "energy": "high",
+          "lighting": "bright",
+          "camera": "wide",
+          "setting": "urban",
+          "visual_keywords": [
+            "train arriving",
+            "subway platform",
+            " commuters",
+            "urban transit",
+            "movement and speed",
+            "city infrastructure",
+            "daily rush",
+            "public transportation"
+          ],
+          "subject_presence": "object",
+          "score": 15,
+          "thumbnail_url": "/api/broll-thumbnail/movie_clips_60"
+        },
+        {
+          "clip_id": "movie_clips_33",
+          "filename": "movie_clips_33.mp4",
+          "description": "",
+          "emotion": "neutral",
+          "energy": "low",
+          "lighting": "neutral",
+          "camera": "closeup",
+          "setting": "office",
+          "visual_keywords": [
+            "pen writing",
+            "signature",
+            "document",
+            "close detail",
+            "business paper",
+            "hand movement",
+            "official form",
+            "ink on paper"
+          ],
+          "subject_presence": "object",
+          "score": 14,
+          "thumbnail_url": "/api/broll-thumbnail/movie_clips_33"
+        },
+        {
+          "clip_id": "movie_clips_57",
+          "filename": "movie_clips_57.mp4",
+          "description": "",
+          "emotion": "neutral",
+          "energy": "low",
+          "lighting": "neutral",
+          "camera": "closeup",
+          "setting": "neutral",
+          "visual_keywords": [
+            "sand timer",
+            "flowing sand",
+            "time concept",
+            "close detail",
+            "glass container",
+            "measured time",
+            "static composition",
+            "metaphorical"
+          ],
+          "subject_presence": "abstract",
+          "score": 14,
+          "thumbnail_url": "/api/broll-thumbnail/movie_clips_57"
+        },
+        {
+          "clip_id": "movie_clips_4",
+          "filename": "movie_clips_4.mp4",
+          "description": "",
+          "emotion": "tense",
+          "energy": "medium",
+          "lighting": "neutral",
+          "camera": "mid",
+          "setting": "office",
+          "visual_keywords": [
+            "man in suit",
+            "holding microphone",
+            "speaking",
+            "curtains background",
+            "audience silhouettes",
+            "serious expression",
+            "indoor lighting",
+            "formal attire",
+            "side profile",
+            "gesturing hand"
+          ],
+          "subject_presence": "person",
+          "score": 13,
+          "thumbnail_url": "/api/broll-thumbnail/movie_clips_4"
+        }
+      ]
+    },
+    {
+      "timestamp_seconds": 15.0,
+      "duration": 2,
+      "theme": "process of using Obula",
+      "emotion": "happy",
+      "description": "",
+      "enabled": true,
+      "selected_index": 0,
+      "clip_options": [
+        {
+          "clip_id": "movie_clips_14",
+          "filename": "movie_clips_14.mp4",
+          "description": "",
+          "emotion": "tense",
+          "energy": "medium",
+          "lighting": "neutral",
+          "camera": "mid",
+          "setting": "boardroom",
+          "visual_keywords": [
+            "people reading documents",
+            "formal attire",
+            "bookshelves with legal books",
+            "conference table",
+            "focused expressions",
+            "indoor office lighting",
+            "business meeting",
+            "papers and folders",
+            "mixed gender group",
+            "professional environment"
+          ],
+          "subject_presence": "person",
+          "score": 13,
+          "thumbnail_url": "/api/broll-thumbnail/movie_clips_14"
+        },
+        {
+          "clip_id": "movie_clips_89",
+          "filename": "movie_clips_89.mp4",
+          "description": "",
+          "emotion": "tense",
+          "energy": "medium",
+          "lighting": "neutral",
+          "camera": "mid",
+          "setting": "office",
+          "visual_keywords": [
+            "interview process",
+            "job candidate",
+            "hiring panel",
+            "professional evaluation",
+            "formal setting",
+            "career moment",
+            "business attire",
+            "decision time"
+          ],
+          "subject_presence": "person",
+          "score": 13,
+          "thumbnail_url": "/api/broll-thumbnail/movie_clips_89"
+        },
+        {
+          "clip_id": "movie_clips_76",
+          "filename": "movie_clips_76.mp4",
+          "description": "",
+          "emotion": "happy",
+          "energy": "medium",
+          "lighting": "bright",
+          "camera": "closeup",
+          "setting": "home",
+          "visual_keywords": [
+            "baby smiling",
+            "closeup face",
+            "innocent joy",
+            "soft lighting",
+            "tender moment",
+            "parental love",
+            "childhood",
+            "pure happiness"
+          ],
+          "subject_presence": "person",
+          "score": 12,
+          "thumbnail_url": "/api/broll-thumbnail/movie_clips_76"
+        },
+        {
+          "clip_id": "movie_clips_3",
+          "filename": "movie_clips_3.mp4",
+          "description": "",
+          "emotion": "energetic",
+          "energy": "high",
+          "lighting": "neutral",
+          "camera": "mid",
+          "setting": "office",
+          "visual_keywords": [
+            "man on phone",
+            "busy office",
+            "papers on desk",
+            "business attire",
+            "daylight through windows",
+            "focused expressions",
+            "telephone conversation",
+            "indoor plants",
+            "office equipment",
+            "colleagues working"
+          ],
+          "subject_presence": "person",
+          "score": 10,
+          "thumbnail_url": "/api/broll-thumbnail/movie_clips_3"
+        }
+      ]
+    }
+  ]
+}

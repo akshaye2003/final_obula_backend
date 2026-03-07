@@ -405,7 +405,7 @@ export default function Upload() {
           <div className="relative">
             <div 
               className={`
-                relative bg-gradient-to-b from-[#161616] to-[#111111] border rounded-2xl transition-all duration-300 overflow-hidden
+                relative bg-gradient-to-b from-[#161616] to-[#111111] border rounded-2xl transition-all duration-300
                 ${isDragging 
                   ? 'border-[#C9A84C] shadow-xl shadow-[#C9A84C]/20 scale-[1.01]' 
                   : 'border-white/10 hover:border-white/15'
@@ -577,7 +577,7 @@ export default function Upload() {
 
                       {/* Example Dropdown */}
                       {showExamples && (
-                        <div className="absolute top-full left-0 mt-2 w-80 bg-[#1a1a1a] border border-white/10 rounded-xl shadow-2xl z-30 overflow-hidden">
+                        <div className="absolute top-full left-0 sm:left-0 mt-2 w-64 sm:w-80 bg-[#1a1a1a] border border-white/10 rounded-xl shadow-2xl z-50 overflow-hidden max-w-[calc(100vw-2rem)]">
                           <div className="px-3 py-2 border-b border-white/5">
                             <p className="text-white/40 text-xs font-medium uppercase tracking-wider">Example prompts</p>
                           </div>

@@ -1,0 +1,20 @@
+{
+  "name": "Cinematic Slow",
+  "description": "High-quality dramatic captions with smooth animations. Best for YouTube/documentaries.",
+  "font_size": 80,
+  "transparency": 0.95,
+  "color": [255, 255, 255],
+  "position": "center",
+  "animation": "centered_styled",
+  "words_per_line": 5,
+  "max_hook_words": 0,
+  "exclusive_hooks": false,
+  "hw_encode": false,
+  "mask_frame_skip": 1,
+  "smart_placement": true,
+  "font_regular": "fonts/Coolvetica Rg.otf",
+  "font_emphasis": "fonts/Runethia.otf",
+  "y_position": 0.78,
+  "line_spacing": 15,
+  "transparency": 0.95
+}

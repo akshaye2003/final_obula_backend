@@ -1,193 +1,193 @@
 # RunPod Worker for Obula
 
-GPU-accelerated video processing worker for RunPod serverless.
+GPU-accelerated video processing worker for RunPod serverless endpoints.
 
-## Architecture
+## Overview
 
-This worker runs on RunPod's GPU instances and handles:
-- Video transcoding with FFmpeg (GPU-accelerated)
+This worker handles the heavy video processing tasks:
+- Video transcoding with FFmpeg
+- AI-powered caption generation with Whisper
 - Person segmentation with MediaPipe
-- Caption rendering with PIL
-- B-roll compositing
+- B-roll insertion
 - Color grading with LUTs
-- Upload to Supabase Storage
+- Watermarking
 
-## Directory Structure
+## File Structure
 
 ```
 runpod-worker/
-├── Dockerfile           # GPU-enabled container
-├── handler.py          # Main RunPod handler
-├── requirements.txt    # Python dependencies
-├── build.sh           # Docker build script
-├── README.md          # This file
-├── scripts/           # Pipeline scripts (copied from backend)
-├── presets/           # Caption presets
-├── color_grading/     # LUT files
-├── fonts/            # Font files
-├── movie_clips/      # B-roll clips (landscape)
-└── movie_clips_portrait/  # B-roll clips (portrait)
+├── handler.py              # Main RunPod handler entry point
+├── requirements.txt        # Python dependencies
+├── Dockerfile             # Docker image definition
+├── build.sh               # Build script
+├── setup.sh               # Setup script (copies files from backend/)
+├── scripts/               # Python processing modules (COPIED from backend/scripts/)
+│   ├── __init__.py
+│   ├── pipeline.py        # Main processing pipeline
+│   ├── video_utils.py     # Video utilities
+│   ├── caption_renderer.py
+│   ├── mask_utils.py
+│   ├── font_manager.py
+│   ├── broll_engine.py
+│   ├── watermark.py
+│   └── ... (other modules)
+├── presets/               # Caption style presets (COPIED from backend/presets/)
+│   ├── viral.json
+│   ├── cinematic.json
+│   ├── dynamic_smart.json
+│   └── ... (other presets)
+├── color_grading/         # LUT files (COPIED from backend/color_grading/)
+│   ├── 02_Film_LUTs_Vintage.cube
+│   └── ... (other LUTs)
+└── fonts/                 # Font files (COPIED from backend/fonts/)
+    ├── Coolvetica Rg.otf
+    └── Runethia.otf
 ```
 
-## Setup
+## Setup Instructions
 
-### 1. Copy Backend Scripts
+### 1. Copy Required Files from Backend
+
+Run the setup script to copy all necessary files:
 
 ```bash
 cd runpod-worker
-./build.sh  # This will copy scripts and build
+bash setup.sh
+```
+
+Or manually copy:
+```bash
+# Copy Python scripts
+mkdir -p scripts
+cp ../backend/scripts/*.py scripts/
+
+# Copy presets
+mkdir -p presets
+cp ../backend/presets/*.json presets/
+
+# Copy LUTs
+mkdir -p color_grading
+cp ../backend/color_grading/*.cube color_grading/
+
+# Copy fonts
+mkdir -p fonts
+cp ../backend/fonts/* fonts/
+```
+
+### 2. Build Docker Image
+
+```bash
+bash build.sh
 ```
 
 Or manually:
 ```bash
-mkdir -p scripts presets color_grading fonts
-cp ../backend/scripts/*.py scripts/
-cp ../backend/presets/*.json presets/
-cp ../backend/color_grading/*.cube color_grading/
-cp -r ../backend/fonts/* fonts/
+docker build -t obula-runpod-worker:latest .
 ```
 
-### 2. Build and Push Docker Image
+### 3. Push to Docker Hub
 
 ```bash
-# Build
-docker build -t obula-runpod-worker:latest .
-
-# Tag for Docker Hub
-docker tag obula-runpod-worker:latest YOUR_USERNAME/obula-runpod-worker:latest
-
-# Push
-docker push YOUR_USERNAME/obula-runpod-worker:latest
+docker tag obula-runpod-worker:latest yourusername/obula-runpod-worker:latest
+docker push yourusername/obula-runpod-worker:latest
 ```
 
-### 3. Create RunPod Serverless Endpoint
+### 4. Create RunPod Endpoint
 
-1. Go to [RunPod Console](https://runpod.io/console)
-2. Click "Serverless" → "New Endpoint"
-3. Configure:
-   - **Name**: `obula-video-processor`
-   - **Template**: Select GPU template or custom
-   - **Image**: `YOUR_USERNAME/obula-runpod-worker:latest`
-   - **GPU**: RTX 3090 or A100 (for better performance)
-   - **Max Workers**: 5 (adjust based on demand)
-   - **Idle Timeout**: 30 seconds
-   - **Execution Timeout**: 600 seconds (10 minutes)
+1. Go to https://www.runpod.io/console/serverless
+2. Click "New Endpoint"
+3. Select your Docker image
+4. Configure GPU (e.g., RTX 3090)
+5. Set environment variables:
+   - `OPENAI_API_KEY`
+   - `SUPABASE_URL`
+   - `SUPABASE_SERVICE_ROLE_KEY`
+6. Deploy
 
-4. Add Environment Variables (optional, can pass in request):
-   ```
-   OPENAI_API_KEY=sk-...
-   SUPABASE_URL=https://...
-   SUPABASE_SERVICE_ROLE_KEY=...
-   ```
+## Environment Variables
 
-5. Save endpoint and copy the **Endpoint ID**
+Required:
+- `OPENAI_API_KEY` - OpenAI API key for Whisper transcription
+- `SUPABASE_URL` - Supabase project URL
+- `SUPABASE_SERVICE_ROLE_KEY` - Supabase service role key
 
-## API Input Format
-
-```json
-{
-  "input": {
-    "job_id": "uuid-from-api",
-    "video_url": "https://api.obula.io/api/upload/video_id/video",
-    "user_id": "user-uuid",
-    
-    "styled_words": [...],
-    "timed_captions": [...],
-    "transcript_text": "...",
-    
-    "preset": "dynamic_smart",
-    "enable_broll": false,
-    "noise_isolate": false,
-    "aspect_ratio": "9:16",
-    "rounded_corners": "medium",
-    
-    "caption_color": "#FFFFFF",
-    "hook_color": "#FFC850",
-    "emphasis_color": "#FFC850",
-    "regular_color": "#C8DCF0",
-    
-    "enable_red_hook": true,
-    "hook_size": 1,
-    
-    "watermark": {
-      "enabled": true,
-      "text": "@obula",
-      "position": "bottom-right",
-      "opacity": 0.6
-    },
-    
-    "supabase_url": "https://...",
-    "supabase_key": "...",
-    "webhook_url": "https://api.obula.io/api/jobs/webhook"
-  }
-}
-```
-
-## API Output Format
-
-```json
-{
-  "output": {
-    "success": true,
-    "job_id": "uuid-from-api",
-    "video_id": "generated-video-id",
-    "video_url": "https://....supabase.co/storage/v1/object/public/videos/...",
-    "thumbnail_url": "https://....supabase.co/storage/v1/object/public/videos/...",
-    "duration": 45.5,
-    "output_size": 15728640,
-    "processing_time": 127.3
-  }
-}
-```
+Optional:
+- `RUNPOD_API_KEY` - RunPod API key (for testing)
 
 ## Testing Locally
 
 ```bash
-# Set environment variables
-export OPENAI_API_KEY=sk-...
-export SUPABASE_URL=https://...
-export SUPABASE_SERVICE_ROLE_KEY=...
-
-# Run handler directly
-python handler.py
-
-# Or with RunPod SDK
-python -m runpod.serverless.start --handler handler.py
+docker run --gpus all \
+  -e OPENAI_API_KEY=sk-xxx \
+  -e SUPABASE_URL=https://xxx.supabase.co \
+  -e SUPABASE_SERVICE_ROLE_KEY=xxx \
+  -it --rm \
+  obula-runpod-worker:latest
 ```
 
-## Monitoring
+## Input Format
 
-In RunPod Console:
-- View job logs
-- Monitor GPU utilization
-- Track cold start times
-- Set up alerts for failures
+The handler expects this input format:
+
+```json
+{
+  "input": {
+    "job_id": "uuid-string",
+    "video_url": "https://...",
+    "user_id": "user-uuid",
+    "styled_words": [...],
+    "timed_captions": [...],
+    "transcript_text": "...",
+    "preset": "dynamic_smart",
+    "enable_broll": false,
+    "noise_isolate": false,
+    "lut_name": "02_Film_LUTs_Vintage.cube",
+    "aspect_ratio": null,
+    "rounded_corners": "medium",
+    "webhook_url": "https://...",
+    "supabase_url": "https://...",
+    "supabase_key": "...",
+    "caption_color": "#FFFFFF",
+    "hook_color": "#FF0000"
+  }
+}
+```
+
+## Output Format
+
+```json
+{
+  "success": true,
+  "job_id": "uuid-string",
+  "video_id": "short-id",
+  "video_url": "https://supabase...",
+  "thumbnail_url": "https://supabase...",
+  "duration": 28.5,
+  "output_size": 15234567,
+  "processing_time": 45.2
+}
+```
 
 ## Troubleshooting
 
-### Job Timeout
-Increase "Execution Timeout" in endpoint settings (max 1 hour).
+### Import Errors
+If you see "No module named 'scripts'", ensure:
+1. All .py files are copied to scripts/
+2. scripts/__init__.py exists
+3. PYTHONPATH is set correctly in Dockerfile
 
-### Out of Memory
-- Use A100 (80GB) instead of RTX 3090 (24GB)
-- Reduce batch sizes in pipeline
-- Process shorter video segments
+### Missing Assets
+If LUTs or fonts are missing:
+1. Check color_grading/ and fonts/ directories exist
+2. Verify files are copied in Dockerfile
 
-### Slow Cold Start
-- Reduce Docker image size (use smaller base image)
-- Pre-install common models
-- Set longer idle timeout
+### GPU Not Available
+Ensure you're using a GPU-enabled RunPod template and the base image includes CUDA.
 
-### FFmpeg Errors
-Ensure FFmpeg is installed in Dockerfile with GPU codecs:
-```dockerfile
-RUN apt-get install -y ffmpeg libnvidia-encode-xxx
-```
+## Files Sync
 
-## Pricing
-
-RunPod charges per second of GPU usage:
-- RTX 3090: ~$0.44/hour = $0.0073/minute
-- A100: ~$1.99/hour = $0.033/minute
-
-Example: 2-minute video processing on RTX 3090 ≈ $0.015
+When updating backend/scripts/, remember to:
+1. Re-run `setup.sh` to copy new files
+2. Rebuild Docker image
+3. Push to Docker Hub
+4. Update RunPod endpoint
