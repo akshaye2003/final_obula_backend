@@ -2684,6 +2684,90 @@ async def get_activity_feed(user: dict = Depends(require_auth)):
 
 
 # =============================================================================
+# FRONTEND OBSERVABILITY
+# =============================================================================
+
+class FrontendLogEntry(BaseModel):
+    timestamp: str
+    level: str
+    message: str
+    request_id: Optional[str] = None
+    session_id: Optional[str] = None
+    user_id: Optional[str] = None
+    url: Optional[str] = None
+    user_agent: Optional[str] = None
+
+class FrontendLogsBody(BaseModel):
+    logs: List[FrontendLogEntry]
+
+class FrontendErrorReport(BaseModel):
+    type: str
+    message: Optional[str] = None
+    source: Optional[str] = None
+    lineno: Optional[int] = None
+    colno: Optional[int] = None
+    stack: Optional[str] = None
+    reason: Optional[str] = None
+    componentStack: Optional[str] = None
+    request_id: Optional[str] = None
+    user_id: Optional[str] = None
+    url: Optional[str] = None
+    timestamp: Optional[str] = None
+
+@app.post("/api/logs")
+async def receive_frontend_logs(body: FrontendLogsBody):
+    """Receive batched logs from frontend."""
+    for entry in body.logs:
+        # Forward to structured logger
+        log_func = getattr(logger, entry.level.lower(), logger.info)
+        log_func(
+            f"[FRONTEND] {entry.message}",
+            source="frontend",
+            frontend_request_id=entry.request_id,
+            session_id=entry.session_id,
+            user_id=entry.user_id,
+            url=entry.url,
+            user_agent=entry.user_agent,
+        )
+    return {"ok": True, "received": len(body.logs)}
+
+@app.post("/api/errors/report")
+async def report_frontend_error(body: FrontendErrorReport):
+    """Receive error reports from frontend."""
+    logger.error(
+        f"[FRONTEND_ERROR] {body.type}: {body.message or body.reason}",
+        source="frontend",
+        error_type=body.type,
+        message=body.message,
+        source_file=body.source,
+        line=body.lineno,
+        column=body.colno,
+        stack=body.stack,
+        component_stack=body.componentStack,
+        frontend_request_id=body.request_id,
+        user_id=body.user_id,
+        url=body.url,
+    )
+    
+    # Send to Sentry if configured
+    try:
+        if body.stack:
+            capture_exception(
+                Exception(f"{body.type}: {body.message}"),
+                extra={
+                    "source": "frontend",
+                    "stack": body.stack,
+                    "component_stack": body.componentStack,
+                    "url": body.url,
+                }
+            )
+    except:
+        pass
+    
+    return {"ok": True}
+
+
+# =============================================================================
 # HEALTH CHECK
 # =============================================================================
 
