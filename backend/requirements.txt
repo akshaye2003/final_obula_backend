@@ -27,11 +27,18 @@ pillow>=10.0.0
 opencv-python>=4.8.0
 openai>=1.0.0
 
+# Video Processing (required for pipeline on Railway)
+mediapipe>=0.10.0
+openai-whisper>=20231117
+
 # File Handling
 ffmpeg-python>=0.2.0
 
 # Supabase (for database and storage)
 supabase>=2.0.0
+
+# System Monitoring (for health checks)
+psutil>=5.9.0
 
 # RunPod (for submitting jobs to GPU workers)
 runpod>=1.0.0
