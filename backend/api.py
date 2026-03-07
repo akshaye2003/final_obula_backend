@@ -574,40 +574,27 @@ async def create_prep_background(body: CreatePrepBody, user: dict = Depends(requ
         }, f, indent=2)
     
     def run_background_prep():
-        """Prep now just saves video metadata - transcription happens on RunPod."""
+        """Prep now just saves video metadata - transcription happens on RunPod GPU."""
         try:
+            # Just update status - actual transcription done on RunPod
             with _prep_jobs_lock:
                 _prep_jobs[prep_id]["status"] = "completed"
                 _prep_jobs[prep_id]["progress"] = 100
             
-            # Save minimal prep data - transcription will be done on RunPod GPU
-                _prep_jobs[prep_id]["status"] = "saving"
-                _prep_jobs[prep_id]["progress"] = 90
-            
-            # Step 3: Save final data
-            for w in styled_words:
-                if "color" not in w:
-                    w["color"] = _PREP_STYLE_COLORS.get(w.get("style", "regular"), [200, 220, 240])
-            
-            tc_serializable = [[s, e, list(lines) if isinstance(lines, (list, tuple)) else [str(lines)]] for s, e, lines in timed_captions]
-            
+            # Save minimal prep data
             with open(prep_path, "w", encoding="utf-8") as f:
                 json.dump({
                     "input_video": str(input_path),
                     "video_id": body.video_id,
                     "user_id": user["id"],
                     "status": "completed",
-                    "transcript_text": transcript_text,
-                    "styled_words": styled_words,
-                    "timed_captions": tc_serializable,
-                    "broll_placements": broll_placements,
+                    "transcript_text": "",
+                    "styled_words": [],
+                    "timed_captions": [],
+                    "broll_placements": [],
                 }, f, indent=2)
-            
-            with _prep_jobs_lock:
-                _prep_jobs[prep_id]["status"] = "completed"
-                _prep_jobs[prep_id]["progress"] = 100
                 
-            print(f"[Prep BG] Completed: {prep_id}")
+            print(f"[Prep BG] Completed (minimal): {prep_id}")
             
         except Exception as e:
             import traceback
