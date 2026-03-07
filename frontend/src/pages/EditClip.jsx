@@ -1078,6 +1078,16 @@ export default function EditClip() {
     setError(null);
     getPrepData(prepJobId)
       .then((data) => {
+        // DEBUG: Log received prep data
+        console.log('[DEBUG EditClip] Received prep data:', {
+          prep_id: prepJobId,
+          has_transcript_text: !!data.transcript_text,
+          transcript_text_length: data.transcript_text?.length || 0,
+          styled_words_count: data.styled_words?.length || 0,
+          timed_captions_count: data.timed_captions?.length || 0,
+          broll_placements_count: data.broll_placements?.length || 0,
+          raw_keys: Object.keys(data),
+        });
         setStyledWords(data.styled_words || []);
         setTimedCaptions(data.timed_captions || []);
         setTranscript(data.transcript_text || '');

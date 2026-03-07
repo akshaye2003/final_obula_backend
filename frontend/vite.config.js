@@ -8,7 +8,7 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks: {
-          'vendor-router': ['react-router-dom'],
+          // react-router-dom removed - caused router context issues in lazy-loaded chunks
           'vendor-motion': ['framer-motion'],
           'vendor-axios': ['axios'],
         },

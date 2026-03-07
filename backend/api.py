@@ -604,7 +604,7 @@ async def create_prep_background(body: CreatePrepBody, user: dict = Depends(requ
                 if hasattr(transcript, 'words') and transcript.words:
                     for word_info in transcript.words:
                         styled_words.append({
-                            "text": word_info.word,
+                            "word": word_info.word,
                             "start": word_info.start,
                             "end": word_info.end,
                             "style": "regular",
@@ -735,7 +735,7 @@ async def create_prep(body: CreatePrepBody, user: dict = Depends(require_auth)):
         if hasattr(transcript, 'words') and transcript.words:
             for word_info in transcript.words:
                 styled_words.append({
-                    "text": word_info.word,
+                    "word": word_info.word,
                     "start": word_info.start,
                     "end": word_info.end,
                     "style": "regular",
@@ -821,7 +821,50 @@ async def get_prep(prep_id: str, user: dict = Depends(require_auth)):
     _check_prep_ownership(data, user)
     if not data.get("video_id") and data.get("input_video"):
         data["video_id"] = _extract_video_id_from_path(data["input_video"])
+    
+    # Debug logging for transcript data
+    print(f"[DEBUG get_prep] prep_id={prep_id}")
+    print(f"[DEBUG get_prep] transcript_text length={len(data.get('transcript_text', ''))}")
+    print(f"[DEBUG get_prep] styled_words count={len(data.get('styled_words', []))}")
+    print(f"[DEBUG get_prep] timed_captions count={len(data.get('timed_captions', []))}")
+    
     return data
+
+@app.get("/api/prep/{prep_id}/debug")
+async def debug_prep(prep_id: str, user: dict = Depends(require_auth)):
+    """Debug endpoint to check prep data health."""
+    _validate_prep_id(prep_id)
+    path = PREP_DIR / f"{prep_id}.json"
+    if not path.exists():
+        raise HTTPException(status_code=404, detail="Prep session not found")
+    with open(path, encoding="utf-8") as f:
+        data = json.load(f)
+    _check_prep_ownership(data, user)
+    
+    # Analyze styled_words field names
+    styled_words = data.get("styled_words", [])
+    sample_word = styled_words[0] if styled_words else None
+    
+    return {
+        "prep_id": prep_id,
+        "status": data.get("status", "unknown"),
+        "transcript_stats": {
+            "transcript_text_length": len(data.get("transcript_text", "")),
+            "transcript_text_preview": data.get("transcript_text", "")[:100] + "..." if len(data.get("transcript_text", "")) > 100 else data.get("transcript_text", ""),
+        },
+        "styled_words_stats": {
+            "count": len(styled_words),
+            "sample_fields": list(sample_word.keys()) if sample_word else [],
+            "has_word_field": sample_word.get("word") is not None if sample_word else False,
+            "has_text_field": sample_word.get("text") is not None if sample_word else False,
+            "first_3_words": [w.get("word") or w.get("text") for w in styled_words[:3]] if styled_words else [],
+        },
+        "timed_captions_stats": {
+            "count": len(data.get("timed_captions", [])),
+            "first_caption": data.get("timed_captions", [])[0] if data.get("timed_captions") else None,
+        },
+        "broll_placements_count": len(data.get("broll_placements", [])),
+    }
 
 class PrepUpdateBody(BaseModel):
     styled_words: Optional[List[Any]] = None
