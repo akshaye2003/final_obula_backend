@@ -20,7 +20,10 @@ dist/
 downloads/
 eggs/
 .eggs/
-lib/
+# lib/  # Commented out - we need frontend/src/lib/
+# Keep Python lib/ ignored but allow frontend/src/lib
+/lib/
+!/frontend/src/lib/
 lib64/
 parts/
 sdist/
