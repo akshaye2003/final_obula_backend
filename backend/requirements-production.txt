@@ -1,0 +1,57 @@
+# ============================================================
+# Production Requirements
+# Install with: pip install -r requirements-production.txt
+# ============================================================
+
+# Core API
+fastapi>=0.104.0
+uvicorn[standard]>=0.24.0
+python-multipart>=0.0.6
+pydantic>=2.5.0
+
+# Security
+PyJWT>=2.8.0
+python-dotenv>=1.0.0
+
+# Rate Limiting (NEW - Required for production)
+slowapi>=0.1.9
+
+# HTTP Client
+requests>=2.31.0
+
+# Scheduled Tasks (NEW - For cleanup jobs)
+fastapi-utils>=0.2.1
+
+# Monitoring & Error Tracking (Recommended)
+sentry-sdk>=1.40.0
+prometheus-client>=0.19.0
+
+# System Monitoring (NEW)
+psutil>=5.9.0
+
+# Payments (Optional)
+razorpay>=1.4.0
+
+# Video Processing (Core Pipeline)
+opencv-python>=4.8.0
+numpy>=1.24.0
+pillow>=10.0.0
+openai>=1.0.0
+
+# Audio Processing
+openai-whisper>=20231117
+
+# ML/DL (for mask generation)
+mediapipe>=0.10.0
+tensorflow>=2.13.0
+
+# File Handling
+ffmpeg-python>=0.2.0
+
+# Caching
+redis>=5.0.0  # Optional - for distributed caching
+
+# Testing (Development only, remove in production container)
+# pytest>=7.4.0
+# pytest-asyncio>=0.21.0
+# httpx>=0.25.0

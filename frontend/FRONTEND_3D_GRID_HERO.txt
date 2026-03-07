@@ -1,0 +1,106 @@
+================================================================================
+OBULA FRONTEND – 3D GRID HERO (Futuristic Animated Background)
+================================================================================
+
+This document describes the 3D grid hero and futuristic animations added to the
+Obula landing page.
+
+--------------------------------------------------------------------------------
+1. FILES MODIFIED / CREATED
+--------------------------------------------------------------------------------
+
+  • clipify/src/pages/Landing.jsx
+    - Hero section markup: 3D grid container, gradient, scan line, three grid layers.
+
+  • clipify/src/index.css
+    - All 3D grid and animation styles (see section 2 below).
+
+--------------------------------------------------------------------------------
+2. CSS CLASSES & ANIMATIONS (index.css)
+--------------------------------------------------------------------------------
+
+HERO GRID CONTAINER
+  .hero-grid-3d
+    - perspective: 1200px
+    - perspective-origin animated (hero-grid-perspective, 12s)
+    - Slight camera drift for a moving view.
+
+MAIN GRID PLANE (white grid)
+  .hero-grid-plane
+    - 3D floor: rotateX(62deg), scale(2), receding into horizon.
+    - background-size: 56px 56px
+    - Animations:
+      - hero-grid-drift (6s): translateX/Y, rotateX, scale, translateZ.
+      - hero-grid-flow (4s): background-position diagonal movement.
+    - ::after: subtle sweep overlay (hero-grid-sweep, 3s).
+    - mask: fades grid at top (horizon).
+    - box-shadow: soft cyan glow.
+
+DEPTH GRID PLANE (secondary layer)
+  .hero-grid-plane-depth
+    - Larger cells (112px), slightly offset.
+    - hero-grid-drift-depth (5s), hero-grid-flow-slow (8s).
+    - Parallax-style motion.
+
+NEON ACCENT GRID (cyan layer)
+  .hero-grid-plane-neon
+    - Cyan-tinted grid (rgba(0, 234, 255)).
+    - hero-grid-flow-neon (2.5s), hero-grid-pulse (2s opacity/brightness).
+    - mask so it’s stronger toward center.
+
+SCAN LINE (screen-space)
+  .hero-scan-line
+    - Full-width cyan gradient band sweeping top to bottom.
+    - hero-scan (4s linear infinite).
+
+KEYFRAMES
+  - hero-grid-perspective   – perspective-origin drift
+  - hero-grid-flow          – main grid background-position
+  - hero-grid-flow-slow     – depth grid background-position
+  - hero-grid-flow-neon     – neon grid background-position
+  - hero-grid-drift         – main plane 3D drift
+  - hero-grid-drift-depth   – depth plane motion
+  - hero-grid-sweep         – plane ::after sweep
+  - hero-grid-pulse         – neon opacity/brightness pulse
+  - hero-scan               – scan line position
+
+REDUCED MOTION
+  - All grid and scan animations are disabled when
+    (prefers-reduced-motion: reduce).
+
+--------------------------------------------------------------------------------
+3. LANDING PAGE STRUCTURE (Hero section, Landing.jsx)
+--------------------------------------------------------------------------------
+
+  <section> (hero)
+    ├── .hero-gradient.hero-gradient-animated     (base gradient)
+    ├── .hero-scan-line                           (sweep overlay)
+    └── .hero-grid-3d
+          ├── .hero-grid-plane                    (main white grid)
+          ├── .hero-grid-plane.hero-grid-plane-depth
+          └── .hero-grid-plane-neon               (cyan grid)
+    + .hero-overlay-subtle
+    + Content (badge, headline, bullets, input card, pills, CTA)
+
+--------------------------------------------------------------------------------
+4. QUICK REFERENCE – WHERE TO TWEAK
+--------------------------------------------------------------------------------
+
+  • Grid speed: change animation durations in index.css
+    (e.g. hero-grid-flow 4s → 3s for faster flow).
+
+  • Grid visibility: adjust rgba() opacity in .hero-grid-plane
+    background-image (e.g. 0.22 → 0.3 for stronger lines).
+
+  • Neon color: in .hero-grid-3d .hero-grid-plane-neon, replace
+    rgba(0, 234, 255, …) with your color.
+
+  • Scan line: .hero-scan-line – change rgba(0, 234, 255, 0.12)
+    or hero-scan duration (4s).
+
+  • Turn off a layer: remove or comment the corresponding div
+    in Landing.jsx (e.g. hero-grid-plane-neon or hero-scan-line).
+
+================================================================================
+End of document.
+================================================================================

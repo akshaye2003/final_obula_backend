@@ -1,0 +1,270 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Design system: premium dark, champagne accent */
+:root {
+  --bg: #000000;
+  --surface: #09090B;
+  --muted: #71717a;
+  --accent: #C9A962;
+  --accent-dim: #B8A988;
+  --accent-warm: #D4AF37;
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+html {
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  height: 100%;
+  background: var(--bg);
+  color: #fafafa;
+  font-family: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#root {
+  height: 100%;
+  overflow: hidden;
+}
+
+/* Noise texture overlay – subtle, low opacity */
+.noise-overlay {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.015;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+}
+
+/* Grid lines – subtle, lets 3D show through */
+.grid-pattern {
+  background-image:
+    linear-gradient(rgba(255,255,255,0.012) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.012) 1px, transparent 1px);
+  background-size: 48px 48px;
+}
+
+/* Fibonacci grid – lines at Fibonacci spacing (1,1,2,3,5,8,13 scaled by 3) */
+.fibonacci-pattern {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.06;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='144' height='144'%3E%3Cdefs%3E%3Cpattern id='fib' width='144' height='144' patternUnits='userSpaceOnUse'%3E%3Cline x1='0' y1='0' x2='0' y2='144' stroke='rgba(201,169,98,0.5)' stroke-width='0.5'/%3E%3Cline x1='3' y1='0' x2='3' y2='144' stroke='rgba(201,169,98,0.5)' stroke-width='0.5'/%3E%3Cline x1='6' y1='0' x2='6' y2='144' stroke='rgba(201,169,98,0.5)' stroke-width='0.5'/%3E%3Cline x1='12' y1='0' x2='12' y2='144' stroke='rgba(201,169,98,0.5)' stroke-width='0.5'/%3E%3Cline x1='21' y1='0' x2='21' y2='144' stroke='rgba(201,169,98,0.5)' stroke-width='0.5'/%3E%3Cline x1='36' y1='0' x2='36' y2='144' stroke='rgba(201,169,98,0.5)' stroke-width='0.5'/%3E%3Cline x1='60' y1='0' x2='60' y2='144' stroke='rgba(201,169,98,0.5)' stroke-width='0.5'/%3E%3Cline x1='99' y1='0' x2='99' y2='144' stroke='rgba(201,169,98,0.5)' stroke-width='0.5'/%3E%3Cline x1='0' x2='144' y1='0' y2='0' stroke='rgba(201,169,98,0.5)' stroke-width='0.5'/%3E%3Cline x1='0' x2='144' y1='3' y2='3' stroke='rgba(201,169,98,0.5)' stroke-width='0.5'/%3E%3Cline x1='0' x2='144' y1='6' y2='6' stroke='rgba(201,169,98,0.5)' stroke-width='0.5'/%3E%3Cline x1='0' x2='144' y1='12' y2='12' stroke='rgba(201,169,98,0.5)' stroke-width='0.5'/%3E%3Cline x1='0' x2='144' y1='21' y2='21' stroke='rgba(201,169,98,0.5)' stroke-width='0.5'/%3E%3Cline x1='0' x2='144' y1='36' y2='36' stroke='rgba(201,169,98,0.5)' stroke-width='0.5'/%3E%3Cline x1='0' x2='144' y1='60' y2='60' stroke='rgba(201,169,98,0.5)' stroke-width='0.5'/%3E%3Cline x1='0' x2='144' y1='99' y2='99' stroke='rgba(201,169,98,0.5)' stroke-width='0.5'/%3E%3C/pattern%3E%3C/defs%3E%3Crect width='100%25' height='100%25' fill='url(%23fib)'/%3E%3C/svg%3E");
+}
+
+/* Radial gradient glow behind hero – subtle */
+.hero-glow {
+  position: absolute;
+  top: -20%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 140%;
+  height: 100%;
+  background: radial-gradient(
+    ellipse 70% 50% at 50% 15%,
+    rgba(201, 169, 98, 0.015) 0%,
+    rgba(184, 169, 136, 0.006) 35%,
+    transparent 55%
+  );
+  pointer-events: none;
+  animation: hero-glow-pulse 8s ease-in-out infinite;
+}
+
+/* Calm zone – darkens center so text reads clearly, fades fully above hero bottom */
+.hero-calm-zone {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(
+    ellipse 80% 48% at 50% 38%,
+    rgba(5, 5, 7, 0.5) 0%,
+    rgba(5, 5, 7, 0.2) 45%,
+    transparent 62%
+  );
+}
+@keyframes hero-glow-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+/* Animated gradient mesh – subtle warmth, preserves black depth */
+.premium-gradient-mesh {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background: 
+    radial-gradient(ellipse 100% 70% at 50% 35%, rgba(201, 169, 98, 0.012) 0%, transparent 60%),
+    radial-gradient(ellipse 80% 50% at 20% 20%, rgba(201, 169, 98, 0.008) 0%, transparent 45%),
+    radial-gradient(ellipse 60% 80% at 80% 80%, rgba(184, 169, 136, 0.006) 0%, transparent 45%);
+  animation: premium-pulse 12s ease-in-out infinite;
+}
+@keyframes premium-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.85; }
+}
+
+/* Vignette overlay – very subtle, stars visible across full viewport */
+.vignette-overlay {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  background: radial-gradient(
+    ellipse 90% 90% at 50% 50%,
+    transparent 80%,
+    rgba(0, 0, 0, 0.04) 95%,
+    rgba(0, 0, 0, 0.08) 100%
+  );
+}
+
+/* Glass card – frosted glass + 3D depth */
+@layer components {
+  .glass-card {
+    @apply backdrop-blur-xl border border-white/5;
+    background: rgba(10, 10, 11, 0.6);
+    box-shadow: 0 0 0 1px rgba(255,255,255,0.03) inset;
+    transform-style: preserve-3d;
+  }
+
+  .glass-card-glow {
+    @apply glass-card;
+    box-shadow: 
+      0 0 0 1px rgba(255,255,255,0.03) inset,
+      0 0 60px -20px rgba(201, 169, 98, 0.1);
+  }
+
+  .glass-card-3d {
+    transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94), box-shadow 0.4s ease;
+  }
+  .glass-card-3d:hover {
+    transform: perspective(1000px) rotateX(3deg) rotateY(-3deg) translateZ(12px);
+    box-shadow: 
+      0 0 0 1px rgba(255,255,255,0.05) inset,
+      0 0 40px -8px rgba(201, 169, 98, 0.12),
+      0 24px 48px -12px rgba(0,0,0,0.5);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .glass-card-3d:hover {
+    transform: none;
+  }
+}
+
+/* Accent gradient text – champagne gold */
+.gradient-text {
+  background: linear-gradient(135deg, #D4AF37 0%, #C9A962 50%, #B8A988 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Button – refined champagne gradient */
+.btn-accent {
+  background: linear-gradient(135deg, #B8A988 0%, #C9A962 50%, #D4AF37 100%);
+  @apply text-[#0A0A0C] font-semibold transition-all duration-300;
+  box-shadow: 0 0 24px -4px rgba(201, 169, 98, 0.3);
+}
+.btn-accent:hover {
+  filter: brightness(1.1);
+  box-shadow: 0 0 40px -4px rgba(201, 169, 98, 0.4), 0 4px 24px -4px rgba(0,0,0,0.3);
+  transform: translateY(-1px);
+}
+
+/* Accent gradient for price/headline – strong gold */
+.price-3d-text,
+.gradient-accent-text {
+  background: linear-gradient(135deg, #F5E6B3 0%, #E8C547 30%, #E5C158 60%, #FFD700 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-size: 200% auto;
+  animation: gradient-shift 8s ease-in-out infinite;
+}
+
+/* Hero accent – italic, emphatic gold */
+.hero-accent-text {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-style: italic;
+  font-weight: 600;
+  background: linear-gradient(135deg, #FFF9E6 0%, #FFD700 25%, #FFA000 50%, #FF8F00 75%, #FFD700 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-size: 200% auto;
+  animation: gradient-shift 6s ease-in-out infinite;
+}
+@keyframes gradient-shift {
+  0%, 100% { background-position: 0% center; }
+  50% { background-position: 100% center; }
+}
+
+/* Smooth scroll */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Navbar smart scroll animations */
+.nav-pill {
+  transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1),
+              opacity 0.4s ease,
+              background-color 0.3s ease,
+              box-shadow 0.3s ease,
+              border-color 0.3s ease;
+}
+
+.nav-pill.nav-visible {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+.nav-pill.nav-hidden {
+  transform: translateY(-120%);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.nav-pill.nav-scrolling-up {
+  transition-duration: 0.3s;
+  transition-timing-function: ease-out;
+}
+
+/* Golden glow effect when appearing on scroll up */
+.nav-glow {
+  box-shadow: 
+    0 0 0 1px rgba(255,255,255,0.08) inset,
+    0 4px 24px -8px rgba(0,0,0,0.4),
+    0 0 40px -12px rgba(201, 169, 98, 0.1);
+}
+
+.nav-glow-active {
+  box-shadow: 
+    0 0 0 1px rgba(255,255,255,0.12) inset,
+    0 8px 32px -8px rgba(0,0,0,0.5),
+    0 0 60px -16px rgba(201, 169, 98, 0.2);
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

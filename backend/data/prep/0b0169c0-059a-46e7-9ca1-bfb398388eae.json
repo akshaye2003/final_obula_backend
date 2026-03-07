@@ -1,0 +1,1026 @@
+{
+  "input_video": "C:\\Users\\aksha\\Downloads\\final_mvp_backend_final\\final_mvp_backend\\backend\\uploads\\ce521e32230d.mov",
+  "video_id": "ce521e32230d",
+  "user_id": "2ab54779-adb1-4829-9a51-9314aeeee73f",
+  "status": "completed",
+  "transcript_text": "Be honest if I told you that this was edited in under 10 minutes you wouldn't believe me I recorded typed up the instructions on orbila and left the room Came back and it looked like this And yeah just 99 rupees I don't even think of editing manually anymore So yeah comment 99 for access",
+  "styled_words": [
+    {
+      "word": "Be",
+      "style": "regular",
+      "size_mult": 1,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 0,
+      "end": 0.7400000095367432
+    },
+    {
+      "word": "honest",
+      "style": "hook",
+      "size_mult": 1,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 0.7400000095367432,
+      "end": 1.159999966621399
+    },
+    {
+      "word": "if",
+      "style": "regular",
+      "size_mult": 1,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 1.659999966621399,
+      "end": 1.7400000095367432
+    },
+    {
+      "word": "I",
+      "style": "regular",
+      "size_mult": 1,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 1.7400000095367432,
+      "end": 1.9600000381469727
+    },
+    {
+      "word": "told",
+      "style": "emphasis",
+      "size_mult": 1,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 1.9600000381469727,
+      "end": 2.180000066757202
+    },
+    {
+      "word": "you",
+      "style": "regular",
+      "size_mult": 1,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 2.180000066757202,
+      "end": 2.359999895095825
+    },
+    {
+      "word": "that",
+      "style": "regular",
+      "size_mult": 1,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 2.359999895095825,
+      "end": 2.5399999618530273
+    },
+    {
+      "word": "this",
+      "style": "regular",
+      "size_mult": 1,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 2.5399999618530273,
+      "end": 2.619999885559082
+    },
+    {
+      "word": "was",
+      "style": "regular",
+      "size_mult": 1,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 2.619999885559082,
+      "end": 2.799999952316284
+    },
+    {
+      "word": "edited",
+      "style": "regular",
+      "size_mult": 1,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 2.799999952316284,
+      "end": 3.200000047683716
+    },
+    {
+      "word": "in",
+      "style": "regular",
+      "size_mult": 1,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 3.200000047683716,
+      "end": 3.4800000190734863
+    },
+    {
+      "word": "under",
+      "style": "regular",
+      "size_mult": 1,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 3.4800000190734863,
+      "end": 3.759999990463257
+    },
+    {
+      "word": "10",
+      "style": "regular",
+      "size_mult": 1,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 3.759999990463257,
+      "end": 3.9800000190734863
+    },
+    {
+      "word": "minutes",
+      "style": "regular",
+      "size_mult": 1,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 3.9800000190734863,
+      "end": 4.300000190734863
+    },
+    {
+      "word": "you",
+      "style": "regular",
+      "size_mult": 1,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 4.400000095367432,
+      "end": 4.739999771118164
+    },
+    {
+      "word": "wouldn't",
+      "style": "regular",
+      "size_mult": 1,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 4.739999771118164,
+      "end": 5
+    },
+    {
+      "word": "believe",
+      "style": "emphasis",
+      "size_mult": 1,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 5,
+      "end": 5.28000020980835
+    },
+    {
+      "word": "me",
+      "style": "regular",
+      "size_mult": 1,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 5.300000190734863,
+      "end": 5.940000057220459
+    },
+    {
+      "word": "I",
+      "style": "regular",
+      "size_mult": 1,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 6.199999809265137,
+      "end": 6.460000038146973
+    },
+    {
+      "word": "recorded",
+      "style": "regular",
+      "size_mult": 1,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 6.460000038146973,
+      "end": 6.800000190734863
+    },
+    {
+      "word": "typed",
+      "style": "regular",
+      "size_mult": 1,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 7.400000095367432,
+      "end": 7.659999847412109
+    },
+    {
+      "word": "up",
+      "style": "regular",
+      "size_mult": 1,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 7.659999847412109,
+      "end": 7.900000095367432
+    },
+    {
+      "word": "the",
+      "style": "regular",
+      "size_mult": 1,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 7.900000095367432,
+      "end": 8.0600004196167
+    },
+    {
+      "word": "instructions",
+      "style": "hook",
+      "size_mult": 1,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 8.0600004196167,
+      "end": 8.5
+    },
+    {
+      "word": "on",
+      "style": "regular",
+      "size_mult": 1,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 8.5,
+      "end": 8.739999771118164
+    },
+    {
+      "word": "orbila",
+      "style": "regular",
+      "size_mult": 1,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 8.739999771118164,
+      "end": 9.0600004196167
+    },
+    {
+      "word": "and",
+      "style": "regular",
+      "size_mult": 1,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 9.0600004196167,
+      "end": 9.399999618530273
+    },
+    {
+      "word": "left",
+      "style": "regular",
+      "size_mult": 1,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 9.399999618530273,
+      "end": 9.619999885559082
+    },
+    {
+      "word": "the",
+      "style": "regular",
+      "size_mult": 1,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 9.619999885559082,
+      "end": 10
+    },
+    {
+      "word": "room",
+      "style": "regular",
+      "size_mult": 1,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 10,
+      "end": 10
+    },
+    {
+      "word": "Came",
+      "style": "regular",
+      "size_mult": 1,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 10.699999809265137,
+      "end": 10.779999732971191
+    },
+    {
+      "word": "back",
+      "style": "regular",
+      "size_mult": 1,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 10.779999732971191,
+      "end": 11.180000305175781
+    },
+    {
+      "word": "and",
+      "style": "regular",
+      "size_mult": 1,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 11.180000305175781,
+      "end": 11.5
+    },
+    {
+      "word": "it",
+      "style": "regular",
+      "size_mult": 1,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 11.5,
+      "end": 11.640000343322754
+    },
+    {
+      "word": "looked",
+      "style": "regular",
+      "size_mult": 1,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 11.640000343322754,
+      "end": 11.84000015258789
+    },
+    {
+      "word": "like",
+      "style": "regular",
+      "size_mult": 1,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 11.84000015258789,
+      "end": 12.079999923706055
+    },
+    {
+      "word": "this",
+      "style": "regular",
+      "size_mult": 1,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 12.079999923706055,
+      "end": 12.399999618530273
+    },
+    {
+      "word": "And",
+      "style": "regular",
+      "size_mult": 1,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 12.960000038146973,
+      "end": 13.0600004196167
+    },
+    {
+      "word": "yeah",
+      "style": "regular",
+      "size_mult": 1,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 13.0600004196167,
+      "end": 13.380000114440918
+    },
+    {
+      "word": "just",
+      "style": "regular",
+      "size_mult": 1,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 13.420000076293945,
+      "end": 13.880000114440918
+    },
+    {
+      "word": "99",
+      "style": "regular",
+      "size_mult": 1,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 13.880000114440918,
+      "end": 14.420000076293945
+    },
+    {
+      "word": "rupees",
+      "style": "hook",
+      "size_mult": 1,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 14.420000076293945,
+      "end": 14.819999694824219
+    },
+    {
+      "word": "I",
+      "style": "regular",
+      "size_mult": 1,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 15.420000076293945,
+      "end": 15.760000228881836
+    },
+    {
+      "word": "don't",
+      "style": "emphasis",
+      "size_mult": 1,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 15.760000228881836,
+      "end": 15.859999656677246
+    },
+    {
+      "word": "even",
+      "style": "regular",
+      "size_mult": 1,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 15.859999656677246,
+      "end": 16.15999984741211
+    },
+    {
+      "word": "think",
+      "style": "regular",
+      "size_mult": 1,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 16.15999984741211,
+      "end": 16.520000457763672
+    },
+    {
+      "word": "of",
+      "style": "regular",
+      "size_mult": 1,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 16.520000457763672,
+      "end": 17.100000381469727
+    },
+    {
+      "word": "editing",
+      "style": "emphasis",
+      "size_mult": 1,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 17.100000381469727,
+      "end": 17.100000381469727
+    },
+    {
+      "word": "manually",
+      "style": "regular",
+      "size_mult": 1,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 17.100000381469727,
+      "end": 17.5
+    },
+    {
+      "word": "anymore",
+      "style": "regular",
+      "size_mult": 1,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 17.5,
+      "end": 18.020000457763672
+    },
+    {
+      "word": "So",
+      "style": "regular",
+      "size_mult": 1,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 18.719999313354492,
+      "end": 18.84000015258789
+    },
+    {
+      "word": "yeah",
+      "style": "regular",
+      "size_mult": 1,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 18.84000015258789,
+      "end": 19.459999084472656
+    },
+    {
+      "word": "comment",
+      "style": "regular",
+      "size_mult": 1,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 19.479999542236328,
+      "end": 19.799999237060547
+    },
+    {
+      "word": "99",
+      "style": "regular",
+      "size_mult": 1,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 19.799999237060547,
+      "end": 20.299999237060547
+    },
+    {
+      "word": "for",
+      "style": "regular",
+      "size_mult": 1,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 20.299999237060547,
+      "end": 20.6200008392334
+    },
+    {
+      "word": "access",
+      "style": "regular",
+      "size_mult": 1,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 20.6200008392334,
+      "end": 21.059999465942383
+    }
+  ],
+  "timed_captions": [
+    [
+      0,
+      1.7400000095367432,
+      [
+        "Be honest if"
+      ]
+    ],
+    [
+      1.7400000095367432,
+      2.359999895095825,
+      [
+        "I told you"
+      ]
+    ],
+    [
+      2.359999895095825,
+      2.799999952316284,
+      [
+        "that this was"
+      ]
+    ],
+    [
+      2.799999952316284,
+      3.759999990463257,
+      [
+        "edited in under"
+      ]
+    ],
+    [
+      3.759999990463257,
+      4.739999771118164,
+      [
+        "10 minutes you"
+      ]
+    ],
+    [
+      4.739999771118164,
+      5.940000057220459,
+      [
+        "wouldn't believe me"
+      ]
+    ],
+    [
+      6.199999809265137,
+      7.659999847412109,
+      [
+        "I recorded typed"
+      ]
+    ],
+    [
+      7.659999847412109,
+      8.5,
+      [
+        "up the instructions"
+      ]
+    ],
+    [
+      8.5,
+      9.399999618530273,
+      [
+        "on orbila and"
+      ]
+    ],
+    [
+      9.399999618530273,
+      10,
+      [
+        "left the room"
+      ]
+    ],
+    [
+      10.699999809265137,
+      11.5,
+      [
+        "Came back and"
+      ]
+    ],
+    [
+      11.5,
+      12.079999923706055,
+      [
+        "it looked like"
+      ]
+    ],
+    [
+      12.079999923706055,
+      13.380000114440918,
+      [
+        "this And yeah"
+      ]
+    ],
+    [
+      13.420000076293945,
+      14.819999694824219,
+      [
+        "just 99 rupees"
+      ]
+    ],
+    [
+      15.420000076293945,
+      16.15999984741211,
+      [
+        "I don't even"
+      ]
+    ],
+    [
+      16.15999984741211,
+      17.100000381469727,
+      [
+        "think of editing"
+      ]
+    ],
+    [
+      17.100000381469727,
+      18.84000015258789,
+      [
+        "manually anymore So"
+      ]
+    ],
+    [
+      18.84000015258789,
+      20.299999237060547,
+      [
+        "yeah comment 99"
+      ]
+    ],
+    [
+      20.299999237060547,
+      21.059999465942383,
+      [
+        "for access"
+      ]
+    ]
+  ],
+  "broll_placements": [
+    {
+      "timestamp_seconds": 4.0,
+      "duration": 2,
+      "theme": "editing process",
+      "emotion": "neutral",
+      "description": "",
+      "enabled": true,
+      "selected_index": 0,
+      "clip_options": [
+        {
+          "clip_id": "movie_clips_89",
+          "filename": "movie_clips_89.mp4",
+          "description": "",
+          "emotion": "tense",
+          "energy": "medium",
+          "lighting": "neutral",
+          "camera": "mid",
+          "setting": "office",
+          "visual_keywords": [
+            "interview process",
+            "job candidate",
+            "hiring panel",
+            "professional evaluation",
+            "formal setting",
+            "career moment",
+            "business attire",
+            "decision time"
+          ],
+          "subject_presence": "person",
+          "score": 8,
+          "thumbnail_url": "/api/broll-thumbnail/movie_clips_89"
+        },
+        {
+          "clip_id": "movie_clips_29",
+          "filename": "movie_clips_29.mp4",
+          "description": "",
+          "emotion": "neutral",
+          "energy": "medium",
+          "lighting": "bright",
+          "camera": "closeup",
+          "setting": "office",
+          "visual_keywords": [
+            "coffee cup",
+            "steam rising",
+            "desk surface",
+            "morning light",
+            "work environment",
+            "still life",
+            "warm beverage",
+            "ceramic mug"
+          ],
+          "subject_presence": "object",
+          "score": 7,
+          "thumbnail_url": "/api/broll-thumbnail/movie_clips_29"
+        },
+        {
+          "clip_id": "movie_clips_67",
+          "filename": "movie_clips_67.mp4",
+          "description": "",
+          "emotion": "neutral",
+          "energy": "medium",
+          "lighting": "bright",
+          "camera": "mid",
+          "setting": "outdoor",
+          "visual_keywords": [
+            "shopping district",
+            "pedestrian street",
+            "storefronts",
+            "daytime commerce",
+            "urban retail",
+            "people browsing",
+            "commercial area",
+            "city life"
+          ],
+          "subject_presence": "person",
+          "score": 7,
+          "thumbnail_url": "/api/broll-thumbnail/movie_clips_67"
+        },
+        {
+          "clip_id": "movie_clips_83",
+          "filename": "movie_clips_83.mp4",
+          "description": "",
+          "emotion": "neutral",
+          "energy": "medium",
+          "lighting": "bright",
+          "camera": "mid",
+          "setting": "urban",
+          "visual_keywords": [
+            "coffee shop",
+            "barista working",
+            "customers waiting",
+            "urban cafe",
+            "morning rush",
+            "espresso machine",
+            "casual meeting",
+            "city life"
+          ],
+          "subject_presence": "person",
+          "score": 7,
+          "thumbnail_url": "/api/broll-thumbnail/movie_clips_83"
+        }
+      ]
+    },
+    {
+      "timestamp_seconds": 10.0,
+      "duration": 2,
+      "theme": "Orbila interface",
+      "emotion": "happy",
+      "description": "",
+      "enabled": true,
+      "selected_index": 0,
+      "clip_options": [
+        {
+          "clip_id": "movie_clips_16",
+          "filename": "movie_clips_16.mp4",
+          "description": "",
+          "emotion": "happy",
+          "energy": "medium",
+          "lighting": "neutral",
+          "camera": "mid",
+          "setting": "boardroom",
+          "visual_keywords": [
+            "formal attire",
+            "group applause",
+            "smiling faces",
+            "indoor event",
+            "table setting",
+            "champagne glass",
+            "chandelier lighting",
+            "warm tones",
+            "celebration",
+            "focused subject"
+          ],
+          "subject_presence": "person",
+          "score": 7,
+          "thumbnail_url": "/api/broll-thumbnail/movie_clips_16"
+        },
+        {
+          "clip_id": "movie_clips_25",
+          "filename": "movie_clips_25.mp4",
+          "description": "",
+          "emotion": "happy",
+          "energy": "medium",
+          "lighting": "bright",
+          "camera": "mid",
+          "setting": "outdoor",
+          "visual_keywords": [
+            "park scene",
+            "sunny day",
+            "people socializing",
+            "green trees",
+            "casual atmosphere",
+            "laughter",
+            "natural environment",
+            "relaxed mood"
+          ],
+          "subject_presence": "person",
+          "score": 7,
+          "thumbnail_url": "/api/broll-thumbnail/movie_clips_25"
+        },
+        {
+          "clip_id": "movie_clips_40",
+          "filename": "movie_clips_40.mp4",
+          "description": "",
+          "emotion": "happy",
+          "energy": "medium",
+          "lighting": "bright",
+          "camera": "mid",
+          "setting": "outdoor",
+          "visual_keywords": [
+            "picnic scene",
+            "group of friends",
+            "sunny meadow",
+            "food spread",
+            "casual gathering",
+            "laughter",
+            "warm weather",
+            "social event"
+          ],
+          "subject_presence": "person",
+          "score": 7,
+          "thumbnail_url": "/api/broll-thumbnail/movie_clips_40"
+        },
+        {
+          "clip_id": "movie_clips_50",
+          "filename": "movie_clips_50.mp4",
+          "description": "",
+          "emotion": "happy",
+          "energy": "medium",
+          "lighting": "bright",
+          "camera": "mid",
+          "setting": "home",
+          "visual_keywords": [
+            "family dinner",
+            "table setting",
+            "warm lighting",
+            "conversation",
+            "home interior",
+            "shared meal",
+            "cozy atmosphere",
+            "domestic scene"
+          ],
+          "subject_presence": "person",
+          "score": 7,
+          "thumbnail_url": "/api/broll-thumbnail/movie_clips_50"
+        }
+      ]
+    }
+  ]
+}

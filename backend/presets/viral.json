@@ -1,0 +1,34 @@
+{
+  "name": "Viral",
+  "description": "2-line vertical captions. Line 1: Coolvetica regular. Line 2: Runethia cursive larger. Smart placement, behind-person depth effect.",
+  "font_size": 55,
+  "transparency": 1.0,
+  "color": [255, 255, 255],
+  "position": "center",
+  "animation": "vertical_smart",
+  "words_per_line": 4,
+  "max_hook_words": 5,
+  "exclusive_hooks": false,
+  "hw_encode": false,
+  "mask_frame_skip": 0,
+  "smart_placement": false,
+  "font_regular": "fonts/Coolvetica Rg.otf",
+  "font_emphasis": "fonts/Runethia.otf",
+  "y_position": 0.65,
+  "line_spacing": 8,
+  "vertical_mode": true,
+  "line2_size_mult": 1.4,
+  "coverage_threshold": 0.40,
+  "min_y_margin": 0.10,
+  "max_y_margin": 0.90,
+  "emotional_words": [
+    "believe", "dream", "love", "hope", "passion", "amazing", "incredible",
+    "beautiful", "wonderful", "fantastic", "awesome", "mind-blowing", "shocking",
+    "secret", "truth", "revealed", "exposed", "hidden", "must-watch"
+  ],
+  "emphasis_words": [
+    "stop", "wait", "look", "listen", "now", "immediately", "urgent",
+    "critical", "important", "warning", "alert", "breaking", "viral",
+    "trending", "millions", "billions", "never", "always", "guaranteed"
+  ]
+}

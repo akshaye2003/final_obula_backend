@@ -1,0 +1,294 @@
+/* ============================================
+   MOBILE VIDEO PLAYER OPTIMIZATIONS
+   Add this to your index.css or import separately
+   ============================================ */
+
+/* Hide native video controls completely */
+video::-webkit-media-controls {
+  display: none !important;
+}
+
+video::-webkit-media-controls-enclosure {
+  display: none !important;
+}
+
+video::-webkit-media-controls-panel {
+  display: none !important;
+}
+
+video::-webkit-media-controls-play-button {
+  display: none !important;
+}
+
+video::-webkit-media-controls-timeline {
+  display: none !important;
+}
+
+video::-webkit-media-controls-current-time-display {
+  display: none !important;
+}
+
+video::-webkit-media-controls-time-remaining-display {
+  display: none !important;
+}
+
+video::-webkit-media-controls-volume-slider {
+  display: none !important;
+}
+
+video::-webkit-media-controls-mute-button {
+  display: none !important;
+}
+
+video::-webkit-media-controls-fullscreen-button {
+  display: none !important;
+}
+
+/* Firefox */
+video::-moz-media-controls {
+  display: none !important;
+}
+
+/* MS Edge/IE */
+video::-ms-media-controls {
+  display: none !important;
+}
+
+/* Video container - Full width on mobile */
+@media (max-width: 640px) {
+  .video-preview-container {
+    max-width: 100vw !important;
+    border-radius: 0;
+    border-left: none;
+    border-right: none;
+  }
+  
+  /* Larger video on mobile */
+  .video-preview-container video {
+    object-fit: cover;
+  }
+}
+
+/* Video controls container */
+.video-controls-container {
+  width: 100%;
+}
+
+.video-controls {
+  /* Prevent controls from being too small */
+  min-height: 56px;
+}
+
+@media (max-width: 640px) {
+  .video-controls {
+    padding: 12px;
+    gap: 6px;
+    min-height: 64px;
+  }
+  
+  /* Progress bar - easier to grab on mobile */
+  .video-controls input[type="range"] {
+    min-height: 24px;
+    -webkit-appearance: none;
+    appearance: none;
+    background: transparent;
+  }
+  
+  .video-controls input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #C9A84C;
+    cursor: pointer;
+    margin-top: -6px;
+    border: 2px solid white;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+  }
+  
+  .video-controls input[type="range"]::-webkit-slider-runnable-track {
+    height: 4px;
+    border-radius: 2px;
+    background: rgba(255,255,255,0.15);
+  }
+  
+  /* Firefox thumb */
+  .video-controls input[type="range"]::-moz-range-thumb {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #C9A84C;
+    cursor: pointer;
+    border: 2px solid white;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+  }
+  
+  /* Larger buttons */
+  .video-controls button {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  /* Larger select dropdown */
+  .video-controls select {
+    min-height: 44px;
+    padding: 8px 10px;
+    font-size: 13px;
+  }
+}
+
+/* Play button overlay - Centered and prominent */
+.video-play-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.4);
+  transition: background 0.2s ease;
+  cursor: pointer;
+}
+
+.video-play-overlay:hover {
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.video-play-overlay:active {
+  background: rgba(0, 0, 0, 0.6);
+}
+
+.video-play-button {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.25);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  transition: transform 0.15s ease, background 0.2s ease;
+}
+
+.video-play-button:active {
+  transform: scale(0.95);
+  background: rgba(255, 255, 255, 0.35);
+}
+
+@media (max-width: 640px) {
+  .video-play-button {
+    width: 72px;
+    height: 72px;
+  }
+  
+  .video-play-button svg {
+    width: 32px;
+    height: 32px;
+  }
+}
+
+/* Progress bar styling for all screen sizes */
+.video-controls input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+  cursor: pointer;
+}
+
+.video-controls input[type="range"]:focus {
+  outline: none;
+}
+
+/* Webkit slider thumb */
+.video-controls input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #C9A84C;
+  cursor: pointer;
+  border: 2px solid white;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+  margin-top: -5px;
+}
+
+/* Webkit slider track */
+.video-controls input[type="range"]::-webkit-slider-runnable-track {
+  height: 4px;
+  border-radius: 2px;
+}
+
+/* Firefox slider */
+.video-controls input[type="range"]::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #C9A84C;
+  cursor: pointer;
+  border: 2px solid white;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+
+.video-controls input[type="range"]::-moz-range-track {
+  height: 4px;
+  border-radius: 2px;
+  background: rgba(255,255,255,0.15);
+}
+
+/* Caption positioning for mobile */
+@media (max-width: 640px) {
+  /* Ensure captions don't overlap with controls */
+  .caption-overlay {
+    padding-bottom: 80px;
+  }
+}
+
+/* Safe area for notched phones */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+  .video-controls-container {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  
+  .video-preview-container {
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+  }
+}
+
+/* Tap highlight removal for cleaner mobile UX */
+.video-play-overlay,
+.video-controls button,
+.video-controls select {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Focus visible for accessibility */
+.video-controls button:focus-visible,
+.video-controls select:focus-visible {
+  outline: 2px solid #C9A84C;
+  outline-offset: 2px;
+}
+
+/* Disabled state styling */
+.video-controls button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* Select dropdown styling */
+.video-controls select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%23ffffff' stroke-opacity='0.5' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3E%3C/svg%3E");
+  background-position: right 8px center;
+  background-repeat: no-repeat;
+  background-size: 16px;
+  padding-right: 28px;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+}
+
+/* Time display styling */
+.video-controls .tabular-nums {
+  font-variant-numeric: tabular-nums;
+}

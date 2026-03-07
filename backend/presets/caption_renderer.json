@@ -1,0 +1,29 @@
+{
+  "name": "Caption Renderer (Recommended)",
+  "description": "Smart centered captions with Coolvetica + Runethia fonts. Best for viral short-form content.",
+  "font_size": 72,
+  "transparency": 0.95,
+  "color": [255, 255, 255],
+  "position": "center",
+  "animation": "centered_styled",
+  "words_per_line": 4,
+  "max_hook_words": 0,
+  "exclusive_hooks": false,
+  "hw_encode": false,
+  "mask_frame_skip": 5,
+  "smart_placement": true,
+  "font_regular": "fonts/Coolvetica Rg.otf",
+  "font_emphasis": "fonts/Runethia.otf",
+  "y_position": 0.72,
+  "line_spacing": 10,
+  "emotional_words": [
+    "believe", "dream", "love", "hope", "passion", "amazing", "incredible",
+    "beautiful", "wonderful", "fantastic", "awesome", "inspired", "feel",
+    "heart", "soul", "joy", "peace", "faith", "wish", "blessed"
+  ],
+  "emphasis_words": [
+    "never", "always", "stop", "start", "must", "need", "now", "every",
+    "only", "just", "real", "truth", "fact", "huge", "big", "best",
+    "worst", "first", "last", "right", "wrong", "yes", "no"
+  ]
+}

@@ -1,0 +1,2635 @@
+"""
+Obula API Server — connects Frontend to the video processing pipeline.
+Run with: uvicorn api:app --reload --port 8000
+"""
+
+import os
+import sys
+import uuid
+import threading
+import json
+import time
+import shutil
+import base64
+import hmac
+import hashlib
+from pathlib import Path
+from typing import Optional, List, Any, Dict
+
+import requests
+import jwt
+
+from dotenv import load_dotenv
+load_dotenv(Path(__file__).resolve().parent / ".env")
+
+from fastapi import FastAPI, UploadFile, File, HTTPException, Depends, Header, Query, Request
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
+from pydantic import BaseModel
+
+# Environment configuration
+ENV = os.getenv("ENV", "development")
+
+# Rate limiting
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
+
+limiter = Limiter(key_func=get_remote_address)
+
+try:
+    import razorpay as _razorpay
+except ImportError:
+    _razorpay = None
+
+# Add scripts to path
+BASE_DIR = Path(__file__).resolve().parent
+sys.path.insert(0, str(BASE_DIR))
+
+# Dirs
+UPLOAD_DIR = BASE_DIR / "uploads"
+OUTPUT_DIR = BASE_DIR / "outputs"
+DATA_DIR   = BASE_DIR / "data"
+for d in [UPLOAD_DIR, OUTPUT_DIR, DATA_DIR]:
+    d.mkdir(exist_ok=True)
+
+MAX_UPLOAD_MB = int(os.environ.get("MAX_UPLOAD_MB", "500"))
+
+app = FastAPI(title="Obula API", version="1.0.0")
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+# CORS configuration based on environment
+if ENV == "production":
+    allow_origins = ["https://obula.io", "https://www.obula.io"]
+else:
+    # Development: allow Vite dev server + localhost + local network (for mobile testing)
+    allow_origins = ["*"]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=allow_origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# =============================================================================
+# SUPABASE HELPERS
+# =============================================================================
+
+def _sb_headers() -> dict:
+    key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY", "").strip()
+    return {
+        "apikey": key,
+        "Authorization": f"Bearer {key}",
+        "Content-Type": "application/json",
+    }
+
+def _sb_rpc(func: str, params: dict):
+    url = os.environ.get("SUPABASE_URL", "").strip()
+    if not url:
+        return None
+    try:
+        r = requests.post(f"{url}/rest/v1/rpc/{func}", headers=_sb_headers(), json=params, timeout=5)
+        return r
+    except Exception:
+        return None
+
+def _decrement_credits(user_id: str) -> bool:
+    # Bypass when Supabase not configured (dev/testing)
+    if not os.environ.get("SUPABASE_URL", "").strip():
+        return True
+    r = _sb_rpc("decrement_credits", {"user_uuid": user_id})
+    return r is not None and r.status_code == 200
+
+def _refund_credit(user_id: str) -> None:
+    _sb_rpc("refund_credit", {"user_uuid": user_id})
+
+def _add_credits(user_id: str, amount: int) -> None:
+    _sb_rpc("add_credits", {"user_uuid": user_id, "credit_count": amount})
+
+def _save_video_to_supabase(user_id: str, output_path: Path, filename: str) -> None:
+    sb_url = os.environ.get("SUPABASE_URL", "").strip()
+    if not sb_url or not output_path.exists():
+        return
+    storage_path = f"{user_id}/{filename}"
+    try:
+        file_size = output_path.stat().st_size
+        with open(output_path, "rb") as fh:
+            r = requests.post(
+                f"{sb_url}/storage/v1/object/videos/{storage_path}",
+                headers={**_sb_headers(), "Content-Type": "video/mp4", "x-upsert": "true"},
+                data=fh,
+                timeout=300,
+            )
+        if not r.ok:
+            print(f"[Supabase] Storage upload failed: {r.status_code} {r.text[:200]}")
+            return
+        requests.post(
+            f"{sb_url}/rest/v1/videos",
+            headers=_sb_headers(),
+            json={
+                "user_id": user_id,
+                "title": f"Clip {filename[:8]}",
+                "storage_path": storage_path,
+                "file_size": file_size,
+            },
+            timeout=5,
+        )
+        print(f"[Supabase] Video saved: {storage_path}")
+    except Exception as e:
+        print(f"[Supabase] Save error: {e}")
+
+# =============================================================================
+# AUTH
+# =============================================================================
+
+# Cache verified tokens for 5 minutes to avoid calling Supabase on every poll
+_TOKEN_CACHE: dict[str, tuple[dict, float]] = {}
+_TOKEN_CACHE_TTL = 300  # seconds
+
+def _verify_supabase_jwt(token: str) -> Optional[dict]:
+    """Verify JWT token locally using SUPABASE_JWT_SECRET."""
+    jwt_secret = os.environ.get("SUPABASE_JWT_SECRET", "").strip()
+    if not jwt_secret or jwt_secret == "your-supabase-jwt-secret":
+        # Fallback to API verification if JWT secret not configured
+        return _verify_supabase_jwt_api(token)
+    try:
+        # Decode and verify the token
+        payload = jwt.decode(token, jwt_secret, algorithms=["HS256"])
+        print(f"[Auth] Verified user via JWT: {payload.get('email')}")
+        return {
+            "id": payload.get("sub", ""),
+            "email": payload.get("email", ""),
+            "name": (payload.get("user_metadata") or {}).get("full_name") or payload.get("email", "").split("@")[0],
+        }
+    except jwt.ExpiredSignatureError:
+        print("[Auth] JWT token expired")
+        return None
+    except jwt.InvalidTokenError as e:
+        print(f"[Auth] Invalid JWT token: {e}")
+        return None
+    except Exception as e:
+        print(f"[Auth] Exception verifying JWT: {e}")
+        return None
+
+def _verify_supabase_jwt_api(token: str) -> Optional[dict]:
+    """Fallback: Verify token by calling Supabase /auth/v1/user."""
+    sb_url = os.environ.get("SUPABASE_URL", "").strip()
+    sb_service_key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY", "").strip()
+    if not sb_url or not sb_service_key:
+        return None
+    try:
+        # Try with service role key in Authorization header (admin get user)
+        resp = requests.get(
+            f"{sb_url}/auth/v1/admin/users/{_get_user_id_from_jwt(token)}",
+            headers={
+                "apikey": sb_service_key,
+                "Authorization": f"Bearer {sb_service_key}",
+            },
+            timeout=5,
+        )
+        if resp.ok:
+            data = resp.json()
+            user = data.get("user", data)
+            print(f"[Auth] Verified user via Admin API: {user.get('email')}")
+            return {
+                "id": user.get("id", ""),
+                "email": user.get("email", ""),
+                "name": (user.get("user_metadata") or {}).get("full_name") or user.get("email", "").split("@")[0],
+            }
+        # Fallback: try /user endpoint with the user's token
+        resp2 = requests.get(
+            f"{sb_url}/auth/v1/user",
+            headers={
+                "apikey": sb_service_key,
+                "Authorization": f"Bearer {token}",
+            },
+            timeout=5,
+        )
+        if resp2.ok:
+            data = resp2.json()
+            print(f"[Auth] Verified user via /user API: {data.get('email')}")
+            return {
+                "id": data.get("id", ""),
+                "email": data.get("email", ""),
+                "name": (data.get("user_metadata") or {}).get("full_name") or data.get("email", "").split("@")[0],
+            }
+        print(f"[Auth] Supabase API verify failed: {resp.status_code}, {resp2.status_code}")
+        return None
+    except Exception as e:
+        print(f"[Auth] Exception: {e}")
+        return None
+
+def _get_user_id_from_jwt(token: str) -> str:
+    """Extract user ID (sub) from JWT without verification."""
+    try:
+        parts = token.split(".")
+        if len(parts) != 3:
+            return ""
+        payload = parts[1]
+        # Add padding if needed
+        payload += "=" * (4 - len(payload) % 4)
+        decoded = base64.b64decode(payload)
+        data = json.loads(decoded)
+        return data.get("sub", "")
+    except Exception as e:
+        print(f"[Auth] Could not extract user ID from JWT: {e}")
+        return ""
+
+def _accept_dev_token(request: Optional["Request"] = None) -> bool:
+    """Accept dev-token only when ENV=development."""
+    if ENV == "development":
+        return True
+    return False
+
+def get_current_user(authorization: Optional[str] = Header(None), request: Request = None) -> Optional[dict]:
+    if not authorization or not authorization.startswith("Bearer "):
+        return None
+    token = authorization.replace("Bearer ", "").strip()
+    # Dev bypass — when ENV=development or request from localhost
+    if token.startswith("dev-token-"):
+        if _accept_dev_token(request):
+            return {"id": "dev", "email": "dev@obula.local", "name": "Developer"}
+        return None
+    # Check cache first
+    cached = _TOKEN_CACHE.get(token)
+    if cached:
+        user, expires_at = cached
+        if time.time() < expires_at:
+            return user
+        else:
+            del _TOKEN_CACHE[token]
+    user = _verify_supabase_jwt(token)
+    if user:
+        _TOKEN_CACHE[token] = (user, time.time() + _TOKEN_CACHE_TTL)
+    return user
+
+def require_auth(user: Optional[dict] = Depends(get_current_user)) -> dict:
+    if not user:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    return user
+
+def get_current_user_from_query(token: Optional[str] = Query(None), authorization: Optional[str] = Header(None)) -> Optional[dict]:
+    """Get user from either query param (for video elements) or header (for API calls)."""
+    if token:
+        return _get_user_from_token(token)
+    if authorization and authorization.startswith("Bearer "):
+        return _get_user_from_token(authorization.replace("Bearer ", "").strip())
+    return None
+
+def _get_user_from_token(token: str) -> Optional[dict]:
+    """Verify token and return user."""
+    if token.startswith("dev-token-"):
+        if ENV == "development":
+            return {"id": "dev", "email": "dev@obula.local", "name": "Developer"}
+        return None
+    cached = _TOKEN_CACHE.get(token)
+    if cached:
+        user, expires_at = cached
+        if time.time() < expires_at:
+            return user
+        else:
+            del _TOKEN_CACHE[token]
+    user = _verify_supabase_jwt(token)
+    if user:
+        _TOKEN_CACHE[token] = (user, time.time() + _TOKEN_CACHE_TTL)
+    return user
+
+def require_auth_with_query(token: Optional[str] = Query(None), authorization: Optional[str] = Header(None)) -> dict:
+    """Require auth from header or query param (for video playback)."""
+    user = get_current_user_from_query(token, authorization)
+    if not user:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    return user
+
+@app.get("/api/auth/me")
+async def auth_me(user: dict = Depends(require_auth)):
+    return user
+
+@app.post("/api/auth/logout")
+async def auth_logout():
+    return {}
+
+# =============================================================================
+# HEALTH CHECK (for Railway)
+# =============================================================================
+
+@app.get("/api/health")
+async def health_check():
+    return {"status": "ok"}
+
+# =============================================================================
+# STARTUP EVENT (for Railway)
+# =============================================================================
+
+@app.on_event("startup")
+async def startup_event():
+    os.makedirs("uploads", exist_ok=True)
+    os.makedirs("outputs", exist_ok=True)
+    os.makedirs("data/prep", exist_ok=True)
+
+# =============================================================================
+# CONFIG
+# =============================================================================
+
+MAX_INPUT_RESOLUTION = 1920  # 1080p — max(width, height)
+
+@app.get("/api/config")
+async def get_config():
+    return {
+        "max_upload_mb": MAX_UPLOAD_MB,
+        "max_resolution": "1080p",
+        "max_resolution_px": MAX_INPUT_RESOLUTION,
+        "presets": ["dynamic_smart", "viral", "split", "cinematic", "minimal", "marquee"],
+        "luts": [
+            "02_Film LUTs_Vintage.cube",
+            "02_Film Emulation LUTs_Cross Process.cube",
+            "04_Cinematic LUTs_Frosted.cube",
+            "05_Film LUTs_Foliage.cube",
+            "07_Cinematic LUTs_Flavin.cube",
+            "08_Film Emulation LUTs_B&W.cube",
+        ],
+    }
+
+# =============================================================================
+# UPLOAD SECURITY - Magic bytes validation
+# =============================================================================
+
+VIDEO_MAGIC_BYTES = {
+    # MP4: ftyp marker at offset 4
+    b'\x66\x74\x79\x70': 'mp4',  # ftyp
+    # MOV: same as MP4 (QuickTime container)
+    b'\x66\x74\x79\x70': 'mov',  # ftyp (alias)
+    # WEBM: EBML header starts with 0x1A 0x45 0xDF 0xA3
+    b'\x1a\x45\xdf\xa3': 'webm',
+    # AVI: RIFF....AVI
+    b'\x52\x49\x46\x46': 'avi',  # RIFF (need to check further for AVI)
+    # MKV: EBML header (same as WEBM)
+    b'\x1a\x45\xdf\xa3': 'mkv',
+}
+
+ALLOWED_VIDEO_EXTENSIONS = {".mp4", ".mov", ".webm", ".avi", ".mkv"}
+
+def _validate_video_file(file_path: Path, declared_ext: str) -> bool:
+    """Validate video file using magic bytes."""
+    try:
+        with open(file_path, 'rb') as f:
+            header = f.read(12)
+        
+        # Check for MP4/MOV (ftyp at offset 4)
+        if len(header) >= 8 and header[4:8] == b'ftyp':
+            return declared_ext in ('.mp4', '.mov')
+        
+        # Check for WEBM/MKV (EBML header)
+        if header[:4] == b'\x1a\x45\xdf\xa3':
+            return declared_ext in ('.webm', '.mkv')
+        
+        # Check for AVI (RIFF....AVI)
+        if header[:4] == b'RIFF' and len(header) >= 12 and header[8:12] == b'AVI ':
+            return declared_ext == '.avi'
+        
+        return False
+    except Exception:
+        return False
+
+# =============================================================================
+# UPLOAD
+# =============================================================================
+
+@app.post("/api/upload")
+@limiter.limit("10/minute")
+async def upload_video(request: Request, file: UploadFile = File(...), user: dict = Depends(require_auth)):
+    if not file.filename:
+        raise HTTPException(status_code=400, detail="No file provided")
+    
+    # Validate extension
+    ext = Path(file.filename).suffix.lower()
+    if ext not in ALLOWED_VIDEO_EXTENSIONS:
+        raise HTTPException(status_code=400, detail="Invalid video format")
+
+    # Generate UUID filename (never use original filename)
+    vid = uuid.uuid4().hex[:12]
+    path = UPLOAD_DIR / f"{vid}{ext}"
+    max_bytes = MAX_UPLOAD_MB * 1024 * 1024
+    total = 0
+    first_chunk = True
+
+    try:
+        with open(path, "wb") as f:
+            while True:
+                chunk = await file.read(8 * 1024 * 1024)
+                if not chunk:
+                    break
+                
+                # Validate magic bytes on first chunk
+                if first_chunk:
+                    first_chunk = False
+                    if len(chunk) < 12:
+                        path.unlink(missing_ok=True)
+                        raise HTTPException(status_code=400, detail="File too small or corrupted")
+                    
+                    # Quick magic bytes check
+                    is_valid = False
+                    # MP4/MOV check
+                    if len(chunk) >= 8 and chunk[4:8] == b'ftyp':
+                        is_valid = ext in ('.mp4', '.mov')
+                    # WEBM/MKV check
+                    elif chunk[:4] == b'\x1a\x45\xdf\xa3':
+                        is_valid = ext in ('.webm', '.mkv')
+                    # AVI check
+                    elif chunk[:4] == b'RIFF' and len(chunk) >= 12 and chunk[8:12] == b'AVI ':
+                        is_valid = ext == '.avi'
+                    
+                    if not is_valid:
+                        path.unlink(missing_ok=True)
+                        raise HTTPException(status_code=400, detail="Invalid video file content")
+                
+                total += len(chunk)
+                if total > max_bytes:
+                    path.unlink(missing_ok=True)
+                    raise HTTPException(status_code=413, detail=f"File too large. Max {MAX_UPLOAD_MB}MB")
+                f.write(chunk)
+        
+        # Final validation
+        if not _validate_video_file(path, ext):
+            path.unlink(missing_ok=True)
+            raise HTTPException(status_code=400, detail="File content does not match declared format")
+            
+    except HTTPException:
+        raise
+    except Exception as e:
+        path.unlink(missing_ok=True)
+        raise HTTPException(status_code=500, detail="Upload failed")
+
+    # Enforce max 1080p resolution (1920×1080 or 1080×1920)
+    try:
+        from scripts.video_utils import VideoUtils
+        w, h = VideoUtils.get_dimensions(str(path))
+        max_dim = max(w, h)
+        if max_dim > 1920:
+            path.unlink(missing_ok=True)
+            raise HTTPException(
+                status_code=400,
+                detail=f"Video resolution too high ({w}×{h}). Max input is 1080p (1920×1080). Please downscale your video first."
+            )
+    except HTTPException:
+        raise
+    except Exception as e:
+        # If we can't read dimensions, allow the upload (e.g. corrupted probe)
+        print(f"[Upload] Could not verify resolution: {e}")
+
+    return {"video_id": vid, "filename": file.filename, "size_mb": round(total / 1024 / 1024, 2)}
+
+@app.get("/api/upload/{video_id}/video")
+async def get_uploaded_video(video_id: str, user: dict = Depends(require_auth_with_query)):
+    for ext in (".mp4", ".mov", ".webm", ".avi", ".mkv"):
+        p = UPLOAD_DIR / f"{video_id}{ext}"
+        if p.exists():
+            # Determine correct media type based on extension
+            media_types = {
+                ".mp4": "video/mp4",
+                ".mov": "video/quicktime",
+                ".webm": "video/webm",
+                ".avi": "video/x-msvideo",
+                ".mkv": "video/x-matroska",
+            }
+            media_type = media_types.get(ext, "video/mp4")
+            print(f"[Video] Serving: {p} ({media_type})")
+            return FileResponse(p, media_type=media_type, filename=p.name)
+    print(f"[Video] Not found: {video_id}")
+    raise HTTPException(status_code=404, detail="Video not found")
+
+def _find_upload(video_id: str) -> Path:
+    for ext in (".mp4", ".mov", ".webm", ".avi", ".mkv"):
+        p = UPLOAD_DIR / f"{video_id}{ext}"
+        if p.exists():
+            return p
+    raise HTTPException(status_code=404, detail="Uploaded video not found")
+
+# =============================================================================
+# PREP (EditClip)
+# =============================================================================
+
+PREP_DIR = DATA_DIR / "prep"
+PREP_DIR.mkdir(exist_ok=True)
+
+class CreatePrepBody(BaseModel):
+    video_id: str
+
+# Default colors by style for prep data (EditClip uses these)
+_PREP_STYLE_COLORS = {"hook": [255, 200, 80], "emphasis": [255, 200, 80], "regular": [200, 220, 240], "emotional": [245, 158, 11]}
+
+# In-memory status tracker for background prep jobs
+_prep_jobs: dict[str, dict] = {}
+_prep_jobs_lock = threading.Lock()
+
+@app.post("/api/prep/background")
+async def create_prep_background(body: CreatePrepBody, user: dict = Depends(require_auth)):
+    """Start prep in background - returns immediately with prep_id. Runs transcription + masks + B-roll planning."""
+    input_path = _find_upload(body.video_id)
+    prep_id = str(uuid.uuid4())
+    prep_path = PREP_DIR / f"{prep_id}.json"
+    
+    # Initialize status
+    with _prep_jobs_lock:
+        _prep_jobs[prep_id] = {
+            "status": "starting",
+            "progress": 0,
+            "video_id": body.video_id,
+            "user_id": user["id"],
+        }
+    
+    # Create empty prep file with status
+    with open(prep_path, "w", encoding="utf-8") as f:
+        json.dump({
+            "input_video": str(input_path),
+            "video_id": body.video_id,
+            "status": "processing",
+            "transcript_text": "",
+            "styled_words": [],
+            "timed_captions": [],
+            "broll_placements": [],
+        }, f, indent=2)
+    
+    def run_background_prep():
+        try:
+            from scripts.pipeline import Pipeline
+            from scripts.broll_engine import BrollEngine
+            from scripts.video_utils import VideoUtils
+            
+            with _prep_jobs_lock:
+                _prep_jobs[prep_id]["status"] = "transcribing"
+                _prep_jobs[prep_id]["progress"] = 10
+            
+            pipeline = Pipeline(api_key=os.environ.get("OPENAI_API_KEY", ""))
+            
+            # Step 1: Transcription + GPT styling (hooks, emphasis)
+            styled_words, timed_captions, transcript_text = pipeline._transcribe_and_style(str(input_path))
+            if styled_words is None:
+                styled_words = []
+            if timed_captions is None:
+                timed_captions = []
+            if transcript_text is None:
+                transcript_text = ""
+            
+            with _prep_jobs_lock:
+                _prep_jobs[prep_id]["status"] = "planning_broll"
+                _prep_jobs[prep_id]["progress"] = 60
+            
+            # Step 2: B-roll planning with GPT + clip selection
+            broll_placements = []
+            if transcript_text:
+                try:
+                    video_duration = VideoUtils.get_duration(str(input_path))
+                    video_width, video_height = VideoUtils.get_dimensions(str(input_path))
+                    broll_engine = BrollEngine(
+                        api_key=os.environ.get("OPENAI_API_KEY", ""),
+                        target_width=video_width,
+                        target_height=video_height
+                    )
+                    planned = broll_engine.plan_scenes(transcript_text, video_duration)
+                    
+                    for p in planned[:2]:
+                        placement = {
+                            "timestamp_seconds": p["timestamp_seconds"],
+                            "duration": p.get("duration", 3),
+                            "theme": p.get("theme", ""),
+                            "emotion": p.get("emotion", ""),
+                            "description": p.get("description", ""),
+                            "enabled": True,
+                            "selected_index": 0,
+                            "clip_options": []
+                        }
+                        
+                        # Get clip options for this placement
+                        try:
+                            scene_request = {
+                                "theme": placement["theme"],
+                                "emotion": placement["emotion"],
+                                "energy": p.get("energy", "medium"),
+                            }
+                            clip_options = broll_engine.get_clip_options(scene_request, num_options=4)
+                            
+                            # Generate thumbnails
+                            THUMB_DIR = DATA_DIR / "broll_thumbnails"
+                            THUMB_DIR.mkdir(exist_ok=True)
+                            
+                            for option in clip_options:
+                                clip_id = option["clip_id"]
+                                thumb_path = THUMB_DIR / f"{clip_id}.jpg"
+                                
+                                if not thumb_path.exists():
+                                    broll_engine.generate_thumbnail(option["path"], str(thumb_path))
+                                
+                                if thumb_path.exists():
+                                    option["thumbnail_url"] = f"/api/broll-thumbnail/{clip_id}"
+                                else:
+                                    option["thumbnail_url"] = None
+                                
+                                del option["path"]  # Remove path for security
+                            
+                            placement["clip_options"] = clip_options
+                        except Exception as clip_err:
+                            print(f"[Prep BG] Clip options error: {clip_err}")
+                        
+                        broll_placements.append(placement)
+                    
+                    print(f"[Prep BG] Generated {len(broll_placements)} B-roll placements with clips")
+                except Exception as e:
+                    print(f"[Prep BG] B-roll planning error: {e}")
+            
+            with _prep_jobs_lock:
+                _prep_jobs[prep_id]["status"] = "saving"
+                _prep_jobs[prep_id]["progress"] = 90
+            
+            # Step 3: Save final data
+            for w in styled_words:
+                if "color" not in w:
+                    w["color"] = _PREP_STYLE_COLORS.get(w.get("style", "regular"), [200, 220, 240])
+            
+            tc_serializable = [[s, e, list(lines) if isinstance(lines, (list, tuple)) else [str(lines)]] for s, e, lines in timed_captions]
+            
+            with open(prep_path, "w", encoding="utf-8") as f:
+                json.dump({
+                    "input_video": str(input_path),
+                    "video_id": body.video_id,
+                    "user_id": user["id"],
+                    "status": "completed",
+                    "transcript_text": transcript_text,
+                    "styled_words": styled_words,
+                    "timed_captions": tc_serializable,
+                    "broll_placements": broll_placements,
+                }, f, indent=2)
+            
+            with _prep_jobs_lock:
+                _prep_jobs[prep_id]["status"] = "completed"
+                _prep_jobs[prep_id]["progress"] = 100
+                
+            print(f"[Prep BG] Completed: {prep_id}")
+            
+        except Exception as e:
+            import traceback
+            print(f"[Prep BG] Error: {e}")
+            print(traceback.format_exc())
+            with _prep_jobs_lock:
+                _prep_jobs[prep_id]["status"] = "failed"
+                _prep_jobs[prep_id]["error"] = str(e)
+    
+    # Start in background thread
+    threading.Thread(target=run_background_prep, daemon=True).start()
+    
+    return {"prep_id": prep_id, "video_id": body.video_id, "status": "started"}
+
+
+@app.get("/api/prep/{prep_id}/status")
+async def get_prep_status(prep_id: str, user: dict = Depends(require_auth)):
+    """Get status of background prep job."""
+    _validate_prep_id(prep_id)
+    with _prep_jobs_lock:
+        job = _prep_jobs.get(prep_id)
+    
+    if not job:
+        # Check if prep file exists (might be old sync prep)
+        prep_path = PREP_DIR / f"{prep_id}.json"
+        if prep_path.exists():
+            with open(prep_path, encoding="utf-8") as f:
+                data = json.load(f)
+            _check_prep_ownership(data, user)
+            return {
+                "prep_id": prep_id,
+                "status": data.get("status", "completed"),
+                "progress": 100 if data.get("status") == "completed" else 0,
+                "video_id": data.get("video_id"),
+            }
+        raise HTTPException(status_code=404, detail="Prep job not found")
+    
+    return {
+        "prep_id": prep_id,
+        "status": job["status"],
+        "progress": job["progress"],
+        "video_id": job.get("video_id"),
+        "error": job.get("error"),
+    }
+
+
+@app.post("/api/prep")
+async def create_prep(body: CreatePrepBody, user: dict = Depends(require_auth)):
+    """Create a prep session from uploaded video. Runs transcription + styling + B-roll planning, saves to prep dir."""
+    input_path = _find_upload(body.video_id)
+    prep_id = str(uuid.uuid4())
+    prep_path = PREP_DIR / f"{prep_id}.json"
+
+    def run_prep():
+        try:
+            from scripts.pipeline import Pipeline
+            from scripts.broll_engine import BrollEngine
+            from scripts.video_utils import VideoUtils
+            
+            pipeline = Pipeline(api_key=os.environ.get("OPENAI_API_KEY", ""))
+            styled_words, timed_captions, transcript_text = pipeline._transcribe_and_style(str(input_path))
+            
+            # Generate B-roll placements using GPT (Phase 1)
+            broll_placements = []
+            if transcript_text:
+                try:
+                    video_duration = VideoUtils.get_duration(str(input_path))
+                    video_width, video_height = VideoUtils.get_dimensions(str(input_path))
+                    broll_engine = BrollEngine(
+                        api_key=os.environ.get("OPENAI_API_KEY", ""),
+                        target_width=video_width,
+                        target_height=video_height
+                    )
+                    planned = broll_engine.plan_scenes(transcript_text, video_duration)
+                    
+                    # Format placements for EditClip
+                    for p in planned[:2]:  # Max 2 placements
+                        broll_placements.append({
+                            "timestamp_seconds": p["timestamp_seconds"],
+                            "duration": p.get("duration", 3),
+                            "theme": p.get("theme", ""),
+                            "emotion": p.get("emotion", ""),
+                            "description": p.get("description", ""),
+                            "enabled": True,
+                            "selected_index": 0,
+                            "clip_options": []
+                        })
+                    print(f"[Prep] Generated {len(broll_placements)} B-roll placements")
+                except Exception as e:
+                    print(f"[Prep] B-roll planning error: {e}")
+            
+            if not styled_words or not timed_captions:
+                with open(prep_path, "w", encoding="utf-8") as f:
+                    json.dump({
+                        "input_video": str(input_path),
+                        "video_id": body.video_id,
+                        "user_id": user["id"],
+                        "transcript_text": transcript_text or "",
+                        "styled_words": [],
+                        "timed_captions": [],
+                        "broll_placements": broll_placements,
+                    }, f, indent=2)
+            else:
+                # Add color to each word for EditClip
+                for w in styled_words:
+                    if "color" not in w:
+                        w["color"] = _PREP_STYLE_COLORS.get(w.get("style", "regular"), [200, 220, 240])
+                # timed_captions: list of [start, end, [lines]] to match prep format
+                tc_serializable = [[s, e, list(lines) if isinstance(lines, (list, tuple)) else [str(lines)]] for s, e, lines in timed_captions]
+                with open(prep_path, "w", encoding="utf-8") as f:
+                    json.dump({
+                        "input_video": str(input_path),
+                        "video_id": body.video_id,
+                        "user_id": user["id"],
+                        "transcript_text": transcript_text,
+                        "styled_words": styled_words,
+                        "timed_captions": tc_serializable,
+                        "broll_placements": broll_placements,
+                    }, f, indent=2)
+        except Exception as e:
+            import traceback
+            print(f"[Prep] Error: {e}")
+            print(traceback.format_exc())
+            prep_path.unlink(missing_ok=True)
+            raise
+
+    # Run synchronously for now (blocking) - prep is needed before EditClip loads
+    run_prep()
+    return {"prep_id": prep_id, "video_id": body.video_id}
+
+def _extract_video_id_from_path(input_path: str) -> str:
+    """Extract video_id (e.g. 12c1f5c70174) from input_video path."""
+    if not input_path:
+        return ""
+    name = Path(input_path).stem
+    return name
+
+def _validate_prep_id(prep_id: str) -> None:
+    """Validate prep_id to prevent path traversal."""
+    if not prep_id or len(prep_id) > 64:
+        raise HTTPException(status_code=400, detail="Invalid prep ID")
+    if ".." in prep_id or "/" in prep_id or "\\" in prep_id:
+        raise HTTPException(status_code=400, detail="Invalid prep ID")
+    if not all(c.isalnum() or c in "-_" for c in prep_id):
+        raise HTTPException(status_code=400, detail="Invalid prep ID")
+
+def _validate_clip_id(clip_id: str) -> str:
+    """Validate and sanitize clip_id for path safety."""
+    if not clip_id or len(clip_id) > 64:
+        raise HTTPException(status_code=400, detail="Invalid clip ID")
+    safe = "".join(c for c in clip_id if c.isalnum() or c == "_")
+    if not safe:
+        raise HTTPException(status_code=400, detail="Invalid clip ID")
+    return safe
+
+def _check_prep_ownership(data: dict, user: dict) -> None:
+    """Raise 403 if prep has user_id and it doesn't match."""
+    prep_user = data.get("user_id")
+    if prep_user and prep_user != user["id"]:
+        raise HTTPException(status_code=403, detail="Access denied")
+
+@app.get("/api/prep/{prep_id}")
+async def get_prep(prep_id: str, user: dict = Depends(require_auth)):
+    """Get prep data for EditClip. Adds video_id from input_video path if missing."""
+    _validate_prep_id(prep_id)
+    path = PREP_DIR / f"{prep_id}.json"
+    if not path.exists():
+        raise HTTPException(status_code=404, detail="Prep session not found")
+    with open(path, encoding="utf-8") as f:
+        data = json.load(f)
+    _check_prep_ownership(data, user)
+    if not data.get("video_id") and data.get("input_video"):
+        data["video_id"] = _extract_video_id_from_path(data["input_video"])
+    return data
+
+class PrepUpdateBody(BaseModel):
+    styled_words: Optional[List[Any]] = None
+    timed_captions: Optional[List[Any]] = None
+    transcript_text: Optional[str] = None
+    broll_placements: Optional[List[Any]] = None
+
+@app.patch("/api/prep/{prep_id}")
+async def update_prep(prep_id: str, body: PrepUpdateBody, user: dict = Depends(require_auth)):
+    """Update prep data (transcript, captions, broll)."""
+    _validate_prep_id(prep_id)
+    path = PREP_DIR / f"{prep_id}.json"
+    if not path.exists():
+        raise HTTPException(status_code=404, detail="Prep session not found")
+    with open(path, encoding="utf-8") as f:
+        data = json.load(f)
+    _check_prep_ownership(data, user)
+    if body.styled_words is not None:
+        data["styled_words"] = body.styled_words
+    if body.timed_captions is not None:
+        data["timed_captions"] = body.timed_captions
+    if body.transcript_text is not None:
+        data["transcript_text"] = body.transcript_text
+    if body.broll_placements is not None:
+        data["broll_placements"] = body.broll_placements
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(data, f, indent=2)
+    return {"ok": True}
+
+def _get_clip_options_for_placement(broll_engine, placement: dict, num_options: int = 4) -> List[Dict]:
+    """Helper to get clip options with thumbnails for a placement."""
+    scene_request = {
+        "theme": placement.get("theme", ""),
+        "emotion": placement.get("emotion", ""),
+        "energy": placement.get("energy", "medium"),
+    }
+    
+    clip_options = broll_engine.get_clip_options(scene_request, num_options=num_options)
+    
+    # Generate/serve thumbnails
+    THUMB_DIR = DATA_DIR / "broll_thumbnails"
+    THUMB_DIR.mkdir(exist_ok=True)
+    
+    for option in clip_options:
+        clip_id = option["clip_id"]
+        thumb_path = THUMB_DIR / f"{clip_id}.jpg"
+        
+        # Generate thumbnail if doesn't exist
+        if not thumb_path.exists():
+            broll_engine.generate_thumbnail(option["path"], str(thumb_path))
+        
+        # Add thumbnail URL
+        if thumb_path.exists():
+            option["thumbnail_url"] = f"/api/broll-thumbnail/{clip_id}"
+        else:
+            option["thumbnail_url"] = None
+        
+        # Remove full path for security
+        del option["path"]
+    
+    return clip_options
+
+
+@app.post("/api/prep/{prep_id}/broll-suggestions")
+async def generate_broll_suggestions(prep_id: str, user: dict = Depends(require_auth)):
+    """Generate B-roll suggestions using GPT based on transcript."""
+    _validate_prep_id(prep_id)
+    path = PREP_DIR / f"{prep_id}.json"
+    if not path.exists():
+        raise HTTPException(status_code=404, detail="Prep session not found")
+    
+    with open(path, encoding="utf-8") as f:
+        data = json.load(f)
+    _check_prep_ownership(data, user)
+    
+    transcript = data.get("transcript_text", "")
+    input_video = data.get("input_video", "")
+    
+    if not transcript or not input_video:
+        return {"broll_placements": data.get("broll_placements", [])}
+    
+    try:
+        from scripts.broll_engine import BrollEngine
+        from scripts.video_utils import VideoUtils
+        
+        video_duration = VideoUtils.get_duration(input_video)
+        video_width, video_height = VideoUtils.get_dimensions(input_video)
+        broll_engine = BrollEngine(
+            api_key=os.environ.get("OPENAI_API_KEY", ""),
+            target_width=video_width,
+            target_height=video_height
+        )
+        planned = broll_engine.plan_scenes(transcript, video_duration)
+        
+        # Format placements with clip options
+        broll_placements = []
+        for p in planned[:2]:  # Max 2 placements
+            placement = {
+                "timestamp_seconds": p["timestamp_seconds"],
+                "duration": p.get("duration", 3),
+                "theme": p.get("theme", ""),
+                "emotion": p.get("emotion", ""),
+                "description": p.get("description", ""),
+                "enabled": True,
+                "selected_index": 0,
+                "clip_options": []
+            }
+            
+            # Get clip options for this placement
+            try:
+                placement["clip_options"] = _get_clip_options_for_placement(
+                    broll_engine, placement, num_options=4
+                )
+            except Exception as e:
+                print(f"[B-roll Suggestions] Clip options error: {e}")
+                placement["clip_options"] = []
+            
+            broll_placements.append(placement)
+        
+        # Save to prep file
+        data["broll_placements"] = broll_placements
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump(data, f, indent=2)
+        
+        print(f"[B-roll Suggestions] Generated {len(broll_placements)} placements with clips for {prep_id}")
+        return {"broll_placements": broll_placements}
+        
+    except Exception as e:
+        print(f"[B-roll Suggestions] Error: {e}")
+        import traceback
+        traceback.print_exc()
+        # Return existing placements on error
+        return {"broll_placements": data.get("broll_placements", [])}
+
+@app.post("/api/prep/{prep_id}/regenerate-placement/{placement_index:int}")
+async def regenerate_placement(prep_id: str, placement_index: int, user: dict = Depends(require_auth)):
+    """Regenerate a single B-roll placement with new timestamp/theme from GPT."""
+    _validate_prep_id(prep_id)
+    path = PREP_DIR / f"{prep_id}.json"
+    if not path.exists():
+        raise HTTPException(status_code=404, detail="Prep session not found")
+    
+    with open(path, encoding="utf-8") as f:
+        data = json.load(f)
+    _check_prep_ownership(data, user)
+    
+    placements = data.get("broll_placements", [])
+    if not (0 <= placement_index < len(placements)):
+        raise HTTPException(status_code=400, detail="Invalid placement index")
+    
+    transcript = data.get("transcript_text", "")
+    input_video = data.get("input_video", "")
+    
+    if not transcript or not input_video:
+        return {"broll_placements": placements}
+    
+    try:
+        from scripts.broll_engine import BrollEngine
+        from scripts.video_utils import VideoUtils
+        
+        video_duration = VideoUtils.get_duration(input_video)
+        video_width, video_height = VideoUtils.get_dimensions(input_video)
+        broll_engine = BrollEngine(
+            api_key=os.environ.get("OPENAI_API_KEY", ""),
+            target_width=video_width,
+            target_height=video_height
+        )
+        
+        # Generate new plan
+        planned = broll_engine.plan_scenes(transcript, video_duration)
+        
+        # If we have a new placement at this index, use it
+        # Otherwise shift the index to get a different one
+        if placement_index < len(planned):
+            new_placement = planned[placement_index]
+        elif planned:
+            # Try to get a different one
+            new_placement = planned[0]
+        else:
+            return {"broll_placements": placements}
+        
+        # Build updated placement
+        updated_placement = {
+            "timestamp_seconds": new_placement["timestamp_seconds"],
+            "duration": new_placement.get("duration", 3),
+            "theme": new_placement.get("theme", ""),
+            "emotion": new_placement.get("emotion", ""),
+            "description": new_placement.get("description", ""),
+            "enabled": placements[placement_index].get("enabled", True),
+            "selected_index": 0,
+            "clip_options": []
+        }
+        
+        # Get new clip options for this placement
+        try:
+            updated_placement["clip_options"] = _get_clip_options_for_placement(
+                broll_engine, updated_placement, num_options=4
+            )
+        except Exception as e:
+            print(f"[B-roll Regenerate] Clip options error: {e}")
+        
+        # Update the placement
+        placements[placement_index] = updated_placement
+        
+        # Save updated placements
+        data["broll_placements"] = placements
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump(data, f, indent=2)
+        
+        print(f"[B-roll Regenerate] Updated placement {placement_index} with clips for {prep_id}")
+        return {"broll_placements": placements}
+        
+    except Exception as e:
+        print(f"[B-roll Regenerate] Error: {e}")
+        import traceback
+        traceback.print_exc()
+        return {"broll_placements": placements}
+
+@app.get("/api/prep/{prep_id}/broll-clips/{placement_index:int}")
+async def get_broll_clips(prep_id: str, placement_index: int, user: dict = Depends(require_auth)):
+    """
+    Get available clip options for a B-roll placement.
+    Returns top 4 matching clips with metadata for user selection.
+    """
+    _validate_prep_id(prep_id)
+    path = PREP_DIR / f"{prep_id}.json"
+    if not path.exists():
+        raise HTTPException(status_code=404, detail="Prep session not found")
+    
+    with open(path, encoding="utf-8") as f:
+        data = json.load(f)
+    _check_prep_ownership(data, user)
+    
+    placements = data.get("broll_placements", [])
+    if not (0 <= placement_index < len(placements)):
+        raise HTTPException(status_code=400, detail="Invalid placement index")
+    
+    placement = placements[placement_index]
+    
+    try:
+        from scripts.broll_engine import BrollEngine
+        from scripts.video_utils import VideoUtils
+        
+        # Build scene request from placement
+        scene_request = {
+            "theme": placement.get("theme", ""),
+            "emotion": placement.get("emotion", ""),
+            "energy": placement.get("energy", "medium"),
+        }
+        
+        # Get video dimensions to determine orientation
+        input_video = data.get("input_video", "")
+        video_width, video_height = VideoUtils.get_dimensions(input_video) if input_video else (1920, 1080)
+        
+        broll_engine = BrollEngine(
+            api_key=os.environ.get("OPENAI_API_KEY", ""),
+            target_width=video_width,
+            target_height=video_height
+        )
+        clip_options = broll_engine.get_clip_options(scene_request, num_options=4)
+        
+        # Generate/serve thumbnails
+        THUMB_DIR = DATA_DIR / "broll_thumbnails"
+        THUMB_DIR.mkdir(exist_ok=True)
+        
+        for option in clip_options:
+            clip_id = option["clip_id"]
+            thumb_path = THUMB_DIR / f"{clip_id}.jpg"
+            
+            # Generate thumbnail if doesn't exist
+            if not thumb_path.exists():
+                broll_engine.generate_thumbnail(option["path"], str(thumb_path))
+            
+            # Add thumbnail URL
+            if thumb_path.exists():
+                option["thumbnail_url"] = f"/api/broll-thumbnail/{clip_id}"
+            else:
+                option["thumbnail_url"] = None
+            
+            # Remove full path for security
+            del option["path"]
+        
+        return {
+            "placement_index": placement_index,
+            "clip_options": clip_options
+        }
+        
+    except Exception as e:
+        print(f"[B-roll Clips] Error: {e}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail="Failed to get clips")
+
+@app.get("/api/broll-thumbnail/{clip_id}")
+async def get_broll_thumbnail(clip_id: str):
+    """Serve a B-roll clip thumbnail image. Extracts frame from video if needed."""
+    import cv2
+    
+    # Note: No auth required - movie clips are public assets
+    
+    THUMB_DIR = DATA_DIR / "broll_thumbnails"
+    THUMB_DIR.mkdir(exist_ok=True)
+    
+    # Clean clip_id
+    safe_id = _validate_clip_id(clip_id)
+    thumb_path = THUMB_DIR / f"{safe_id}.jpg"
+    
+    # Return cached thumbnail if exists
+    if thumb_path.exists():
+        print(f"[Thumbnail] Serving cached: {thumb_path}")
+        return FileResponse(thumb_path, media_type="image/jpeg")
+    
+    # Build video path directly - clip_id is like "movie_clips_1"
+    video_path = BASE_DIR / "movie_clips" / f"{safe_id}.mp4"
+    
+    # Try portrait folder if not found
+    if not video_path.exists():
+        video_path = BASE_DIR / "movie_clips_portrait" / f"{safe_id}.mp4"
+    
+    if not video_path.exists():
+        print(f"[Thumbnail] Video not found: {safe_id}")
+        raise HTTPException(status_code=404, detail="Video not found")
+    
+    print(f"[Thumbnail] Generating from: {video_path}")
+    
+    # Extract frame using OpenCV
+    try:
+        cap = cv2.VideoCapture(str(video_path))
+        if not cap.isOpened():
+            raise HTTPException(status_code=500, detail="Cannot open video")
+        
+        # Seek to 0.5 seconds
+        cap.set(cv2.CAP_PROP_POS_MSEC, 500)
+        ret, frame = cap.read()
+        cap.release()
+        
+        if not ret or frame is None:
+            raise HTTPException(status_code=500, detail="Cannot read frame")
+        
+        # Resize to thumbnail
+        h, w = frame.shape[:2]
+        target_h = 180
+        target_w = int(w * (target_h / h))
+        frame = cv2.resize(frame, (target_w, target_h))
+        
+        # Save and return
+        cv2.imwrite(str(thumb_path), frame)
+        print(f"[Thumbnail] Saved and serving: {thumb_path}")
+        return FileResponse(thumb_path, media_type="image/jpeg")
+        
+    except Exception as e:
+        print(f"[Thumbnail] Error: {e}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail="Thumbnail generation failed")
+
+def _generate_color_grade_previews(input_video: str) -> dict:
+    """Extract a frame from the user's video, apply each LUT, return base64 data URLs."""
+    import subprocess
+    import tempfile
+
+    if not input_video or not Path(input_video).exists():
+        return {}
+
+    preview_width = 320  # Keep small for fast generation and small base64
+    result = {}
+
+    try:
+        from scripts.video_utils import VideoUtils
+        duration = VideoUtils.get_duration(input_video)
+        # Pick frame at 2 seconds or 10% into video, whichever is earlier
+        seek_time = min(2.0, duration * 0.1) if duration > 0 else 1.0
+    except Exception:
+        seek_time = 2.0
+
+    with tempfile.TemporaryDirectory(prefix="color_preview_") as tmpdir:
+        tmp = Path(tmpdir)
+
+        # 1. Extract "before" frame (original, no LUT - ensure accurate colors)
+        before_path = tmp / "before.jpg"
+        cmd_before = [
+            "ffmpeg", "-y", "-hide_banner", "-loglevel", "error",
+            "-ss", str(seek_time), "-i", input_video,
+            "-vframes", "1",
+            # Use format filter to ensure proper color space, then scale
+            "-vf", f"format=pix_fmts=yuv420p,scale={preview_width}:-2:flags=lanczos",
+            "-q:v", "2",  # High quality JPEG
+            "-f", "image2", str(before_path),
+        ]
+        subprocess.run(cmd_before, capture_output=True, timeout=10)
+        if before_path.exists():
+            with open(before_path, "rb") as f:
+                result["before"] = f"data:image/jpeg;base64,{base64.b64encode(f.read()).decode()}"
+
+        # 2. For each LUT, extract frame with LUT applied
+        color_grading_dir = BASE_DIR / "color_grading"
+        for grade_key, lut_filename in COLOR_GRADE_TO_LUT.items():
+            lut_path = color_grading_dir / lut_filename
+            if not lut_path.exists():
+                continue
+            lut_str = str(lut_path).replace("\\", "/").replace(":", "\\:")
+            after_path = tmp / f"{grade_key}.jpg"
+            cmd_after = [
+                "ffmpeg", "-y", "-hide_banner", "-loglevel", "error",
+                "-ss", str(seek_time), "-i", input_video,
+                "-vframes", "1",
+                "-vf", f"lut3d=file='{lut_str}',scale={preview_width}:-2",
+                "-f", "image2", str(after_path),
+            ]
+            subprocess.run(cmd_after, capture_output=True, timeout=10)
+            if after_path.exists():
+                with open(after_path, "rb") as f:
+                    result[grade_key] = f"data:image/jpeg;base64,{base64.b64encode(f.read()).decode()}"
+
+    return result
+
+
+@app.get("/api/prep/{prep_id}/color-grade-previews")
+async def get_color_grade_previews(prep_id: str, user: dict = Depends(require_auth)):
+    """Generate color grade previews from a frame of the user's video."""
+    _validate_prep_id(prep_id)
+    path = PREP_DIR / f"{prep_id}.json"
+    if not path.exists():
+        raise HTTPException(status_code=404, detail="Prep session not found")
+    with open(path, encoding="utf-8") as f:
+        data = json.load(f)
+    _check_prep_ownership(data, user)
+    input_video = data.get("input_video", "")
+    if not input_video or not Path(input_video).exists():
+        return {}
+    try:
+        return _generate_color_grade_previews(input_video)
+    except Exception as e:
+        import traceback
+        print(f"[Color Grade Previews] Error: {e}")
+        traceback.print_exc()
+        return {}
+
+# =============================================================================
+# PIPELINE INTEGRATION
+# =============================================================================
+
+class _PipelineCancelled(Exception):
+    """Raised when the user cancels the job; pipeline stops at next progress update."""
+    pass
+
+
+def _hex_to_rgb(hex_str: str) -> Optional[List[int]]:
+    """Convert hex color (e.g. '#FFFFFF') to [R, G, B] list. Returns None if invalid."""
+    if not hex_str or not isinstance(hex_str, str):
+        return None
+    hex_str = hex_str.strip().lstrip("#")
+    if len(hex_str) == 6:
+        try:
+            return [int(hex_str[i : i + 2], 16) for i in (0, 2, 4)]
+        except ValueError:
+            pass
+    return None
+
+
+def _load_prep_data(prep_id: str) -> tuple:
+    """Load styled_words and timed_captions from prep file. Returns (styled_words, timed_captions, transcript) or (None, None, None) if invalid."""
+    if not prep_id or len(prep_id) > 64 or ".." in prep_id or "/" in prep_id or "\\" in prep_id:
+        return (None, None, None)
+    if not all(c.isalnum() or c in "-_" for c in prep_id):
+        return (None, None, None)
+    prep_path = PREP_DIR / f"{prep_id}.json"
+    if not prep_path.exists():
+        return (None, None, None)
+    try:
+        with open(prep_path, encoding="utf-8") as f:
+            data = json.load(f)
+        sw = data.get("styled_words") or []
+        tc = data.get("timed_captions") or []
+        tx = data.get("transcript_text") or ""
+        if sw:
+            if tc:
+                print(f"[Prep] Loaded from {prep_id}: {len(sw)} words, {len(tc)} caption groups")
+                return (sw, tc, tx)
+            # styled_words present but timed_captions empty — return sw so pipeline can build tc from it
+            print(f"[Prep] Loaded from {prep_id}: {len(sw)} words, 0 caption groups (will build from styled_words)")
+            return (sw, [], tx)
+    except Exception as e:
+        print(f"[Prep] Failed to load {prep_id}: {e}")
+    return (None, None, None)
+
+
+def _run_pipeline(input_video: str, output_video: str, options: dict, progress_cb=None, cancel_check=None) -> dict:
+    """Calls Viral Caption pipeline with options from the frontend."""
+    from scripts.pipeline import Pipeline
+
+    preset        = options.get("preset", "dynamic_smart")
+    use_whisper   = options.get("whisper", True)
+    # Use styled_words/timed_captions — prefer prep file when from_prep_id (avoids payload size limits)
+    styled_words  = options.get("styled_words")
+    timed_captions = options.get("timed_captions")
+    transcript    = options.get("transcript_text") or options.get("user_prompt") or options.get("transcript") or None
+    from_prep_id  = options.get("from_prep_id")
+
+    # Diagnostic: log what we received
+    sw_len = len(styled_words) if styled_words else 0
+    tc_len = len(timed_captions) if timed_captions else 0
+    print(f"[Pipeline] Incoming: from_prep_id={from_prep_id!r}, styled_words={sw_len}, timed_captions={tc_len}")
+
+    # CRITICAL: Prefer request payload (user's current edits from EditClip) over prep file.
+    # EditClip sends styled_words + timed_captions in the payload — these are the user's latest edits.
+    # Only fall back to prep when request has no caption data (e.g. ExportMobile).
+    request_has_captions = bool(styled_words and timed_captions and len(styled_words) > 0 and len(timed_captions) > 0)
+
+    if request_has_captions:
+        print(f"[Pipeline] Using request payload (user edits): {len(styled_words)} words, {len(timed_captions)} caption groups")
+    elif from_prep_id:
+        loaded_sw, loaded_tc, loaded_tx = _load_prep_data(from_prep_id)
+        if loaded_sw:
+            styled_words = loaded_sw
+            timed_captions = loaded_tc if (loaded_tc and len(loaded_tc) > 0) else []
+            if loaded_tx and not transcript:
+                transcript = loaded_tx
+            print(f"[Pipeline] Using prep {from_prep_id}: {len(styled_words)} words, {len(timed_captions) if timed_captions else 0} caption groups")
+        else:
+            prep_path = PREP_DIR / f"{from_prep_id}.json"
+            exists = prep_path.exists()
+            print(f"[Pipeline] Prep {from_prep_id}: file_exists={exists}, loaded_sw={bool(loaded_sw)} ({len(loaded_sw) if loaded_sw else 0}), loaded_tc={bool(loaded_tc)} ({len(loaded_tc) if loaded_tc else 0})")
+            if not styled_words or not timed_captions:
+                print(f"[Pipeline] Will use Whisper (no caption data from request or prep)")
+    enable_broll  = options.get("enable_broll") if options.get("enable_broll") is not None else options.get("broll", False)
+    noise_isolate = options.get("enable_noise_isolation") if options.get("enable_noise_isolation") is not None else options.get("noise_isolate", False)
+    add_intro     = options.get("intro", True)
+    instagram     = options.get("export_instagram") if options.get("export_instagram") is not None else options.get("instagram", True)
+    rounded       = options.get("rounded_corners") or "medium"
+    aspect_ratio  = options.get("aspect_ratio") or None
+    
+    # Watermark options
+    enable_watermark = options.get("enable_watermark", False)
+    watermark_text   = options.get("watermark_text") if enable_watermark else None
+    watermark_image  = options.get("watermark_image") if enable_watermark else None
+    watermark_position = options.get("watermark_position", "bottom-right")
+    watermark_opacity  = options.get("watermark_opacity", 0.6)
+
+    # LUT: frontend sends color_grade_lut (e.g. "vintage") or legacy "lut" (filename)
+    color_grade   = (options.get("color_grade_lut") or "").strip()
+    lut_name      = options.get("lut") or (COLOR_GRADE_TO_LUT.get(color_grade) if color_grade else None)
+    if not lut_name:
+        lut_name = "02_Film LUTs_Vintage.cube"
+    lut_path      = str(BASE_DIR / "color_grading" / lut_name) if lut_name else None
+
+    # Load preset config
+    preset_path = BASE_DIR / "presets" / f"{preset}.json"
+    config = {}
+    if preset_path.exists():
+        with open(preset_path) as f:
+            config = json.load(f)
+
+    # Merge user layout options from frontend into config (so preview matches final output)
+    if options.get("font_size") is not None:
+        config["font_size"] = int(options["font_size"])
+    if options.get("position") is not None:
+        config["position"] = str(options["position"])
+    if options.get("y_position") is not None:
+        config["y_position"] = float(options["y_position"])
+    if options.get("words_per_line") is not None:
+        config["words_per_line"] = int(options["words_per_line"])
+    if options.get("caption_color"):
+        rgb = _hex_to_rgb(str(options["caption_color"]))
+        if rgb:
+            config["color"] = rgb
+    if options.get("hook_color"):
+        rgb = _hex_to_rgb(str(options["hook_color"]))
+        if rgb:
+            config["highlight_color"] = rgb
+            config["hook_color"] = rgb  # Also store as hook_color for clarity
+    if options.get("emphasis_color"):
+        rgb = _hex_to_rgb(str(options["emphasis_color"]))
+        if rgb:
+            config["emphasis_color"] = rgb
+    if options.get("regular_color"):
+        rgb = _hex_to_rgb(str(options["regular_color"]))
+        if rgb:
+            config["regular_color"] = rgb
+    if options.get("scroll_speed") is not None and preset == "marquee":
+        if "marquee_settings" not in config:
+            config["marquee_settings"] = {}
+        config["marquee_settings"]["scroll_speed"] = float(options["scroll_speed"])
+    if options.get("caption_position") is not None and preset not in ("viral", "marquee", "split"):
+        # caption_position maps to y_position for classic presets (top/center/bottom)
+        pos_map = {"top": 0.15, "center": 0.5, "bottom": 0.85}
+        config["y_position"] = pos_map.get(str(options["caption_position"]).lower(), config.get("y_position", 0.72))
+    # Red hooks (giant background text) — enable_red_hook from frontend
+    if options.get("enable_red_hook") is not None:
+        if options["enable_red_hook"]:
+            hook_size = options.get("hook_size", 1.0)
+            config["max_hook_words"] = max(1, int(hook_size)) if isinstance(hook_size, (int, float)) else 1
+            config["exclusive_hooks"] = True
+        else:
+            config["max_hook_words"] = 0
+            config["exclusive_hooks"] = False
+
+    try:
+        pipeline = Pipeline(api_key=os.environ.get("OPENAI_API_KEY", ""), config=config)
+        
+        # Attach cancel check function to pipeline for use in long-running operations
+        pipeline.cancel_check = cancel_check
+
+        # Hook progress updates into pipeline; check cancel at each progress tick
+        if progress_cb or cancel_check:
+            original_update = pipeline._update_progress
+            def patched_update(stage, pct):
+                if cancel_check and cancel_check():
+                    raise _PipelineCancelled()
+                original_update(stage, pct)
+                if progress_cb:
+                    stage_weights = {
+                        "orientation": 5, "masks": 15, "transcription": 20,
+                        "captions": 40, "broll": 10, "intro": 5,
+                        "instagram": 2, "rounded_corners": 3, "watermark": 2,
+                    }
+                    progress_cb(stage, pct, stage_weights.get(stage, 5))
+            pipeline._update_progress = patched_update
+
+        success = pipeline.process(
+            input_video=input_video,
+            output_video=output_video,
+            transcript=transcript,
+            use_whisper=use_whisper and not transcript and styled_words is None,
+            enable_broll=enable_broll,
+            noise_isolate=noise_isolate,
+            add_intro=add_intro,
+            instagram_export=instagram,
+            lut_path=lut_path if lut_path and Path(lut_path).exists() else None,
+            rounded_corners=rounded,
+            aspect_ratio=aspect_ratio,
+            watermark_text=watermark_text,
+            watermark_image=watermark_image,
+            watermark_position=watermark_position,
+            watermark_opacity=watermark_opacity,
+            styled_words=styled_words,
+            timed_captions=timed_captions,
+        )
+        return {"success": success}
+    except _PipelineCancelled:
+        return {"success": False, "cancelled": True}
+    except Exception as e:
+        import traceback
+        return {"success": False, "error": str(e), "traceback": traceback.format_exc()}
+
+# =============================================================================
+# RUNPOD INTEGRATION
+# =============================================================================
+
+import httpx
+
+RUNPOD_API_KEY = os.getenv("RUNPOD_API_KEY")
+RUNPOD_ENDPOINT_ID = os.getenv("RUNPOD_ENDPOINT_ID")
+
+async def send_to_runpod(job_payload: dict) -> str:
+    """Send job to RunPod serverless endpoint."""
+    if not RUNPOD_API_KEY or not RUNPOD_ENDPOINT_ID:
+        raise HTTPException(status_code=503, detail="RunPod not configured")
+    
+    url = f"https://api.runpod.ai/v2/{RUNPOD_ENDPOINT_ID}/run"
+    headers = {"Authorization": f"Bearer {RUNPOD_API_KEY}"}
+    
+    async with httpx.AsyncClient() as client:
+        r = await client.post(url, json={"input": job_payload}, headers=headers, timeout=30)
+        if r.status_code != 200:
+            raise HTTPException(status_code=500, detail=f"RunPod submission failed: {r.text}")
+        return r.json()["id"]
+
+async def get_runpod_status(runpod_job_id: str) -> dict:
+    """Get status of a RunPod job."""
+    if not RUNPOD_API_KEY or not RUNPOD_ENDPOINT_ID:
+        raise HTTPException(status_code=503, detail="RunPod not configured")
+    
+    url = f"https://api.runpod.ai/v2/{RUNPOD_ENDPOINT_ID}/status/{runpod_job_id}"
+    headers = {"Authorization": f"Bearer {RUNPOD_API_KEY}"}
+    
+    async with httpx.AsyncClient() as client:
+        r = await client.get(url, headers=headers, timeout=10)
+        if r.status_code != 200:
+            return {"status": "FAILED", "error": f"RunPod API error: {r.status_code}"}
+        data = r.json()
+        
+        # Map RunPod statuses to our statuses
+        status_map = {
+            "IN_QUEUE": "queued",
+            "IN_PROGRESS": "processing",
+            "COMPLETED": "completed",
+            "FAILED": "failed",
+            "CANCELLED": "cancelled",
+            "TIMED_OUT": "failed",
+        }
+        
+        return {
+            "status": status_map.get(data.get("status"), "unknown"),
+            "output": data.get("output"),
+            "error": data.get("error"),
+        }
+
+# =============================================================================
+# JOBS
+# =============================================================================
+
+JOBS: dict[str, dict] = {}
+JOB_LOCK = threading.Lock()
+JOBS_FILE = DATA_DIR / "jobs.json"
+
+# Frontend sends these keys; backend also accepts legacy names for compatibility
+COLOR_GRADE_TO_LUT = {
+    "vintage": "02_Film LUTs_Vintage.cube",
+    "cinematic": "07_Cinematic LUTs_Flavin.cube",
+    "frosted": "04_Cinematic LUTs_Frosted.cube",
+    "foliage": "05_Film LUTs_Foliage.cube",
+    "cross_process": "02_Film Emulation LUTs_Cross Process.cube",
+    "bw": "08_Film Emulation LUTs_B&W.cube",
+}
+
+class ProcessBody(BaseModel):
+    video_id: str
+    lock_id: Optional[str] = None  # Credit lock ID from upload
+    # Legacy / backend names
+    preset: Optional[str] = "dynamic_smart"
+    whisper: Optional[bool] = True
+    broll: Optional[bool] = False
+    noise_isolate: Optional[bool] = False
+    intro: Optional[bool] = True
+    instagram: Optional[bool] = True
+    rounded_corners: Optional[str] = "medium"
+    lut: Optional[str] = None
+    transcript: Optional[str] = None
+    caption_style: Optional[dict] = None
+    # User's edited transcript data from frontend
+    styled_words: Optional[List[Any]] = None
+    timed_captions: Optional[List[Any]] = None
+    transcript_text: Optional[str] = None
+    # Frontend payload names (so UI options actually take effect)
+    user_prompt: Optional[str] = None
+    enable_broll: Optional[bool] = None
+    enable_noise_isolation: Optional[bool] = None
+    export_instagram: Optional[bool] = None
+    color_grade_lut: Optional[str] = None
+    aspect_ratio: Optional[str] = None
+    caption_position: Optional[str] = None
+    behind_person: Optional[bool] = None
+    duration_seconds: Optional[float] = None
+    model: Optional[str] = None
+    style: Optional[str] = None
+    enable_red_hook: Optional[bool] = None
+    # Watermark options
+    enable_watermark: Optional[bool] = False
+    watermark_text: Optional[str] = None
+    watermark_image: Optional[str] = None
+    watermark_position: Optional[str] = "bottom-right"
+    watermark_opacity: Optional[float] = 0.6
+    # Layout options from EditClip (merged into preset config so preview matches output)
+    font_size: Optional[int] = None
+    position: Optional[str] = None
+    y_position: Optional[float] = None
+    caption_color: Optional[str] = None
+    hook_color: Optional[str] = None
+    hook_y_position: Optional[float] = None
+    hook_position: Optional[str] = None
+    hook_mask_quality: Optional[str] = None
+    hook_size: Optional[float] = None
+    emphasis_color: Optional[str] = None
+    regular_color: Optional[str] = None
+    use_emphasis_font: Optional[bool] = None
+    words_per_line: Optional[int] = None
+    scroll_speed: Optional[float] = None
+    from_prep_id: Optional[str] = None
+    # User's edited transcript data from frontend
+    styled_words: Optional[List[Dict]] = None
+    timed_captions: Optional[List[Any]] = None
+    transcript_text: Optional[str] = None
+
+@app.post("/api/jobs")
+@limiter.limit("5/minute")
+async def create_job(request: Request, body: ProcessBody, user: dict = Depends(require_auth)):
+    # NEW CREDIT SYSTEM: Verify lock exists instead of deducting credits
+    # Credits are locked during upload and only deducted on download confirmation
+    sb_url = os.environ.get("SUPABASE_URL", "").strip()
+    
+    if not body.lock_id:
+        raise HTTPException(status_code=400, detail="Credit lock required. Please start from upload.")
+    
+    # Verify the lock exists and is valid
+    try:
+        r = requests.get(
+            f"{sb_url}/rest/v1/credit_locks?id=eq.{body.lock_id}&user_id=eq.{user['id']}&status=eq.active",
+            headers=_sb_headers(),
+            timeout=5,
+        )
+        
+        if not r.ok or not r.json():
+            raise HTTPException(status_code=402, detail="Credit lock expired or invalid. Please upload again.")
+        
+        lock_data = r.json()[0]
+        
+        # Check if lock has expired
+        from datetime import datetime
+        expires_at = datetime.fromisoformat(lock_data["expires_at"].replace('Z', '+00:00'))
+        if datetime.now(expires_at.tzinfo) > expires_at:
+            raise HTTPException(status_code=402, detail="Credit lock expired. Please upload again.")
+            
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"[Create Job] Lock verification error: {e}")
+        raise HTTPException(status_code=500, detail="Failed to verify credit lock")
+
+    job_id = str(uuid.uuid4())
+    # Store all settings for "Edit Again" feature
+    settings = body.model_dump(exclude_unset=True)
+    with JOB_LOCK:
+        JOBS[job_id] = {
+            "status": "queued",
+            "stage": "queued",
+            "message": "Job queued...",
+            "progress": 0,
+            "cancel_requested": False,
+            "user_id": user["id"],
+            "video_id": body.video_id,
+            "from_prep_id": body.from_prep_id,
+            "lock_id": body.lock_id,  # Store lock_id for download confirmation
+            "settings": settings,  # Store all user settings for restoration
+        }
+
+    def run():
+        input_path  = _find_upload(body.video_id)
+        out_name    = f"processed_{body.video_id}_{uuid.uuid4().hex[:8]}.mp4"
+        output_path = OUTPUT_DIR / out_name
+
+        with JOB_LOCK:
+            JOBS[job_id].update(status="processing", stage="starting", progress=5, message="Starting pipeline...")
+
+        def progress_cb(stage, pct, weight):
+            with JOB_LOCK:
+                if not JOBS.get(job_id):
+                    return
+                JOBS[job_id].update(
+                    stage=stage,
+                    message=f"{stage.replace('_', ' ').title()}... {pct:.0f}%",
+                    progress=min(95, JOBS[job_id].get("progress", 5) + (pct / 100 * weight)),
+                )
+
+        def cancel_check():
+            with JOB_LOCK:
+                return JOBS.get(job_id, {}).get("cancel_requested", False)
+
+        def release_lock_on_failure():
+            """Release credit lock on failure/cancellation (credits were not deducted yet)."""
+            if body.lock_id:
+                try:
+                    requests.post(
+                        f"{sb_url}/rest/v1/rpc/release_credits",
+                        headers=_sb_headers(),
+                        json={"lock_id": body.lock_id},
+                        timeout=5,
+                    )
+                except Exception as e:
+                    print(f"[Job {job_id}] Failed to release lock: {e}")
+        
+        try:
+            if cancel_check():
+                with JOB_LOCK:
+                    JOBS[job_id].update(status="cancelled", stage="cancelled", message="Cancelled")
+                release_lock_on_failure()
+                return
+
+            result = _run_pipeline(
+                input_video=str(input_path),
+                output_video=str(output_path),
+                options=body.model_dump(),
+                progress_cb=progress_cb,
+                cancel_check=cancel_check,
+            )
+
+            if result.get("cancelled") or cancel_check():
+                output_path.unlink(missing_ok=True)
+                with JOB_LOCK:
+                    JOBS[job_id].update(status="cancelled", stage="cancelled", message="Cancelled")
+                release_lock_on_failure()
+                return
+
+            with JOB_LOCK:
+                if result.get("success"):
+                    JOBS[job_id].update(
+                        status="completed",
+                        stage="done",
+                        message="Done!",
+                        progress=100,
+                        output_video_url=f"/api/output/{out_name}",
+                        thumbnail_url=f"/api/output/{out_name}.jpg",
+                    )
+                else:
+                    error_msg = result.get("error", "Processing failed")
+                    print(f"[Job {job_id}] FAILED: {error_msg}")
+                    if result.get("traceback"):
+                        print(f"[Job {job_id}] Traceback:\n{result['traceback']}")
+                    JOBS[job_id].update(
+                        status="failed",
+                        stage="failed",
+                        message=error_msg,
+                        progress=0,
+                    )
+                    release_lock_on_failure()
+
+            # Generate thumbnail for the output video
+            if result.get("success"):
+                try:
+                    thumb_path = OUTPUT_DIR / f"{out_name}.jpg"
+                    import cv2
+                    cap = cv2.VideoCapture(str(output_path))
+                    if cap.isOpened():
+                        # Get video duration and seek to 1 second or 10%
+                        fps = cap.get(cv2.CAP_PROP_FPS)
+                        total_frames = cap.get(cv2.CAP_PROP_FRAME_COUNT)
+                        target_frame = min(int(fps * 1), int(total_frames * 0.1))
+                        cap.set(cv2.CAP_PROP_POS_FRAMES, target_frame)
+                        ret, frame = cap.read()
+                        if ret and frame is not None:
+                            # Resize to thumbnail size
+                            h, w = frame.shape[:2]
+                            thumb_h = 360
+                            thumb_w = int(w * (thumb_h / h))
+                            frame = cv2.resize(frame, (thumb_w, thumb_h))
+                            cv2.imwrite(str(thumb_path), frame)
+                            print(f"[Job {job_id}] Generated thumbnail: {thumb_path}")
+                        cap.release()
+                except Exception as e:
+                    print(f"[Job {job_id}] Thumbnail generation error: {e}")
+            
+            # Note: We don't auto-save to My Videos here
+            # Videos are only saved to My Videos if download fails (handled in frontend)
+
+        except Exception as e:
+            import traceback
+            print(f"[Job {job_id}] EXCEPTION: {e}")
+            print(f"[Job {job_id}] Traceback:\n{traceback.format_exc()}")
+            with JOB_LOCK:
+                JOBS[job_id].update(status="failed", stage="failed", message=str(e), progress=0)
+            release_lock_on_failure()
+
+    threading.Thread(target=run, daemon=True).start()
+    return {"job_id": job_id}
+
+@app.get("/api/jobs/{job_id}")
+async def get_job(job_id: str, user: dict = Depends(require_auth)):
+    j = JOBS.get(job_id)
+    if not j:
+        raise HTTPException(status_code=404, detail="Job not found")
+    if j.get("user_id") and j["user_id"] != user["id"]:
+        raise HTTPException(status_code=404, detail="Job not found")
+    return {k: v for k, v in j.items() if not k.startswith("_") and k != "cancel_requested"}
+
+@app.post("/api/jobs/{job_id}/cancel")
+async def cancel_job(job_id: str, user: dict = Depends(require_auth)):
+    with JOB_LOCK:
+        j = JOBS.get(job_id)
+        if not j:
+            raise HTTPException(status_code=404, detail="Job not found")
+        if j.get("user_id") and j["user_id"] != user["id"]:
+            raise HTTPException(status_code=404, detail="Job not found")
+        if j.get("status") not in ("queued", "processing"):
+            return {"ok": True, "message": "Job already finished"}
+        j["cancel_requested"] = True
+    return {"ok": True, "message": "Cancellation requested"}
+
+# =============================================================================
+# DOWNLOAD CONFIRMATION (Credit Deduction)
+# =============================================================================
+
+class DownloadConfirmBody(BaseModel):
+    job_id: str
+    lock_id: str
+
+@app.post("/api/jobs/{job_id}/confirm-download")
+async def confirm_download(job_id: str, body: DownloadConfirmBody, user: dict = Depends(require_auth)):
+    """
+    Confirm download and deduct credits.
+    This is called when user clicks Download and confirms the warning.
+    """
+    # Verify job belongs to user
+    job = JOBS.get(job_id)
+    if not job or job.get("user_id") != user["id"]:
+        raise HTTPException(status_code=404, detail="Job not found")
+    
+    if job.get("status") != "completed":
+        raise HTTPException(status_code=400, detail="Video not ready")
+    
+    # Verify lock matches
+    if job.get("lock_id") != body.lock_id:
+        raise HTTPException(status_code=400, detail="Credit lock mismatch")
+    
+    sb_url = os.environ.get("SUPABASE_URL", "").strip()
+    
+    try:
+        # Deduct the locked credits
+        r = requests.post(
+            f"{sb_url}/rest/v1/rpc/deduct_locked_credits",
+            headers=_sb_headers(),
+            json={"lock_id": body.lock_id},
+            timeout=5,
+        )
+        
+        if not r.ok or not r.json():
+            raise HTTPException(status_code=402, detail="Failed to process credits")
+        
+        # Mark job as downloaded
+        with JOB_LOCK:
+            if job_id in JOBS:
+                JOBS[job_id]["downloaded"] = True
+                JOBS[job_id]["downloaded_at"] = time.time()
+        
+        return {
+            "ok": True,
+            "message": "100 credits used. You can now download.",
+            "download_url": job.get("output_video_url"),
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"[Confirm Download] Error: {e}")
+        raise HTTPException(status_code=500, detail="Failed to process download")
+
+
+# =============================================================================
+# OUTPUT FILES
+# =============================================================================
+
+@app.get("/api/output/{filename}")
+async def get_output(filename: str, user: dict = Depends(require_auth_with_query)):
+    # Sanitize filename
+    filename = Path(filename).name
+    path = OUTPUT_DIR / filename
+    if not path.exists():
+        raise HTTPException(status_code=404, detail="File not found")
+    return FileResponse(path, media_type="video/mp4", filename=filename)
+
+@app.get("/api/output/{filename}.jpg")
+async def get_output_thumbnail(filename: str, user: dict = Depends(require_auth_with_query)):
+    """Serve thumbnail for output video."""
+    # Sanitize filename
+    filename = Path(filename).name
+    path = OUTPUT_DIR / f"{filename}.jpg"
+    if not path.exists():
+        raise HTTPException(status_code=404, detail="Thumbnail not found")
+    return FileResponse(path, media_type="image/jpeg")
+
+# =============================================================================
+# MY VIDEOS
+# =============================================================================
+
+@app.get("/api/videos")
+async def get_my_videos(user: dict = Depends(require_auth)):
+    sb_url = os.environ.get("SUPABASE_URL", "").strip()
+    if not sb_url:
+        return {"videos": []}
+    try:
+        r = requests.get(
+            f"{sb_url}/rest/v1/videos?user_id=eq.{user['id']}&order=created_at.desc",
+            headers=_sb_headers(),
+            timeout=5,
+        )
+        videos = r.json() if r.ok else []
+        # Add signed URLs
+        for v in videos:
+            if v.get("storage_path"):
+                sr = requests.post(
+                    f"{sb_url}/storage/v1/object/sign/videos/{v['storage_path']}",
+                    headers=_sb_headers(),
+                    json={"expiresIn": 3600},
+                    timeout=5,
+                )
+                if sr.ok:
+                    v["signed_url"] = sr.json().get("signedURL", "")
+        return {"videos": videos}
+    except Exception as e:
+        return {"videos": [], "error": str(e)}
+
+# =============================================================================
+# PAYMENTS (Razorpay)
+# =============================================================================
+
+PLANS = {
+    1: {"credits": 100,  "amount_paise": 9900,  "description": "100 Credits (1 Clip)"},
+    3: {"credits": 300,  "amount_paise": 19900, "description": "300 Credits (3 Clips)"},
+    10: {"credits": 1000, "amount_paise": 49900, "description": "1000 Credits (10 Clips)"},
+}
+
+class CreateOrderBody(BaseModel):
+    plan: int
+
+class VerifyPaymentBody(BaseModel):
+    razorpay_payment_id: str
+    razorpay_order_id: str
+    razorpay_signature: str
+
+@app.post("/api/payments/create-order")
+@limiter.limit("10/minute")
+async def create_payment_order(request: Request, body: CreateOrderBody, user: dict = Depends(require_auth)):
+    plan = PLANS.get(body.plan)
+    if not plan:
+        raise HTTPException(status_code=400, detail="Invalid plan")
+    if not os.environ.get("RAZORPAY_KEY_ID"):
+        raise HTTPException(status_code=503, detail="Payments not configured")
+    if _razorpay is None:
+        raise HTTPException(status_code=503, detail="Razorpay package not installed")
+    try:
+        rzp = _razorpay.Client(auth=(
+            os.environ.get("RAZORPAY_KEY_ID", ""),
+            os.environ.get("RAZORPAY_KEY_SECRET", ""),
+        ))
+        order = rzp.order.create({
+            "amount": plan["amount_paise"],
+            "currency": "INR",
+            "receipt": f"obula_{uuid.uuid4().hex[:12]}",
+            "notes": {"user_id": user["id"], "plan": str(body.plan)},
+        })
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="Could not create order")
+    return {
+        "order_id": order["id"],
+        "amount": plan["amount_paise"],
+        "currency": "INR",
+        "key_id": os.environ.get("RAZORPAY_KEY_ID"),
+        "description": plan["description"],
+    }
+
+@app.post("/api/payments/verify")
+async def verify_payment(body: VerifyPaymentBody, user: dict = Depends(require_auth)):
+    secret = os.environ.get("RAZORPAY_KEY_SECRET", "").strip()
+    if not secret:
+        raise HTTPException(status_code=503, detail="Payments not configured")
+    if _razorpay is None:
+        raise HTTPException(status_code=503, detail="Razorpay package not installed")
+    msg = f"{body.razorpay_order_id}|{body.razorpay_payment_id}"
+    expected = hmac.new(secret.encode(), msg.encode(), hashlib.sha256).hexdigest()
+    if expected != body.razorpay_signature:
+        raise HTTPException(status_code=400, detail="Invalid payment signature")
+    try:
+        rzp = _razorpay.Client(auth=(os.environ.get("RAZORPAY_KEY_ID", ""), secret))
+        rzp_order = rzp.order.fetch(body.razorpay_order_id)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="Payment verification failed")
+    plan_num = int(rzp_order.get("notes", {}).get("plan", 1))
+    credits  = PLANS.get(plan_num, PLANS[1])["credits"]
+    _add_credits(user["id"], credits)
+    return {"ok": True, "credits_added": credits}
+
+
+# =============================================================================
+# CREDIT LOCKS SYSTEM
+# =============================================================================
+
+class LockCreditsBody(BaseModel):
+    upload_id: str
+    amount: Optional[int] = 100
+
+class LockCreditsResponse(BaseModel):
+    lock_id: str
+    expires_at: str
+    message: str
+
+@app.post("/api/credits/lock")
+async def lock_credits_api(body: LockCreditsBody, user: dict = Depends(require_auth)):
+    """Lock credits when user starts upload. Returns lock_id."""
+    sb_url = os.environ.get("SUPABASE_URL", "").strip()
+    
+    try:
+        r = requests.post(
+            f"{sb_url}/rest/v1/rpc/lock_credits",
+            headers=_sb_headers(),
+            json={
+                "user_uuid": user["id"],
+                "vid_id": body.upload_id,
+                "upload_vid_id": body.upload_id,
+                "amount": body.amount
+            },
+            timeout=10,
+        )
+        
+        if not r.ok:
+            error_text = r.text[:200]
+            if "Insufficient credits" in error_text:
+                raise HTTPException(status_code=402, detail="Insufficient credits. Please purchase more.")
+            raise HTTPException(status_code=500, detail=f"Failed to lock credits: {error_text}")
+        
+        lock_id = r.json()
+        
+        # Get expiry time
+        r2 = requests.get(
+            f"{sb_url}/rest/v1/credit_locks?id=eq.{lock_id}&select=expires_at",
+            headers=_sb_headers(),
+            timeout=5,
+        )
+        expires_at = r2.json()[0]["expires_at"] if r2.ok and r2.json() else None
+        
+        return {
+            "lock_id": lock_id,
+            "expires_at": expires_at,
+            "message": f"{body.amount} credits locked. Unlocks in 1 hour if abandoned."
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"[Lock Credits] Error: {e}")
+        raise HTTPException(status_code=500, detail="Failed to lock credits")
+
+
+@app.post("/api/credits/lock/{lock_id}/release")
+async def release_credits_api(lock_id: str, user: dict = Depends(require_auth)):
+    """Release locked credits (when user abandons video)."""
+    sb_url = os.environ.get("SUPABASE_URL", "").strip()
+    
+    try:
+        r = requests.post(
+            f"{sb_url}/rest/v1/rpc/release_credits",
+            headers=_sb_headers(),
+            json={"lock_id": lock_id},
+            timeout=5,
+        )
+        
+        return {"ok": True, "released": r.json() if r.ok else False}
+        
+    except Exception as e:
+        print(f"[Release Credits] Error: {e}")
+        raise HTTPException(status_code=500, detail="Failed to release credits")
+
+
+@app.post("/api/credits/lock/{lock_id}/deduct")
+async def deduct_credits_api(lock_id: str, user: dict = Depends(require_auth)):
+    """Deduct locked credits when user confirms download."""
+    sb_url = os.environ.get("SUPABASE_URL", "").strip()
+    
+    try:
+        r = requests.post(
+            f"{sb_url}/rest/v1/rpc/deduct_locked_credits",
+            headers=_sb_headers(),
+            json={"lock_id": lock_id},
+            timeout=5,
+        )
+        
+        if r.ok and r.json():
+            return {"ok": True, "deducted": True, "message": "100 credits used"}
+        else:
+            raise HTTPException(status_code=400, detail="Failed to deduct credits")
+            
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"[Deduct Credits] Error: {e}")
+        raise HTTPException(status_code=500, detail="Failed to deduct credits")
+
+
+@app.post("/api/credits/lock/{lock_id}/retry")
+async def increment_retry_api(lock_id: str, user: dict = Depends(require_auth)):
+    """Increment retry count when user clicks Edit Again. Returns remaining retries."""
+    sb_url = os.environ.get("SUPABASE_URL", "").strip()
+    
+    try:
+        # First, get current retry count
+        r1 = requests.get(
+            f"{sb_url}/rest/v1/credit_locks?id=eq.{lock_id}&user_id=eq.{user['id']}&status=eq.active&select=retry_count,max_retries",
+            headers=_sb_headers(),
+            timeout=5,
+        )
+        
+        if not r1.ok or not r1.json():
+            raise HTTPException(status_code=404, detail="Lock not found or already used")
+        
+        lock_data = r1.json()[0]
+        current_retry = lock_data.get("retry_count", 0)
+        max_retries = lock_data.get("max_retries", 5)
+        
+        if current_retry >= max_retries:
+            raise HTTPException(status_code=403, detail="Maximum retries exceeded. Please download the video.")
+        
+        # Increment retry count directly
+        new_retry = current_retry + 1
+        r2 = requests.patch(
+            f"{sb_url}/rest/v1/credit_locks?id=eq.{lock_id}&user_id=eq.{user['id']}",
+            headers=_sb_headers(),
+            json={"retry_count": new_retry, "updated_at": "now()"},
+            timeout=5,
+        )
+        
+        if not r2.ok:
+            raise HTTPException(status_code=500, detail="Failed to update retry count")
+        
+        remaining = max_retries - new_retry
+        
+        return {
+            "ok": True,
+            "retry_count": new_retry,
+            "remaining_retries": remaining,
+            "message": f"{remaining} retries remaining"
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"[Increment Retry] Error: {e}")
+        raise HTTPException(status_code=500, detail="Failed to track retry")
+
+
+@app.get("/api/credits/lock/{lock_id}")
+async def get_lock_status(lock_id: str, user: dict = Depends(require_auth)):
+    """Get lock status including remaining retries and expiry."""
+    sb_url = os.environ.get("SUPABASE_URL", "").strip()
+    
+    try:
+        r = requests.get(
+            f"{sb_url}/rest/v1/credit_locks?id=eq.{lock_id}&user_id=eq.{user['id']}&select=*",
+            headers=_sb_headers(),
+            timeout=5,
+        )
+        
+        if not r.ok or not r.json():
+            raise HTTPException(status_code=404, detail="Lock not found")
+        
+        lock = r.json()[0]
+        remaining = lock.get("max_retries", 5) - lock.get("retry_count", 0)
+        
+        return {
+            "lock_id": lock["id"],
+            "status": lock["status"],
+            "locked_amount": lock["locked_amount"],
+            "locked_at": lock["locked_at"],
+            "expires_at": lock["expires_at"],
+            "retry_count": lock["retry_count"],
+            "max_retries": lock["max_retries"],
+            "remaining_retries": max(remaining, 0),
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"[Get Lock Status] Error: {e}")
+        raise HTTPException(status_code=500, detail="Failed to get lock status")
+
+
+@app.get("/api/credits/status")
+async def get_credits_status(user: dict = Depends(require_auth)):
+    """Get user's credit status: total, locked, available."""
+    sb_url = os.environ.get("SUPABASE_URL", "").strip()
+    
+    try:
+        # Get total credits from profile
+        r1 = requests.get(
+            f"{sb_url}/rest/v1/profiles?id=eq.{user['id']}&select=credits,locked_credits",
+            headers=_sb_headers(),
+            timeout=5,
+        )
+        
+        profile = r1.json()[0] if r1.ok and r1.json() else {"credits": 0, "locked_credits": 0}
+        total = profile.get("credits", 0)
+        locked = profile.get("locked_credits", 0)
+        
+        # Get active locks
+        r2 = requests.get(
+            f"{sb_url}/rest/v1/credit_locks?user_id=eq.{user['id']}&status=eq.active&select=*",
+            headers=_sb_headers(),
+            timeout=5,
+        )
+        
+        active_locks = r2.json() if r2.ok else []
+        
+        return {
+            "total_credits": total,
+            "locked_credits": locked,
+            "available_credits": max(total - locked, 0),
+            "active_locks": len(active_locks),
+            "locks": [
+                {
+                    "lock_id": lock["id"],
+                    "video_id": lock["video_id"],
+                    "amount": lock["locked_amount"],
+                    "expires_at": lock["expires_at"],
+                    "remaining_retries": lock["max_retries"] - lock["retry_count"]
+                }
+                for lock in active_locks
+            ]
+        }
+        
+    except Exception as e:
+        print(f"[Get Credits Status] Error: {e}")
+        raise HTTPException(status_code=500, detail="Failed to get credits status")
+
+
+# =============================================================================
+# CONTACT / FEEDBACK
+# =============================================================================
+
+class ContactBody(BaseModel):
+    name: str
+    message: str
+
+@app.post("/api/contact")
+@limiter.limit("3/minute")
+async def submit_feedback(request: Request, body: ContactBody, user: dict = Depends(require_auth)):
+    """Submit feedback - stores in database. Requires authentication."""
+    name = (body.name or "").strip()
+    message = (body.message or "").strip()
+    
+    if not name:
+        raise HTTPException(status_code=400, detail="Name is required")
+    if not message:
+        raise HTTPException(status_code=400, detail="Message is required")
+    if len(message) > 5000:
+        raise HTTPException(status_code=400, detail="Message too long (max 5000 chars)")
+    
+    sb_url = os.environ.get("SUPABASE_URL", "").strip()
+    
+    # Get user's email from Supabase
+    try:
+        r = requests.get(
+            f"{sb_url}/rest/v1/profiles?id=eq.{user['id']}&select=email",
+            headers=_sb_headers(),
+            timeout=5,
+        )
+        rows = r.json() if r.ok else []
+        user_email = rows[0].get("email") if rows else user.get("email", "")
+    except Exception:
+        user_email = user.get("email", "")
+    
+    # Store in database
+    try:
+        r = requests.post(
+            f"{sb_url}/rest/v1/feedbacks",
+            headers=_sb_headers(),
+            json={
+                "user_id": user["id"],
+                "name": name,
+                "email": user_email,
+                "message": message,
+                "status": "unread"
+            },
+            timeout=5,
+        )
+        if not r.ok:
+            print(f"[Feedback] Insert failed: {r.status_code} {r.text[:200]}")
+            raise HTTPException(status_code=500, detail="Could not save feedback")
+    except Exception as e:
+        print(f"[Feedback] Error: {e}")
+        raise HTTPException(status_code=500, detail="Failed to save feedback")
+    
+    return {"ok": True, "message": "Feedback submitted successfully"}
+
+
+# =============================================================================
+# ADMIN ENDPOINTS
+# =============================================================================
+
+def _verify_admin(user: dict) -> bool:
+    """Verify if user is admin via Supabase."""
+    sb_url = os.environ.get("SUPABASE_URL", "").strip()
+    if not sb_url:
+        return False
+    try:
+        r = requests.get(
+            f"{sb_url}/rest/v1/profiles?id=eq.{user['id']}&select=role",
+            headers=_sb_headers(),
+            timeout=5,
+        )
+        rows = r.json() if r.ok else []
+        return rows and rows[0].get("role") == "admin"
+    except Exception as e:
+        print(f"[Admin] Verification error: {e}")
+        return False
+
+
+@app.get("/api/admin/users")
+async def get_admin_users(user: dict = Depends(require_auth)):
+    """Admin-only: Get all users with their credits."""
+    if not _verify_admin(user):
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    sb_url = os.environ.get("SUPABASE_URL", "").strip()
+    try:
+        r = requests.get(
+            f"{sb_url}/rest/v1/profiles?select=*",
+            headers=_sb_headers(),
+            timeout=5,
+        )
+        if not r.ok:
+            raise HTTPException(status_code=500, detail="Could not fetch users")
+        return r.json()
+    except Exception as e:
+        print(f"[Admin] Fetch users error: {e}")
+        raise HTTPException(status_code=500, detail="Failed to fetch users")
+
+
+class GrantCreditsBody(BaseModel):
+    user_id: str
+    credits: int
+
+@app.post("/api/admin/grant-credits")
+async def admin_grant_credits(body: GrantCreditsBody, user: dict = Depends(require_auth)):
+    """Admin-only: Grant credits to a user."""
+    if not _verify_admin(user):
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    _add_credits(body.user_id, body.credits)
+    return {"ok": True, "credits_added": body.credits}
+
+
+@app.get("/api/admin/feedbacks")
+async def get_feedbacks(
+    status: Optional[str] = None,
+    user: dict = Depends(require_auth)
+):
+    """Admin-only: Get all feedbacks with optional status filter."""
+    if not _verify_admin(user):
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    sb_url = os.environ.get("SUPABASE_URL", "").strip()
+    url = f"{sb_url}/rest/v1/feedbacks?select=*&order=created_at.desc"
+    if status:
+        url += f"&status=eq.{status}"
+    
+    try:
+        r = requests.get(url, headers=_sb_headers(), timeout=5)
+        if not r.ok:
+            raise HTTPException(status_code=500, detail="Could not fetch feedbacks")
+        return r.json()
+    except Exception as e:
+        print(f"[Feedback] Fetch error: {e}")
+        raise HTTPException(status_code=500, detail="Failed to fetch feedbacks")
+
+
+@app.patch("/api/admin/feedbacks/{feedback_id}")
+async def update_feedback_status(
+    feedback_id: str,
+    status: str,
+    user: dict = Depends(require_auth)
+):
+    """Admin-only: Update feedback status (unread/read/replied)."""
+    if not _verify_admin(user):
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    if status not in ("unread", "read", "replied"):
+        raise HTTPException(status_code=400, detail="Invalid status")
+    
+    sb_url = os.environ.get("SUPABASE_URL", "").strip()
+    try:
+        r = requests.patch(
+            f"{sb_url}/rest/v1/feedbacks?id=eq.{feedback_id}",
+            headers=_sb_headers(),
+            json={"status": status},
+            timeout=5,
+        )
+        if not r.ok:
+            raise HTTPException(status_code=500, detail="Could not update feedback")
+        return {"ok": True}
+    except Exception as e:
+        print(f"[Feedback] Update error: {e}")
+        raise HTTPException(status_code=500, detail="Failed to update feedback")
+
+
+# =============================================================================
+# ADMIN ANALYTICS ENDPOINTS
+# =============================================================================
+
+@app.get("/api/admin/analytics/revenue")
+async def get_revenue_analytics(user: dict = Depends(require_auth)):
+    """Admin-only: Get revenue statistics."""
+    if not _verify_admin(user):
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    sb_url = os.environ.get("SUPABASE_URL", "").strip()
+    try:
+        r = requests.post(
+            f"{sb_url}/rest/v1/rpc/get_revenue_stats",
+            headers=_sb_headers(),
+            timeout=5,
+        )
+        stats = r.json()[0] if r.ok and r.json() else {}
+        
+        r = requests.post(
+            f"{sb_url}/rest/v1/rpc/get_revenue_by_plan",
+            headers=_sb_headers(),
+            timeout=5,
+        )
+        by_plan = r.json() if r.ok else []
+        
+        r = requests.post(
+            f"{sb_url}/rest/v1/rpc/get_daily_revenue",
+            headers=_sb_headers(),
+            json={"days_count": 30},
+            timeout=5,
+        )
+        daily = r.json() if r.ok else []
+        
+        return {"stats": stats, "by_plan": by_plan, "daily": daily}
+    except Exception as e:
+        print(f"[Analytics] Revenue error: {e}")
+        raise HTTPException(status_code=500, detail="Failed to fetch revenue analytics")
+
+
+@app.get("/api/admin/analytics/payments")
+async def get_payment_details(user: dict = Depends(require_auth)):
+    """Admin-only: Get detailed payment history with user info."""
+    if not _verify_admin(user):
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    sb_url = os.environ.get("SUPABASE_URL", "").strip()
+    try:
+        r = requests.post(
+            f"{sb_url}/rest/v1/rpc/get_payment_details",
+            headers=_sb_headers(),
+            timeout=5,
+        )
+        payments = r.json() if r.ok else []
+        return {"payments": payments}
+    except Exception as e:
+        print(f"[Analytics] Payments error: {e}")
+        raise HTTPException(status_code=500, detail="Failed to fetch payment details")
+
+
+@app.get("/api/admin/analytics/top-buyers")
+async def get_top_credit_buyers(
+    period: str = 'all',
+    user: dict = Depends(require_auth)
+):
+    """Admin-only: Get top credit buyers with time period filter."""
+    if not _verify_admin(user):
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    if period not in ('all', 'today', 'week', 'month'):
+        raise HTTPException(status_code=400, detail="Invalid period. Use: all, today, week, month")
+    
+    sb_url = os.environ.get("SUPABASE_URL", "").strip()
+    try:
+        r = requests.post(
+            f"{sb_url}/rest/v1/rpc/get_top_credit_buyers",
+            headers=_sb_headers(),
+            json={"period_filter": period, "limit_count": 50},
+            timeout=5,
+        )
+        buyers = r.json() if r.ok else []
+        return {"buyers": buyers, "period": period}
+    except Exception as e:
+        print(f"[Analytics] Top buyers error: {e}")
+        raise HTTPException(status_code=500, detail="Failed to fetch top buyers")
+
+
+@app.get("/api/admin/analytics/user-purchases/{user_id}")
+async def get_user_purchase_history(user_id: str, user: dict = Depends(require_auth)):
+    """Admin-only: Get purchase history for a specific user."""
+    if not _verify_admin(user):
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    sb_url = os.environ.get("SUPABASE_URL", "").strip()
+    try:
+        r = requests.post(
+            f"{sb_url}/rest/v1/rpc/get_user_purchase_history",
+            headers=_sb_headers(),
+            json={"target_user_id": user_id},
+            timeout=5,
+        )
+        purchases = r.json() if r.ok else []
+        return {"purchases": purchases}
+    except Exception as e:
+        print(f"[Analytics] User purchases error: {e}")
+        raise HTTPException(status_code=500, detail="Failed to fetch user purchase history")
+
+
+@app.get("/api/admin/analytics/users")
+async def get_user_analytics(user: dict = Depends(require_auth)):
+    """Admin-only: Get user engagement statistics."""
+    if not _verify_admin(user):
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    sb_url = os.environ.get("SUPABASE_URL", "").strip()
+    try:
+        r = requests.post(
+            f"{sb_url}/rest/v1/rpc/get_user_growth_stats",
+            headers=_sb_headers(),
+            timeout=5,
+        )
+        stats = r.json()[0] if r.ok and r.json() else {}
+        
+        r = requests.post(
+            f"{sb_url}/rest/v1/rpc/get_daily_signups",
+            headers=_sb_headers(),
+            json={"days_count": 30},
+            timeout=5,
+        )
+        daily = r.json() if r.ok else []
+        
+        r = requests.post(
+            f"{sb_url}/rest/v1/rpc/get_top_users_by_videos",
+            headers=_sb_headers(),
+            json={"limit_count": 10},
+            timeout=5,
+        )
+        top_users = r.json() if r.ok else []
+        
+        return {"stats": stats, "daily": daily, "top_users": top_users}
+    except Exception as e:
+        print(f"[Analytics] Users error: {e}")
+        raise HTTPException(status_code=500, detail="Failed to fetch user analytics")
+
+
+@app.get("/api/admin/analytics/videos")
+async def get_video_analytics(user: dict = Depends(require_auth)):
+    """Admin-only: Get video processing statistics."""
+    if not _verify_admin(user):
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    sb_url = os.environ.get("SUPABASE_URL", "").strip()
+    try:
+        r = requests.post(
+            f"{sb_url}/rest/v1/rpc/get_video_stats",
+            headers=_sb_headers(),
+            timeout=5,
+        )
+        stats = r.json()[0] if r.ok and r.json() else {}
+        
+        r = requests.post(
+            f"{sb_url}/rest/v1/rpc/get_daily_videos",
+            headers=_sb_headers(),
+            json={"days_count": 30},
+            timeout=5,
+        )
+        daily = r.json() if r.ok else []
+        
+        return {"stats": stats, "daily": daily}
+    except Exception as e:
+        print(f"[Analytics] Videos error: {e}")
+        raise HTTPException(status_code=500, detail="Failed to fetch video analytics")
+
+
+@app.get("/api/admin/analytics/credits")
+async def get_credit_analytics(user: dict = Depends(require_auth)):
+    """Admin-only: Get credit economy statistics."""
+    if not _verify_admin(user):
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    sb_url = os.environ.get("SUPABASE_URL", "").strip()
+    try:
+        r = requests.post(
+            f"{sb_url}/rest/v1/rpc/get_credit_stats",
+            headers=_sb_headers(),
+            timeout=5,
+        )
+        stats = r.json()[0] if r.ok and r.json() else {}
+        
+        r = requests.get(
+            f"{sb_url}/rest/v1/profiles?credits=eq.0&select=id,email,full_name,created_at",
+            headers=_sb_headers(),
+            timeout=5,
+        )
+        zero_credit_users = r.json() if r.ok else []
+        
+        return {"stats": stats, "zero_credit_users": zero_credit_users}
+    except Exception as e:
+        print(f"[Analytics] Credits error: {e}")
+        raise HTTPException(status_code=500, detail="Failed to fetch credit analytics")
+
+
+@app.get("/api/admin/analytics/activity")
+async def get_activity_feed(user: dict = Depends(require_auth)):
+    """Admin-only: Get recent activity feed."""
+    if not _verify_admin(user):
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    sb_url = os.environ.get("SUPABASE_URL", "").strip()
+    try:
+        r = requests.post(
+            f"{sb_url}/rest/v1/rpc/get_recent_activity",
+            headers=_sb_headers(),
+            json={"limit_count": 20},
+            timeout=5,
+        )
+        activities = r.json() if r.ok else []
+        return {"activities": activities}
+    except Exception as e:
+        print(f"[Analytics] Activity error: {e}")
+        raise HTTPException(status_code=500, detail="Failed to fetch activity feed")
+
+
+# =============================================================================
+# HEALTH CHECK
+# =============================================================================
+
+@app.get("/api/health")
+async def health():
+    return {"status": "ok", "version": "1.0.0"}

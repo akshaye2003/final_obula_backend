@@ -1,0 +1,103 @@
+# Environment Variables
+.env
+.env.local
+.env.*.local
+!.env.example
+!.env.example.local
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# Frontend build
+dist/
+dist-ssr/
+*.local
+
+# IDE
+.vscode/*
+!.vscode/extensions.json
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+logs/
+*.log
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Media/Uploads (large files)
+*.mp4
+*.mov
+*.avi
+*.mkv
+*.webm
+uploads/
+outputs/
+*.npy
+
+# Temporary files
+temp/
+tmp/
+*.tmp
+
+# GPT Cache (can be regenerated)
+gpt_cache/
+
+# Mask files (can be regenerated)
+masks_generated/
+
+# Coverage reports
+htmlcov/
+.coverage
+.pytest_cache/
+
+# Certificates
+*.pem
+*.key
+*.crt
+
+# ML Model files (too large for GitHub)
+*.pth
+*.pt
+*.ckpt
+*.safetensors
+backend/models/*.pth
+backend/models/*.pt

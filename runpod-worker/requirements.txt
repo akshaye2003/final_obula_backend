@@ -1,0 +1,36 @@
+# RunPod Worker Dependencies
+# GPU-accelerated video processing for Obula
+
+# RunPod SDK
+runpod>=1.6.0
+
+# Core processing (same as backend)
+numpy>=1.24.0
+opencv-python>=4.8.0
+Pillow>=10.0.0
+scipy>=1.11.0
+
+# Video processing
+ffmpeg-python>=0.2.0
+
+# Audio processing
+pydub>=0.25.1
+openai-whisper>=20231117
+
+# ML/CV (GPU-enabled)
+torch>=2.0.0
+torchvision>=0.15.0
+mediapipe>=0.10.0
+
+# HTTP requests
+requests>=2.31.0
+
+# Utilities
+python-dotenv>=1.0.0
+tqdm>=4.65.0
+
+# Font handling
+fonttools>=4.42.0
+
+# Optional: For better performance
+# onnxruntime-gpu>=1.16.0  # If using ONNX models

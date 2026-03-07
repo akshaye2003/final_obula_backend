@@ -1,0 +1,1724 @@
+{
+  "input_video": "C:\\Users\\aksha\\Downloads\\final_mvp_backend_final\\final_mvp_backend\\backend\\uploads\\237dc9ed6e8f.mp4",
+  "video_id": "237dc9ed6e8f",
+  "user_id": "b11c686b-e8e3-4752-9a11-5e0731f084f9",
+  "status": "completed",
+  "transcript_text": "What if Van Gogh stopped painting because the brush was too complicated What if art came with instructions so overwhelming he doubted himself That's what creating feels like today You have something inside you but before you can share it you are told to learn softwares master transitions buy subscriptions We don't think art should feel like that We think artists should create So we built Auvula to remove these complications We handle them for you so you can express yourself freely Comment 99 if you believe creators were meant to make art and not become exhausted masters of everything except their own expression",
+  "styled_words": [
+    {
+      "word": "What",
+      "style": "hook",
+      "size_mult": 1.25,
+      "color": [
+        255,
+        200,
+        80
+      ],
+      "start": 1.899999976158142,
+      "end": 2.4200000762939453
+    },
+    {
+      "word": "if",
+      "style": "hook",
+      "size_mult": 1.25,
+      "color": [
+        255,
+        200,
+        80
+      ],
+      "start": 2.4200000762939453,
+      "end": 2.940000057220459
+    },
+    {
+      "word": "Van",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 2.940000057220459,
+      "end": 3.1600000858306885
+    },
+    {
+      "word": "Gogh",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 3.1600000858306885,
+      "end": 3.2200000286102295
+    },
+    {
+      "word": "stopped",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 3.2200000286102295,
+      "end": 3.4800000190734863
+    },
+    {
+      "word": "painting",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 3.4800000190734863,
+      "end": 3.700000047683716
+    },
+    {
+      "word": "because",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 3.700000047683716,
+      "end": 3.9200000762939453
+    },
+    {
+      "word": "the",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 3.9200000762939453,
+      "end": 4.079999923706055
+    },
+    {
+      "word": "brush",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 4.079999923706055,
+      "end": 4.239999771118164
+    },
+    {
+      "word": "was",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 4.239999771118164,
+      "end": 4.420000076293945
+    },
+    {
+      "word": "too",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 4.420000076293945,
+      "end": 4.78000020980835
+    },
+    {
+      "word": "complicated",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 4.78000020980835,
+      "end": 5.139999866485596
+    },
+    {
+      "word": "What",
+      "style": "hook",
+      "size_mult": 1.25,
+      "color": [
+        255,
+        200,
+        80
+      ],
+      "start": 5.760000228881836,
+      "end": 5.900000095367432
+    },
+    {
+      "word": "if",
+      "style": "hook",
+      "size_mult": 1.25,
+      "color": [
+        255,
+        200,
+        80
+      ],
+      "start": 5.900000095367432,
+      "end": 6.119999885559082
+    },
+    {
+      "word": "art",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 6.119999885559082,
+      "end": 6.28000020980835
+    },
+    {
+      "word": "came",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 6.28000020980835,
+      "end": 6.5
+    },
+    {
+      "word": "with",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 6.5,
+      "end": 6.739999771118164
+    },
+    {
+      "word": "instructions",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 6.739999771118164,
+      "end": 7.059999942779541
+    },
+    {
+      "word": "so",
+      "style": "emphasis",
+      "size_mult": 1.1,
+      "color": [
+        255,
+        200,
+        80
+      ],
+      "start": 7.059999942779541,
+      "end": 7.420000076293945
+    },
+    {
+      "word": "overwhelming",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 7.420000076293945,
+      "end": 7.880000114440918
+    },
+    {
+      "word": "he",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 7.880000114440918,
+      "end": 8.239999771118164
+    },
+    {
+      "word": "doubted",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 8.239999771118164,
+      "end": 8.739999771118164
+    },
+    {
+      "word": "himself",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 8.739999771118164,
+      "end": 9.180000305175781
+    },
+    {
+      "word": "That's",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 9.899999618530273,
+      "end": 10.420000076293945
+    },
+    {
+      "word": "what",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 10.420000076293945,
+      "end": 10.65999984741211
+    },
+    {
+      "word": "creating",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 10.65999984741211,
+      "end": 10.880000114440918
+    },
+    {
+      "word": "feels",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 10.880000114440918,
+      "end": 11.140000343322754
+    },
+    {
+      "word": "like",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 11.140000343322754,
+      "end": 11.399999618530273
+    },
+    {
+      "word": "today",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 11.399999618530273,
+      "end": 11.65999984741211
+    },
+    {
+      "word": "You",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 11.960000038146973,
+      "end": 12.460000038146973
+    },
+    {
+      "word": "have",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 12.460000038146973,
+      "end": 12.600000381469727
+    },
+    {
+      "word": "something",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 12.600000381469727,
+      "end": 12.859999656677246
+    },
+    {
+      "word": "inside",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 12.859999656677246,
+      "end": 13.180000305175781
+    },
+    {
+      "word": "you",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 13.180000305175781,
+      "end": 13.5600004196167
+    },
+    {
+      "word": "but",
+      "style": "emphasis",
+      "size_mult": 1.1,
+      "color": [
+        255,
+        200,
+        80
+      ],
+      "start": 13.5600004196167,
+      "end": 13.760000228881836
+    },
+    {
+      "word": "before",
+      "style": "emphasis",
+      "size_mult": 1.1,
+      "color": [
+        255,
+        200,
+        80
+      ],
+      "start": 13.760000228881836,
+      "end": 13.979999542236328
+    },
+    {
+      "word": "you",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 13.979999542236328,
+      "end": 14.079999923706055
+    },
+    {
+      "word": "can",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 14.079999923706055,
+      "end": 14.34000015258789
+    },
+    {
+      "word": "share",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 14.34000015258789,
+      "end": 14.619999885559082
+    },
+    {
+      "word": "it",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 14.619999885559082,
+      "end": 14.960000038146973
+    },
+    {
+      "word": "you",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 14.960000038146973,
+      "end": 15.020000457763672
+    },
+    {
+      "word": "are",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 15.020000457763672,
+      "end": 15.260000228881836
+    },
+    {
+      "word": "told",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 15.260000228881836,
+      "end": 15.279999732971191
+    },
+    {
+      "word": "to",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 15.279999732971191,
+      "end": 15.539999961853027
+    },
+    {
+      "word": "learn",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 15.539999961853027,
+      "end": 15.619999885559082
+    },
+    {
+      "word": "softwares",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 15.619999885559082,
+      "end": 16.100000381469727
+    },
+    {
+      "word": "master",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 16.200000762939453,
+      "end": 16.540000915527344
+    },
+    {
+      "word": "transitions",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 16.540000915527344,
+      "end": 17.100000381469727
+    },
+    {
+      "word": "buy",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 17.860000610351562,
+      "end": 18.020000457763672
+    },
+    {
+      "word": "subscriptions",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 18.020000457763672,
+      "end": 18.600000381469727
+    },
+    {
+      "word": "We",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 19.100000381469727,
+      "end": 19.6200008392334
+    },
+    {
+      "word": "don't",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 19.6200008392334,
+      "end": 19.760000228881836
+    },
+    {
+      "word": "think",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 19.760000228881836,
+      "end": 19.920000076293945
+    },
+    {
+      "word": "art",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 19.920000076293945,
+      "end": 20.1200008392334
+    },
+    {
+      "word": "should",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 20.1200008392334,
+      "end": 20.299999237060547
+    },
+    {
+      "word": "feel",
+      "style": "emotional",
+      "size_mult": 1.0,
+      "color": [
+        255,
+        200,
+        80
+      ],
+      "start": 20.299999237060547,
+      "end": 20.479999542236328
+    },
+    {
+      "word": "like",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 20.479999542236328,
+      "end": 20.6200008392334
+    },
+    {
+      "word": "that",
+      "style": "emphasis",
+      "size_mult": 1.1,
+      "color": [
+        255,
+        200,
+        80
+      ],
+      "start": 20.6200008392334,
+      "end": 20.84000015258789
+    },
+    {
+      "word": "We",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 21.219999313354492,
+      "end": 21.479999542236328
+    },
+    {
+      "word": "think",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 21.479999542236328,
+      "end": 21.81999969482422
+    },
+    {
+      "word": "artists",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 21.81999969482422,
+      "end": 22.239999771118164
+    },
+    {
+      "word": "should",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 22.239999771118164,
+      "end": 22.540000915527344
+    },
+    {
+      "word": "create",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 22.540000915527344,
+      "end": 22.979999542236328
+    },
+    {
+      "word": "So",
+      "style": "emphasis",
+      "size_mult": 1.1,
+      "color": [
+        255,
+        200,
+        80
+      ],
+      "start": 23.459999084472656,
+      "end": 23.84000015258789
+    },
+    {
+      "word": "we",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 23.84000015258789,
+      "end": 24.34000015258789
+    },
+    {
+      "word": "built",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 24.34000015258789,
+      "end": 24.520000457763672
+    },
+    {
+      "word": "Auvula",
+      "style": "hook",
+      "size_mult": 1.25,
+      "color": [
+        255,
+        200,
+        80
+      ],
+      "start": 24.520000457763672,
+      "end": 24.940000534057617
+    },
+    {
+      "word": "to",
+      "style": "hook",
+      "size_mult": 1.25,
+      "color": [
+        255,
+        200,
+        80
+      ],
+      "start": 24.940000534057617,
+      "end": 25.600000381469727
+    },
+    {
+      "word": "remove",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 25.600000381469727,
+      "end": 25.719999313354492
+    },
+    {
+      "word": "these",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 25.719999313354492,
+      "end": 26.100000381469727
+    },
+    {
+      "word": "complications",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 26.100000381469727,
+      "end": 26.5
+    },
+    {
+      "word": "We",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 26.5,
+      "end": 27.059999465942383
+    },
+    {
+      "word": "handle",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 27.059999465942383,
+      "end": 27.440000534057617
+    },
+    {
+      "word": "them",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 27.440000534057617,
+      "end": 27.639999389648438
+    },
+    {
+      "word": "for",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 27.639999389648438,
+      "end": 27.959999084472656
+    },
+    {
+      "word": "you",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 27.959999084472656,
+      "end": 28.399999618530273
+    },
+    {
+      "word": "so",
+      "style": "emphasis",
+      "size_mult": 1.1,
+      "color": [
+        255,
+        200,
+        80
+      ],
+      "start": 28.600000381469727,
+      "end": 28.65999984741211
+    },
+    {
+      "word": "you",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 28.65999984741211,
+      "end": 28.719999313354492
+    },
+    {
+      "word": "can",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 28.719999313354492,
+      "end": 29.139999389648438
+    },
+    {
+      "word": "express",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 29.139999389648438,
+      "end": 29.139999389648438
+    },
+    {
+      "word": "yourself",
+      "style": "emphasis",
+      "size_mult": 1.1,
+      "color": [
+        255,
+        200,
+        80
+      ],
+      "start": 29.139999389648438,
+      "end": 29.579999923706055
+    },
+    {
+      "word": "freely",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 29.579999923706055,
+      "end": 30.079999923706055
+    },
+    {
+      "word": "Comment",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 30.959999084472656,
+      "end": 31.079999923706055
+    },
+    {
+      "word": "99",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 31.079999923706055,
+      "end": 31.68000030517578
+    },
+    {
+      "word": "if",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 31.68000030517578,
+      "end": 32.040000915527344
+    },
+    {
+      "word": "you",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 32.040000915527344,
+      "end": 32.20000076293945
+    },
+    {
+      "word": "believe",
+      "style": "emotional",
+      "size_mult": 1.0,
+      "color": [
+        255,
+        200,
+        80
+      ],
+      "start": 32.20000076293945,
+      "end": 32.400001525878906
+    },
+    {
+      "word": "creators",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 32.400001525878906,
+      "end": 32.86000061035156
+    },
+    {
+      "word": "were",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 32.86000061035156,
+      "end": 33.08000183105469
+    },
+    {
+      "word": "meant",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 33.08000183105469,
+      "end": 33.36000061035156
+    },
+    {
+      "word": "to",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 33.36000061035156,
+      "end": 33.79999923706055
+    },
+    {
+      "word": "make",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 33.79999923706055,
+      "end": 33.79999923706055
+    },
+    {
+      "word": "art",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 33.79999923706055,
+      "end": 34.040000915527344
+    },
+    {
+      "word": "and",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 34.040000915527344,
+      "end": 34.65999984741211
+    },
+    {
+      "word": "not",
+      "style": "emphasis",
+      "size_mult": 1.1,
+      "color": [
+        255,
+        200,
+        80
+      ],
+      "start": 34.65999984741211,
+      "end": 34.880001068115234
+    },
+    {
+      "word": "become",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 34.880001068115234,
+      "end": 35.15999984741211
+    },
+    {
+      "word": "exhausted",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 35.15999984741211,
+      "end": 35.720001220703125
+    },
+    {
+      "word": "masters",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 35.720001220703125,
+      "end": 36.15999984741211
+    },
+    {
+      "word": "of",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 36.15999984741211,
+      "end": 36.41999816894531
+    },
+    {
+      "word": "everything",
+      "style": "emphasis",
+      "size_mult": 1.1,
+      "color": [
+        255,
+        200,
+        80
+      ],
+      "start": 36.41999816894531,
+      "end": 36.959999084472656
+    },
+    {
+      "word": "except",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 36.959999084472656,
+      "end": 37.34000015258789
+    },
+    {
+      "word": "their",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 37.34000015258789,
+      "end": 37.63999938964844
+    },
+    {
+      "word": "own",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 37.63999938964844,
+      "end": 38.2599983215332
+    },
+    {
+      "word": "expression",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 38.2599983215332,
+      "end": 38.619998931884766
+    }
+  ],
+  "timed_captions": [
+    [
+      1.899999976158142,
+      3.1600000858306885,
+      [
+        "What if Van"
+      ]
+    ],
+    [
+      3.1600000858306885,
+      3.700000047683716,
+      [
+        "Gogh stopped painting"
+      ]
+    ],
+    [
+      3.700000047683716,
+      4.239999771118164,
+      [
+        "because the brush"
+      ]
+    ],
+    [
+      4.239999771118164,
+      5.139999866485596,
+      [
+        "was too complicated"
+      ]
+    ],
+    [
+      5.760000228881836,
+      6.28000020980835,
+      [
+        "What if art"
+      ]
+    ],
+    [
+      6.28000020980835,
+      7.059999942779541,
+      [
+        "came with instructions"
+      ]
+    ],
+    [
+      7.059999942779541,
+      8.239999771118164,
+      [
+        "so overwhelming he"
+      ]
+    ],
+    [
+      8.239999771118164,
+      10.420000076293945,
+      [
+        "doubted himself That's"
+      ]
+    ],
+    [
+      10.420000076293945,
+      11.140000343322754,
+      [
+        "what creating feels"
+      ]
+    ],
+    [
+      11.140000343322754,
+      12.460000038146973,
+      [
+        "like today You"
+      ]
+    ],
+    [
+      12.460000038146973,
+      13.180000305175781,
+      [
+        "have something inside"
+      ]
+    ],
+    [
+      13.180000305175781,
+      13.979999542236328,
+      [
+        "you but before"
+      ]
+    ],
+    [
+      13.979999542236328,
+      14.619999885559082,
+      [
+        "you can share"
+      ]
+    ],
+    [
+      14.619999885559082,
+      15.260000228881836,
+      [
+        "it you are"
+      ]
+    ],
+    [
+      15.260000228881836,
+      15.619999885559082,
+      [
+        "told to learn"
+      ]
+    ],
+    [
+      15.619999885559082,
+      17.100000381469727,
+      [
+        "softwares master transitions"
+      ]
+    ],
+    [
+      17.860000610351562,
+      19.6200008392334,
+      [
+        "buy subscriptions We"
+      ]
+    ],
+    [
+      19.6200008392334,
+      20.1200008392334,
+      [
+        "don't think art"
+      ]
+    ],
+    [
+      20.1200008392334,
+      20.6200008392334,
+      [
+        "should feel like"
+      ]
+    ],
+    [
+      20.6200008392334,
+      21.81999969482422,
+      [
+        "that We think"
+      ]
+    ],
+    [
+      21.81999969482422,
+      22.979999542236328,
+      [
+        "artists should create"
+      ]
+    ],
+    [
+      23.459999084472656,
+      24.520000457763672,
+      [
+        "So we built"
+      ]
+    ],
+    [
+      24.520000457763672,
+      25.719999313354492,
+      [
+        "Auvula to remove"
+      ]
+    ],
+    [
+      25.719999313354492,
+      27.059999465942383,
+      [
+        "these complications We"
+      ]
+    ],
+    [
+      27.059999465942383,
+      27.959999084472656,
+      [
+        "handle them for"
+      ]
+    ],
+    [
+      27.959999084472656,
+      28.719999313354492,
+      [
+        "you so you"
+      ]
+    ],
+    [
+      28.719999313354492,
+      29.579999923706055,
+      [
+        "can express yourself"
+      ]
+    ],
+    [
+      29.579999923706055,
+      31.68000030517578,
+      [
+        "freely Comment 99"
+      ]
+    ],
+    [
+      31.68000030517578,
+      32.400001525878906,
+      [
+        "if you believe"
+      ]
+    ],
+    [
+      32.400001525878906,
+      33.36000061035156,
+      [
+        "creators were meant"
+      ]
+    ],
+    [
+      33.36000061035156,
+      34.040000915527344,
+      [
+        "to make art"
+      ]
+    ],
+    [
+      34.040000915527344,
+      35.15999984741211,
+      [
+        "and not become"
+      ]
+    ],
+    [
+      35.15999984741211,
+      36.41999816894531,
+      [
+        "exhausted masters of"
+      ]
+    ],
+    [
+      36.41999816894531,
+      37.63999938964844,
+      [
+        "everything except their"
+      ]
+    ],
+    [
+      37.63999938964844,
+      38.619998931884766,
+      [
+        "own expression"
+      ]
+    ]
+  ],
+  "broll_placements": [
+    {
+      "timestamp_seconds": 7.0,
+      "duration": 2,
+      "theme": "Van Gogh's struggle",
+      "emotion": "tense",
+      "description": "",
+      "enabled": true,
+      "selected_index": 0,
+      "clip_options": [
+        {
+          "clip_id": "movie_clips_11",
+          "filename": "movie_clips_11.mp4",
+          "description": "",
+          "emotion": "tense",
+          "energy": "medium",
+          "lighting": "neutral",
+          "camera": "wide",
+          "setting": "office",
+          "visual_keywords": [
+            "boardroom meeting",
+            "formal suits",
+            "serious expressions",
+            "wooden table",
+            "office cubicles",
+            "neutral lighting",
+            "business environment",
+            "standing man",
+            "seated men",
+            "glass partition"
+          ],
+          "subject_presence": "person",
+          "score": 9,
+          "thumbnail_url": "/api/broll-thumbnail/movie_clips_11"
+        },
+        {
+          "clip_id": "movie_clips_14",
+          "filename": "movie_clips_14.mp4",
+          "description": "",
+          "emotion": "tense",
+          "energy": "medium",
+          "lighting": "neutral",
+          "camera": "mid",
+          "setting": "boardroom",
+          "visual_keywords": [
+            "people reading documents",
+            "formal attire",
+            "bookshelves with legal books",
+            "conference table",
+            "focused expressions",
+            "indoor office lighting",
+            "business meeting",
+            "papers and folders",
+            "mixed gender group",
+            "professional environment"
+          ],
+          "subject_presence": "person",
+          "score": 9,
+          "thumbnail_url": "/api/broll-thumbnail/movie_clips_14"
+        },
+        {
+          "clip_id": "movie_clips_2",
+          "filename": "movie_clips_2.mp4",
+          "description": "",
+          "emotion": "tense",
+          "energy": "medium",
+          "lighting": "bright",
+          "camera": "closeup",
+          "setting": "outdoor",
+          "visual_keywords": [
+            "man in hat",
+            "sunglasses",
+            "microphones",
+            "blue building background",
+            "sunlight flare",
+            "formal attire",
+            "serious expression",
+            "daylight",
+            "medium energy"
+          ],
+          "subject_presence": "person",
+          "score": 9,
+          "thumbnail_url": "/api/broll-thumbnail/movie_clips_2"
+        },
+        {
+          "clip_id": "movie_clips_4",
+          "filename": "movie_clips_4.mp4",
+          "description": "",
+          "emotion": "tense",
+          "energy": "medium",
+          "lighting": "neutral",
+          "camera": "mid",
+          "setting": "office",
+          "visual_keywords": [
+            "man in suit",
+            "holding microphone",
+            "speaking",
+            "curtains background",
+            "audience silhouettes",
+            "serious expression",
+            "indoor lighting",
+            "formal attire",
+            "side profile",
+            "gesturing hand"
+          ],
+          "subject_presence": "person",
+          "score": 9,
+          "thumbnail_url": "/api/broll-thumbnail/movie_clips_4"
+        }
+      ]
+    },
+    {
+      "timestamp_seconds": 15.0,
+      "duration": 2,
+      "theme": "modern creative challenges",
+      "emotion": "tense",
+      "description": "",
+      "enabled": true,
+      "selected_index": 0,
+      "clip_options": [
+        {
+          "clip_id": "movie_clips_1",
+          "filename": "movie_clips_1.mp4",
+          "description": "",
+          "emotion": "tense",
+          "energy": "high",
+          "lighting": "neutral",
+          "camera": "closeup",
+          "setting": "office",
+          "visual_keywords": [
+            "man speaking",
+            "microphone",
+            "intense expression",
+            "pinstripe suit",
+            "vertical blinds background",
+            "close framing",
+            "animated gesture",
+            "indoor lighting"
+          ],
+          "subject_presence": "person",
+          "score": 9,
+          "thumbnail_url": "/api/broll-thumbnail/movie_clips_1"
+        },
+        {
+          "clip_id": "movie_clips_11",
+          "filename": "movie_clips_11.mp4",
+          "description": "",
+          "emotion": "tense",
+          "energy": "medium",
+          "lighting": "neutral",
+          "camera": "wide",
+          "setting": "office",
+          "visual_keywords": [
+            "boardroom meeting",
+            "formal suits",
+            "serious expressions",
+            "wooden table",
+            "office cubicles",
+            "neutral lighting",
+            "business environment",
+            "standing man",
+            "seated men",
+            "glass partition"
+          ],
+          "subject_presence": "person",
+          "score": 6,
+          "thumbnail_url": "/api/broll-thumbnail/movie_clips_11"
+        },
+        {
+          "clip_id": "movie_clips_13",
+          "filename": "movie_clips_13.mp4",
+          "description": "",
+          "emotion": "tense",
+          "energy": "low",
+          "lighting": "neutral",
+          "camera": "mid",
+          "setting": "office",
+          "visual_keywords": [
+            "man in suit",
+            "looking out window",
+            "city buildings",
+            "daylight",
+            "indoor office",
+            "reflective mood",
+            "window frame",
+            "urban view",
+            "stillness"
+          ],
+          "subject_presence": "person",
+          "score": 6,
+          "thumbnail_url": "/api/broll-thumbnail/movie_clips_13"
+        },
+        {
+          "clip_id": "movie_clips_14",
+          "filename": "movie_clips_14.mp4",
+          "description": "",
+          "emotion": "tense",
+          "energy": "medium",
+          "lighting": "neutral",
+          "camera": "mid",
+          "setting": "boardroom",
+          "visual_keywords": [
+            "people reading documents",
+            "formal attire",
+            "bookshelves with legal books",
+            "conference table",
+            "focused expressions",
+            "indoor office lighting",
+            "business meeting",
+            "papers and folders",
+            "mixed gender group",
+            "professional environment"
+          ],
+          "subject_presence": "person",
+          "score": 6,
+          "thumbnail_url": "/api/broll-thumbnail/movie_clips_14"
+        }
+      ]
+    }
+  ]
+}

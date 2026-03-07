@@ -1,0 +1,11 @@
+# API server dependencies (install with: pip install -r requirements-api.txt)
+fastapi
+uvicorn[standard]
+python-multipart
+pydantic
+PyJWT
+requests
+python-dotenv
+
+# Payments (optional)
+razorpay

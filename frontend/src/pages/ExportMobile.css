@@ -1,0 +1,179 @@
+/* ============================================
+   MOBILE EXPORT SCREEN STYLES
+   ============================================ */
+
+/* Main container adjustments */
+.export-mobile {
+  min-height: 100vh;
+  min-height: 100dvh; /* Dynamic viewport height for mobile */
+  background-color: #0a0a0a;
+}
+
+/* Safe area insets for notched devices */
+@supports (padding-top: env(safe-area-inset-top)) {
+  .export-mobile {
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+  }
+}
+
+/* Tab bar active state - matching screenshot */
+.export-tab-active {
+  background-color: rgba(74, 74, 58, 0.8);
+  color: #C9A84C;
+}
+
+/* Toggle switch styles */
+.export-toggle {
+  position: relative;
+  display: inline-flex;
+  width: 44px;
+  height: 24px;
+  border-radius: 9999px;
+  transition: background-color 0.2s;
+}
+
+.export-toggle--on {
+  background-color: #C9A84C;
+}
+
+.export-toggle--off {
+  background-color: rgba(255, 255, 255, 0.12);
+}
+
+.export-toggle-thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 20px;
+  height: 20px;
+  background-color: white;
+  border-radius: 50%;
+  transition: transform 0.2s;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.export-toggle--on .export-toggle-thumb {
+  transform: translateX(20px);
+}
+
+/* Selection row styles */
+.selection-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 0;
+}
+
+.selection-label {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.selection-value {
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.selection-value--active {
+  color: #C9A84C;
+}
+
+.selection-value--inactive {
+  color: rgba(255, 255, 255, 0.4);
+}
+
+/* Action pill styles */
+.action-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border-radius: 9999px;
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+  transition: all 0.2s;
+}
+
+.action-pill--active {
+  border: 1px solid rgba(201, 168, 76, 0.6);
+  background-color: rgba(201, 168, 76, 0.15);
+  color: #C9A84C;
+}
+
+.action-pill--inactive {
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background-color: #1a1a1a;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.action-pill--inactive:active {
+  border-color: rgba(255, 255, 255, 0.2);
+  color: rgba(255, 255, 255, 0.8);
+}
+
+/* Export button */
+.export-button {
+  width: 100%;
+  padding: 16px;
+  background-color: #C9A84C;
+  color: #000;
+  font-weight: 600;
+  font-size: 16px;
+  border-radius: 12px;
+  transition: all 0.2s;
+}
+
+.export-button:active {
+  transform: scale(0.98);
+  background-color: rgba(201, 168, 76, 0.9);
+}
+
+.export-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Card styles */
+.export-card {
+  background-color: #111111;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 16px;
+}
+
+/* Scrollbar hiding */
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Touch feedback */
+@media (hover: none) {
+  .touch-feedback:active {
+    opacity: 0.7;
+  }
+}
+
+/* Focus states for accessibility */
+button:focus-visible,
+[role="button"]:focus-visible {
+  outline: 2px solid #C9A84C;
+  outline-offset: 2px;
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .export-toggle-thumb,
+  .action-pill,
+  .export-button {
+    transition: none;
+  }
+}

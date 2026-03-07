@@ -1,0 +1,1560 @@
+{
+  "input_video": "C:\\Users\\aksha\\Downloads\\final_mvp_backend_final\\final_mvp_backend\\backend\\uploads\\98434b29b2e6.mp4",
+  "video_id": "98434b29b2e6",
+  "user_id": "b11c686b-e8e3-4752-9a11-5e0731f084f9",
+  "status": "completed",
+  "transcript_text": "Hi guys welcome to the unboxing of my business card This is just for Bobbila test I want to see how the captions come in and see how the voice ISO is with all this Background noise So let's get into the unboxing It comes in a very nice sleek Premium packaging I don't think I can feel the card now that I think about it I think I got scammed but So anyways moving on this is the unboxing and this is it and I'll see you guys in the next video",
+  "styled_words": [
+    {
+      "word": "Hi",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 0.0,
+      "end": 0.6000000238418579
+    },
+    {
+      "word": "guys",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 0.6000000238418579,
+      "end": 0.9599999785423279
+    },
+    {
+      "word": "welcome",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 0.9599999785423279,
+      "end": 1.5399999618530273
+    },
+    {
+      "word": "to",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 1.5399999618530273,
+      "end": 2.200000047683716
+    },
+    {
+      "word": "the",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 2.200000047683716,
+      "end": 3.0199999809265137
+    },
+    {
+      "word": "unboxing",
+      "style": "hook",
+      "size_mult": 1.25,
+      "color": [
+        255,
+        200,
+        80
+      ],
+      "start": 3.0199999809265137,
+      "end": 3.4200000762939453
+    },
+    {
+      "word": "of",
+      "style": "hook",
+      "size_mult": 1.25,
+      "color": [
+        255,
+        200,
+        80
+      ],
+      "start": 3.4200000762939453,
+      "end": 3.640000104904175
+    },
+    {
+      "word": "my",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 3.640000104904175,
+      "end": 3.799999952316284
+    },
+    {
+      "word": "business",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 3.799999952316284,
+      "end": 4.21999979019165
+    },
+    {
+      "word": "card",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 4.21999979019165,
+      "end": 4.659999847412109
+    },
+    {
+      "word": "This",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 5.039999961853027,
+      "end": 5.480000019073486
+    },
+    {
+      "word": "is",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 5.480000019073486,
+      "end": 5.579999923706055
+    },
+    {
+      "word": "just",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 5.579999923706055,
+      "end": 5.880000114440918
+    },
+    {
+      "word": "for",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 5.880000114440918,
+      "end": 6.039999961853027
+    },
+    {
+      "word": "Bobbila",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 6.039999961853027,
+      "end": 6.420000076293945
+    },
+    {
+      "word": "test",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 6.420000076293945,
+      "end": 6.760000228881836
+    },
+    {
+      "word": "I",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 6.760000228881836,
+      "end": 6.980000019073486
+    },
+    {
+      "word": "want",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 6.980000019073486,
+      "end": 7.139999866485596
+    },
+    {
+      "word": "to",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 7.139999866485596,
+      "end": 7.21999979019165
+    },
+    {
+      "word": "see",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 7.21999979019165,
+      "end": 7.340000152587891
+    },
+    {
+      "word": "how",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 7.340000152587891,
+      "end": 7.440000057220459
+    },
+    {
+      "word": "the",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 7.440000057220459,
+      "end": 7.539999961853027
+    },
+    {
+      "word": "captions",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 7.539999961853027,
+      "end": 7.880000114440918
+    },
+    {
+      "word": "come",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 7.880000114440918,
+      "end": 8.220000267028809
+    },
+    {
+      "word": "in",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 8.220000267028809,
+      "end": 8.84000015258789
+    },
+    {
+      "word": "and",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 8.84000015258789,
+      "end": 9.239999771118164
+    },
+    {
+      "word": "see",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 9.239999771118164,
+      "end": 9.460000038146973
+    },
+    {
+      "word": "how",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 9.460000038146973,
+      "end": 9.640000343322754
+    },
+    {
+      "word": "the",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 9.640000343322754,
+      "end": 9.880000114440918
+    },
+    {
+      "word": "voice",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 9.880000114440918,
+      "end": 10.0600004196167
+    },
+    {
+      "word": "ISO",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 10.0600004196167,
+      "end": 10.34000015258789
+    },
+    {
+      "word": "is",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 10.34000015258789,
+      "end": 10.619999885559082
+    },
+    {
+      "word": "with",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 10.619999885559082,
+      "end": 10.84000015258789
+    },
+    {
+      "word": "all",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 10.84000015258789,
+      "end": 11.0600004196167
+    },
+    {
+      "word": "this",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 11.0600004196167,
+      "end": 11.279999732971191
+    },
+    {
+      "word": "Background",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 12.079999923706055,
+      "end": 12.520000457763672
+    },
+    {
+      "word": "noise",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 12.520000457763672,
+      "end": 12.880000114440918
+    },
+    {
+      "word": "So",
+      "style": "emphasis",
+      "size_mult": 1.1,
+      "color": [
+        255,
+        200,
+        80
+      ],
+      "start": 12.880000114440918,
+      "end": 13.180000305175781
+    },
+    {
+      "word": "let's",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 13.180000305175781,
+      "end": 13.279999732971191
+    },
+    {
+      "word": "get",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 13.279999732971191,
+      "end": 13.460000038146973
+    },
+    {
+      "word": "into",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 13.460000038146973,
+      "end": 13.600000381469727
+    },
+    {
+      "word": "the",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 13.600000381469727,
+      "end": 14.0
+    },
+    {
+      "word": "unboxing",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 14.0,
+      "end": 14.359999656677246
+    },
+    {
+      "word": "It",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 14.979999542236328,
+      "end": 15.420000076293945
+    },
+    {
+      "word": "comes",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 15.420000076293945,
+      "end": 15.65999984741211
+    },
+    {
+      "word": "in",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 15.65999984741211,
+      "end": 15.779999732971191
+    },
+    {
+      "word": "a",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 15.779999732971191,
+      "end": 15.880000114440918
+    },
+    {
+      "word": "very",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 15.880000114440918,
+      "end": 16.079999923706055
+    },
+    {
+      "word": "nice",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 16.079999923706055,
+      "end": 16.81999969482422
+    },
+    {
+      "word": "sleek",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 17.260000228881836,
+      "end": 17.700000762939453
+    },
+    {
+      "word": "Premium",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 18.059999465942383,
+      "end": 18.5
+    },
+    {
+      "word": "packaging",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 18.5,
+      "end": 18.940000534057617
+    },
+    {
+      "word": "I",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 19.100000381469727,
+      "end": 19.540000915527344
+    },
+    {
+      "word": "don't",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 19.540000915527344,
+      "end": 19.700000762939453
+    },
+    {
+      "word": "think",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 19.700000762939453,
+      "end": 19.799999237060547
+    },
+    {
+      "word": "I",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 19.799999237060547,
+      "end": 19.920000076293945
+    },
+    {
+      "word": "can",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 19.920000076293945,
+      "end": 20.079999923706055
+    },
+    {
+      "word": "feel",
+      "style": "emotional",
+      "size_mult": 1.0,
+      "color": [
+        255,
+        200,
+        80
+      ],
+      "start": 20.079999923706055,
+      "end": 20.280000686645508
+    },
+    {
+      "word": "the",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 20.280000686645508,
+      "end": 20.479999542236328
+    },
+    {
+      "word": "card",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 20.479999542236328,
+      "end": 20.639999389648438
+    },
+    {
+      "word": "now",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 20.639999389648438,
+      "end": 20.8799991607666
+    },
+    {
+      "word": "that",
+      "style": "emphasis",
+      "size_mult": 1.1,
+      "color": [
+        255,
+        200,
+        80
+      ],
+      "start": 20.8799991607666,
+      "end": 21.0
+    },
+    {
+      "word": "I",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 21.0,
+      "end": 21.15999984741211
+    },
+    {
+      "word": "think",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 21.15999984741211,
+      "end": 21.31999969482422
+    },
+    {
+      "word": "about",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 21.31999969482422,
+      "end": 21.520000457763672
+    },
+    {
+      "word": "it",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 21.520000457763672,
+      "end": 21.65999984741211
+    },
+    {
+      "word": "I",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 21.65999984741211,
+      "end": 21.739999771118164
+    },
+    {
+      "word": "think",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 21.739999771118164,
+      "end": 21.81999969482422
+    },
+    {
+      "word": "I",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 21.81999969482422,
+      "end": 21.940000534057617
+    },
+    {
+      "word": "got",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 21.940000534057617,
+      "end": 22.139999389648438
+    },
+    {
+      "word": "scammed",
+      "style": "hook",
+      "size_mult": 1.25,
+      "color": [
+        255,
+        200,
+        80
+      ],
+      "start": 22.139999389648438,
+      "end": 22.579999923706055
+    },
+    {
+      "word": "but",
+      "style": "hook",
+      "size_mult": 1.25,
+      "color": [
+        255,
+        200,
+        80
+      ],
+      "start": 22.579999923706055,
+      "end": 23.65999984741211
+    },
+    {
+      "word": "So",
+      "style": "emphasis",
+      "size_mult": 1.1,
+      "color": [
+        255,
+        200,
+        80
+      ],
+      "start": 32.13999938964844,
+      "end": 32.58000183105469
+    },
+    {
+      "word": "anyways",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 32.58000183105469,
+      "end": 32.97999954223633
+    },
+    {
+      "word": "moving",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 32.97999954223633,
+      "end": 33.36000061035156
+    },
+    {
+      "word": "on",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 33.36000061035156,
+      "end": 34.08000183105469
+    },
+    {
+      "word": "this",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 34.08000183105469,
+      "end": 34.5
+    },
+    {
+      "word": "is",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 34.5,
+      "end": 34.70000076293945
+    },
+    {
+      "word": "the",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 34.70000076293945,
+      "end": 34.79999923706055
+    },
+    {
+      "word": "unboxing",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 34.79999923706055,
+      "end": 35.13999938964844
+    },
+    {
+      "word": "and",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 35.13999938964844,
+      "end": 36.099998474121094
+    },
+    {
+      "word": "this",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 36.099998474121094,
+      "end": 36.65999984741211
+    },
+    {
+      "word": "is",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 36.65999984741211,
+      "end": 36.880001068115234
+    },
+    {
+      "word": "it",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 36.880001068115234,
+      "end": 37.380001068115234
+    },
+    {
+      "word": "and",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 37.380001068115234,
+      "end": 37.720001220703125
+    },
+    {
+      "word": "I'll",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 37.720001220703125,
+      "end": 37.880001068115234
+    },
+    {
+      "word": "see",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 37.880001068115234,
+      "end": 38.060001373291016
+    },
+    {
+      "word": "you",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 38.060001373291016,
+      "end": 38.119998931884766
+    },
+    {
+      "word": "guys",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 38.119998931884766,
+      "end": 38.34000015258789
+    },
+    {
+      "word": "in",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 38.34000015258789,
+      "end": 38.47999954223633
+    },
+    {
+      "word": "the",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 38.47999954223633,
+      "end": 38.619998931884766
+    },
+    {
+      "word": "next",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 38.619998931884766,
+      "end": 38.7599983215332
+    },
+    {
+      "word": "video",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 38.7599983215332,
+      "end": 38.91999816894531
+    }
+  ],
+  "timed_captions": [
+    [
+      0.0,
+      1.5399999618530273,
+      [
+        "Hi guys welcome"
+      ]
+    ],
+    [
+      1.5399999618530273,
+      3.4200000762939453,
+      [
+        "to the unboxing"
+      ]
+    ],
+    [
+      3.4200000762939453,
+      4.21999979019165,
+      [
+        "of my business"
+      ]
+    ],
+    [
+      4.21999979019165,
+      5.579999923706055,
+      [
+        "card This is"
+      ]
+    ],
+    [
+      5.579999923706055,
+      6.420000076293945,
+      [
+        "just for Bobbila"
+      ]
+    ],
+    [
+      6.420000076293945,
+      7.139999866485596,
+      [
+        "test I want"
+      ]
+    ],
+    [
+      7.139999866485596,
+      7.440000057220459,
+      [
+        "to see how"
+      ]
+    ],
+    [
+      7.440000057220459,
+      8.220000267028809,
+      [
+        "the captions come"
+      ]
+    ],
+    [
+      8.220000267028809,
+      9.460000038146973,
+      [
+        "in and see"
+      ]
+    ],
+    [
+      9.460000038146973,
+      10.0600004196167,
+      [
+        "how the voice"
+      ]
+    ],
+    [
+      10.0600004196167,
+      10.84000015258789,
+      [
+        "ISO is with"
+      ]
+    ],
+    [
+      10.84000015258789,
+      12.520000457763672,
+      [
+        "all this Background"
+      ]
+    ],
+    [
+      12.520000457763672,
+      13.279999732971191,
+      [
+        "noise So let's"
+      ]
+    ],
+    [
+      13.279999732971191,
+      14.0,
+      [
+        "get into the"
+      ]
+    ],
+    [
+      14.0,
+      15.65999984741211,
+      [
+        "unboxing It comes"
+      ]
+    ],
+    [
+      15.65999984741211,
+      16.079999923706055,
+      [
+        "in a very"
+      ]
+    ],
+    [
+      16.079999923706055,
+      18.5,
+      [
+        "nice sleek Premium"
+      ]
+    ],
+    [
+      18.5,
+      19.700000762939453,
+      [
+        "packaging I don't"
+      ]
+    ],
+    [
+      19.700000762939453,
+      20.079999923706055,
+      [
+        "think I can"
+      ]
+    ],
+    [
+      20.079999923706055,
+      20.639999389648438,
+      [
+        "feel the card"
+      ]
+    ],
+    [
+      20.639999389648438,
+      21.15999984741211,
+      [
+        "now that I"
+      ]
+    ],
+    [
+      21.15999984741211,
+      21.65999984741211,
+      [
+        "think about it"
+      ]
+    ],
+    [
+      21.65999984741211,
+      21.940000534057617,
+      [
+        "I think I"
+      ]
+    ],
+    [
+      21.940000534057617,
+      23.65999984741211,
+      [
+        "got scammed but"
+      ]
+    ],
+    [
+      32.13999938964844,
+      33.36000061035156,
+      [
+        "So anyways moving"
+      ]
+    ],
+    [
+      33.36000061035156,
+      34.70000076293945,
+      [
+        "on this is"
+      ]
+    ],
+    [
+      34.70000076293945,
+      36.099998474121094,
+      [
+        "the unboxing and"
+      ]
+    ],
+    [
+      36.099998474121094,
+      37.380001068115234,
+      [
+        "this is it"
+      ]
+    ],
+    [
+      37.380001068115234,
+      38.060001373291016,
+      [
+        "and I'll see"
+      ]
+    ],
+    [
+      38.060001373291016,
+      38.47999954223633,
+      [
+        "you guys in"
+      ]
+    ],
+    [
+      38.47999954223633,
+      38.91999816894531,
+      [
+        "the next video"
+      ]
+    ]
+  ],
+  "broll_placements": [
+    {
+      "timestamp_seconds": 6.0,
+      "duration": 2,
+      "theme": "unboxing",
+      "emotion": "neutral",
+      "description": "",
+      "enabled": true,
+      "selected_index": 0,
+      "clip_options": [
+        {
+          "clip_id": "movie_clips_10",
+          "filename": "movie_clips_10.mp4",
+          "description": "",
+          "emotion": "neutral",
+          "energy": "low",
+          "lighting": "neutral",
+          "camera": "closeup",
+          "setting": "neutral",
+          "visual_keywords": [
+            "application form",
+            "close-up shot",
+            "text focus",
+            "paper document",
+            "blurred background",
+            "static frame",
+            "neutral colors",
+            "office-related"
+          ],
+          "subject_presence": "object",
+          "score": 4,
+          "thumbnail_url": "/api/broll-thumbnail/movie_clips_10"
+        },
+        {
+          "clip_id": "movie_clips_5",
+          "filename": "movie_clips_5.mp4",
+          "description": "",
+          "emotion": "neutral",
+          "energy": "low",
+          "lighting": "neutral",
+          "camera": "closeup",
+          "setting": "neutral",
+          "visual_keywords": [
+            "newspaper closeup",
+            "business headline",
+            "text focus",
+            "neutral lighting",
+            "static shot",
+            "paper texture",
+            "newsprint",
+            "financial news",
+            "folded newspaper",
+            "blue headline"
+          ],
+          "subject_presence": "object",
+          "score": 4,
+          "thumbnail_url": "/api/broll-thumbnail/movie_clips_5"
+        },
+        {
+          "clip_id": "movie_clips_8",
+          "filename": "movie_clips_8.mp4",
+          "description": "",
+          "emotion": "neutral",
+          "energy": "low",
+          "lighting": "dark",
+          "camera": "closeup",
+          "setting": "neutral",
+          "visual_keywords": [
+            "handwritten equations",
+            "dark background",
+            "glass surface",
+            "white marker",
+            "mathematical formulas",
+            "dim lighting",
+            "static shot",
+            "blurred background"
+          ],
+          "subject_presence": "abstract",
+          "score": 4,
+          "thumbnail_url": "/api/broll-thumbnail/movie_clips_8"
+        },
+        {
+          "clip_id": "movie_clips_11",
+          "filename": "movie_clips_11.mp4",
+          "description": "",
+          "emotion": "tense",
+          "energy": "medium",
+          "lighting": "neutral",
+          "camera": "wide",
+          "setting": "office",
+          "visual_keywords": [
+            "boardroom meeting",
+            "formal suits",
+            "serious expressions",
+            "wooden table",
+            "office cubicles",
+            "neutral lighting",
+            "business environment",
+            "standing man",
+            "seated men",
+            "glass partition"
+          ],
+          "subject_presence": "person",
+          "score": 3,
+          "thumbnail_url": "/api/broll-thumbnail/movie_clips_11"
+        }
+      ]
+    },
+    {
+      "timestamp_seconds": 15.0,
+      "duration": 2,
+      "theme": "packaging",
+      "emotion": "neutral",
+      "description": "",
+      "enabled": true,
+      "selected_index": 0,
+      "clip_options": [
+        {
+          "clip_id": "movie_clips_10",
+          "filename": "movie_clips_10.mp4",
+          "description": "",
+          "emotion": "neutral",
+          "energy": "low",
+          "lighting": "neutral",
+          "camera": "closeup",
+          "setting": "neutral",
+          "visual_keywords": [
+            "application form",
+            "close-up shot",
+            "text focus",
+            "paper document",
+            "blurred background",
+            "static frame",
+            "neutral colors",
+            "office-related"
+          ],
+          "subject_presence": "object",
+          "score": 4,
+          "thumbnail_url": "/api/broll-thumbnail/movie_clips_10"
+        },
+        {
+          "clip_id": "movie_clips_5",
+          "filename": "movie_clips_5.mp4",
+          "description": "",
+          "emotion": "neutral",
+          "energy": "low",
+          "lighting": "neutral",
+          "camera": "closeup",
+          "setting": "neutral",
+          "visual_keywords": [
+            "newspaper closeup",
+            "business headline",
+            "text focus",
+            "neutral lighting",
+            "static shot",
+            "paper texture",
+            "newsprint",
+            "financial news",
+            "folded newspaper",
+            "blue headline"
+          ],
+          "subject_presence": "object",
+          "score": 4,
+          "thumbnail_url": "/api/broll-thumbnail/movie_clips_5"
+        },
+        {
+          "clip_id": "movie_clips_8",
+          "filename": "movie_clips_8.mp4",
+          "description": "",
+          "emotion": "neutral",
+          "energy": "low",
+          "lighting": "dark",
+          "camera": "closeup",
+          "setting": "neutral",
+          "visual_keywords": [
+            "handwritten equations",
+            "dark background",
+            "glass surface",
+            "white marker",
+            "mathematical formulas",
+            "dim lighting",
+            "static shot",
+            "blurred background"
+          ],
+          "subject_presence": "abstract",
+          "score": 4,
+          "thumbnail_url": "/api/broll-thumbnail/movie_clips_8"
+        },
+        {
+          "clip_id": "movie_clips_11",
+          "filename": "movie_clips_11.mp4",
+          "description": "",
+          "emotion": "tense",
+          "energy": "medium",
+          "lighting": "neutral",
+          "camera": "wide",
+          "setting": "office",
+          "visual_keywords": [
+            "boardroom meeting",
+            "formal suits",
+            "serious expressions",
+            "wooden table",
+            "office cubicles",
+            "neutral lighting",
+            "business environment",
+            "standing man",
+            "seated men",
+            "glass partition"
+          ],
+          "subject_presence": "person",
+          "score": 3,
+          "thumbnail_url": "/api/broll-thumbnail/movie_clips_11"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,785 @@
+{
+  "input_video": "C:\\Users\\aksha\\Downloads\\final_mvp_backend_final\\final_mvp_backend\\backend\\uploads\\e934f2fc0cf5.mp4",
+  "video_id": "e934f2fc0cf5",
+  "status": "completed",
+  "transcript_text": "Are used to feel something simple You felt something you created it Now it's tutorials software overpriced tools Artists weren't meant to become technicians So we built Obula You create the mechanics disappear Fall in love with creating again",
+  "styled_words": [
+    {
+      "word": "Are",
+      "style": "emphasis",
+      "size_mult": 1.25,
+      "color": [
+        255,
+        200,
+        80
+      ],
+      "start": 5.699999809265137,
+      "end": 6.400000095367432
+    },
+    {
+      "word": "used",
+      "style": "hook",
+      "size_mult": 1.25,
+      "color": [
+        255,
+        200,
+        80
+      ],
+      "start": 6.400000095367432,
+      "end": 6.699999809265137
+    },
+    {
+      "word": "to",
+      "style": "regular",
+      "size_mult": 1,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 6.699999809265137,
+      "end": 6.880000114440918
+    },
+    {
+      "word": "feel",
+      "style": "emphasis",
+      "size_mult": 1.1,
+      "color": [
+        255,
+        200,
+        80
+      ],
+      "start": 6.880000114440918,
+      "end": 7
+    },
+    {
+      "word": "something",
+      "style": "regular",
+      "size_mult": 1,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 7,
+      "end": 7.340000152587891
+    },
+    {
+      "word": "simple",
+      "style": "regular",
+      "size_mult": 1,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 7.340000152587891,
+      "end": 7.679999828338623
+    },
+    {
+      "word": "You",
+      "style": "regular",
+      "size_mult": 1,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 8.5,
+      "end": 8.5600004196167
+    },
+    {
+      "word": "felt",
+      "style": "regular",
+      "size_mult": 1,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 8.5600004196167,
+      "end": 8.720000267028809
+    },
+    {
+      "word": "something",
+      "style": "regular",
+      "size_mult": 1,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 8.720000267028809,
+      "end": 9.119999885559082
+    },
+    {
+      "word": "you",
+      "style": "regular",
+      "size_mult": 1,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 9.479999542236328,
+      "end": 9.960000038146973
+    },
+    {
+      "word": "created",
+      "style": "regular",
+      "size_mult": 1,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 9.960000038146973,
+      "end": 9.960000038146973
+    },
+    {
+      "word": "it",
+      "style": "regular",
+      "size_mult": 1,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 9.960000038146973,
+      "end": 10.300000190734863
+    },
+    {
+      "word": "Now",
+      "style": "hook",
+      "size_mult": 1.25,
+      "color": [
+        255,
+        200,
+        80
+      ],
+      "start": 11.0600004196167,
+      "end": 11.199999809265137
+    },
+    {
+      "word": "it's",
+      "style": "hook",
+      "size_mult": 1.25,
+      "color": [
+        255,
+        200,
+        80
+      ],
+      "start": 11.199999809265137,
+      "end": 11.380000114440918
+    },
+    {
+      "word": "tutorials",
+      "style": "regular",
+      "size_mult": 1,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 11.380000114440918,
+      "end": 11.880000114440918
+    },
+    {
+      "word": "software",
+      "style": "regular",
+      "size_mult": 1,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 12.619999885559082,
+      "end": 12.859999656677246
+    },
+    {
+      "word": "overpriced",
+      "style": "emphasis",
+      "size_mult": 1.1,
+      "color": [
+        255,
+        200,
+        80
+      ],
+      "start": 13.180000305175781,
+      "end": 13.680000305175781
+    },
+    {
+      "word": "tools",
+      "style": "regular",
+      "size_mult": 1,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 13.680000305175781,
+      "end": 14.220000267028809
+    },
+    {
+      "word": "Artists",
+      "style": "emphasis",
+      "size_mult": 1.1,
+      "color": [
+        255,
+        200,
+        80
+      ],
+      "start": 15.239999771118164,
+      "end": 15.420000076293945
+    },
+    {
+      "word": "weren't",
+      "style": "regular",
+      "size_mult": 1,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 15.420000076293945,
+      "end": 15.640000343322754
+    },
+    {
+      "word": "meant",
+      "style": "regular",
+      "size_mult": 1,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 15.640000343322754,
+      "end": 15.859999656677246
+    },
+    {
+      "word": "to",
+      "style": "emphasis",
+      "size_mult": 1.1,
+      "color": [
+        255,
+        200,
+        80
+      ],
+      "start": 15.859999656677246,
+      "end": 16.139999389648438
+    },
+    {
+      "word": "become",
+      "style": "regular",
+      "size_mult": 1,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 16.139999389648438,
+      "end": 16.219999313354492
+    },
+    {
+      "word": "technicians",
+      "style": "regular",
+      "size_mult": 1,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 16.219999313354492,
+      "end": 16.760000228881836
+    },
+    {
+      "word": "So",
+      "style": "emphasis",
+      "size_mult": 1.1,
+      "color": [
+        255,
+        200,
+        80
+      ],
+      "start": 17.540000915527344,
+      "end": 17.860000610351562
+    },
+    {
+      "word": "we",
+      "style": "regular",
+      "size_mult": 1,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 17.860000610351562,
+      "end": 18.299999237060547
+    },
+    {
+      "word": "built",
+      "style": "regular",
+      "size_mult": 1,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 18.299999237060547,
+      "end": 18.559999465942383
+    },
+    {
+      "word": "Obula",
+      "style": "emphasis",
+      "size_mult": 1.1,
+      "color": [
+        255,
+        200,
+        80
+      ],
+      "start": 18.559999465942383,
+      "end": 18.940000534057617
+    },
+    {
+      "word": "You",
+      "style": "regular",
+      "size_mult": 1,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 20.100000381469727,
+      "end": 20.280000686645508
+    },
+    {
+      "word": "create",
+      "style": "regular",
+      "size_mult": 1,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 20.280000686645508,
+      "end": 20.6200008392334
+    },
+    {
+      "word": "the",
+      "style": "regular",
+      "size_mult": 1,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 21.059999465942383,
+      "end": 21.260000228881836
+    },
+    {
+      "word": "mechanics",
+      "style": "regular",
+      "size_mult": 1,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 21.260000228881836,
+      "end": 21.6200008392334
+    },
+    {
+      "word": "disappear",
+      "style": "emphasis",
+      "size_mult": 1.1,
+      "color": [
+        255,
+        200,
+        80
+      ],
+      "start": 21.6200008392334,
+      "end": 22.200000762939453
+    },
+    {
+      "word": "Fall",
+      "style": "hook",
+      "size_mult": 1.25,
+      "color": [
+        255,
+        200,
+        80
+      ],
+      "start": 23.260000228881836,
+      "end": 23.299999237060547
+    },
+    {
+      "word": "in",
+      "style": "hook",
+      "size_mult": 1.25,
+      "color": [
+        255,
+        200,
+        80
+      ],
+      "start": 23.299999237060547,
+      "end": 23.719999313354492
+    },
+    {
+      "word": "love",
+      "style": "emotional",
+      "size_mult": 1,
+      "color": [
+        255,
+        200,
+        80
+      ],
+      "start": 23.719999313354492,
+      "end": 23.719999313354492
+    },
+    {
+      "word": "with",
+      "style": "emphasis",
+      "size_mult": 1.1,
+      "color": [
+        255,
+        200,
+        80
+      ],
+      "start": 23.719999313354492,
+      "end": 24.280000686645508
+    },
+    {
+      "word": "creating",
+      "style": "regular",
+      "size_mult": 1,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 24.280000686645508,
+      "end": 24.700000762939453
+    },
+    {
+      "word": "again",
+      "style": "regular",
+      "size_mult": 1,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 24.700000762939453,
+      "end": 25.600000381469727
+    }
+  ],
+  "timed_captions": [
+    [
+      5.699999809265137,
+      7.679999828338623,
+      [
+        "Are",
+        "used",
+        "to",
+        "feel",
+        "something",
+        "simple"
+      ]
+    ],
+    [
+      8.5,
+      10.300000190734863,
+      [
+        "You",
+        "felt",
+        "something",
+        "you",
+        "created",
+        "it"
+      ]
+    ],
+    [
+      11.0600004196167,
+      11.880000114440918,
+      [
+        "Now",
+        "it's",
+        "tutorials"
+      ]
+    ],
+    [
+      12.619999885559082,
+      14.220000267028809,
+      [
+        "software",
+        "overpriced",
+        "tools"
+      ]
+    ],
+    [
+      15.239999771118164,
+      16.760000228881836,
+      [
+        "Artists",
+        "weren't",
+        "meant",
+        "to",
+        "become",
+        "technicians"
+      ]
+    ],
+    [
+      17.540000915527344,
+      18.940000534057617,
+      [
+        "So",
+        "we",
+        "built",
+        "Obula"
+      ]
+    ],
+    [
+      20.100000381469727,
+      22.200000762939453,
+      [
+        "You",
+        "create",
+        "the",
+        "mechanics",
+        "disappear"
+      ]
+    ],
+    [
+      23.260000228881836,
+      25.600000381469727,
+      [
+        "Fall",
+        "in",
+        "love",
+        "with",
+        "creating",
+        "again"
+      ]
+    ]
+  ],
+  "broll_placements": [
+    {
+      "timestamp_seconds": 4.0,
+      "duration": 2,
+      "theme": "complexity of modern art creation",
+      "emotion": "tense",
+      "description": "",
+      "enabled": true,
+      "selected_index": 0,
+      "clip_options": [
+        {
+          "clip_id": "movie_clips_11",
+          "filename": "movie_clips_11.mp4",
+          "description": "",
+          "emotion": "tense",
+          "energy": "medium",
+          "lighting": "neutral",
+          "camera": "wide",
+          "setting": "office",
+          "visual_keywords": [
+            "boardroom meeting",
+            "formal suits",
+            "serious expressions",
+            "wooden table",
+            "office cubicles",
+            "neutral lighting",
+            "business environment",
+            "standing man",
+            "seated men",
+            "glass partition"
+          ],
+          "subject_presence": "person",
+          "score": 19,
+          "thumbnail_url": "/api/broll-thumbnail/movie_clips_11"
+        },
+        {
+          "clip_id": "movie_clips_14",
+          "filename": "movie_clips_14.mp4",
+          "description": "",
+          "emotion": "tense",
+          "energy": "medium",
+          "lighting": "neutral",
+          "camera": "mid",
+          "setting": "boardroom",
+          "visual_keywords": [
+            "people reading documents",
+            "formal attire",
+            "bookshelves with legal books",
+            "conference table",
+            "focused expressions",
+            "indoor office lighting",
+            "business meeting",
+            "papers and folders",
+            "mixed gender group",
+            "professional environment"
+          ],
+          "subject_presence": "person",
+          "score": 19,
+          "thumbnail_url": "/api/broll-thumbnail/movie_clips_14"
+        },
+        {
+          "clip_id": "movie_clips_6",
+          "filename": "movie_clips_6.mp4",
+          "description": "",
+          "emotion": "tense",
+          "energy": "low",
+          "lighting": "neutral",
+          "camera": "mid",
+          "setting": "office",
+          "visual_keywords": [
+            "man in suit",
+            "indoor office",
+            "blurred background",
+            "serious expression",
+            "neutral colors",
+            "desk and chair",
+            "soft lighting",
+            "focused on documents",
+            "people in background"
+          ],
+          "subject_presence": "person",
+          "score": 16,
+          "thumbnail_url": "/api/broll-thumbnail/movie_clips_6"
+        },
+        {
+          "clip_id": "movie_clips_7",
+          "filename": "movie_clips_7.mp4",
+          "description": "",
+          "emotion": "tense",
+          "energy": "low",
+          "lighting": "neutral",
+          "camera": "closeup",
+          "setting": "urban",
+          "visual_keywords": [
+            "man looking out window",
+            "soft natural light",
+            "neutral tones",
+            "indoor setting",
+            "contemplative expression",
+            "urban buildings outside",
+            "side profile",
+            "calm atmosphere"
+          ],
+          "subject_presence": "person",
+          "score": 16,
+          "thumbnail_url": "/api/broll-thumbnail/movie_clips_7"
+        }
+      ]
+    },
+    {
+      "timestamp_seconds": 10.0,
+      "duration": 2,
+      "theme": "introduction of Obula",
+      "emotion": "happy",
+      "description": "",
+      "enabled": true,
+      "selected_index": 0,
+      "clip_options": [
+        {
+          "clip_id": "movie_clips_20",
+          "filename": "movie_clips_20.mp4",
+          "description": "",
+          "emotion": "energetic",
+          "energy": "high",
+          "lighting": "neutral",
+          "camera": "mid",
+          "setting": "office",
+          "visual_keywords": [
+            "group of men",
+            "business attire",
+            "office desk",
+            "papers and files",
+            "smiling and laughing",
+            "fluorescent lights",
+            "smoke",
+            "busy atmosphere",
+            "mid shot",
+            "natural window light"
+          ],
+          "subject_presence": "person",
+          "score": 13,
+          "thumbnail_url": "/api/broll-thumbnail/movie_clips_20"
+        },
+        {
+          "clip_id": "movie_clips_3",
+          "filename": "movie_clips_3.mp4",
+          "description": "",
+          "emotion": "energetic",
+          "energy": "high",
+          "lighting": "neutral",
+          "camera": "mid",
+          "setting": "office",
+          "visual_keywords": [
+            "man on phone",
+            "busy office",
+            "papers on desk",
+            "business attire",
+            "daylight through windows",
+            "focused expressions",
+            "telephone conversation",
+            "indoor plants",
+            "office equipment",
+            "colleagues working"
+          ],
+          "subject_presence": "person",
+          "score": 13,
+          "thumbnail_url": "/api/broll-thumbnail/movie_clips_3"
+        },
+        {
+          "clip_id": "movie_clips_14",
+          "filename": "movie_clips_14.mp4",
+          "description": "",
+          "emotion": "tense",
+          "energy": "medium",
+          "lighting": "neutral",
+          "camera": "mid",
+          "setting": "boardroom",
+          "visual_keywords": [
+            "people reading documents",
+            "formal attire",
+            "bookshelves with legal books",
+            "conference table",
+            "focused expressions",
+            "indoor office lighting",
+            "business meeting",
+            "papers and folders",
+            "mixed gender group",
+            "professional environment"
+          ],
+          "subject_presence": "person",
+          "score": 10,
+          "thumbnail_url": "/api/broll-thumbnail/movie_clips_14"
+        },
+        {
+          "clip_id": "movie_clips_6",
+          "filename": "movie_clips_6.mp4",
+          "description": "",
+          "emotion": "tense",
+          "energy": "low",
+          "lighting": "neutral",
+          "camera": "mid",
+          "setting": "office",
+          "visual_keywords": [
+            "man in suit",
+            "indoor office",
+            "blurred background",
+            "serious expression",
+            "neutral colors",
+            "desk and chair",
+            "soft lighting",
+            "focused on documents",
+            "people in background"
+          ],
+          "subject_presence": "person",
+          "score": 10,
+          "thumbnail_url": "/api/broll-thumbnail/movie_clips_6"
+        }
+      ]
+    }
+  ]
+}

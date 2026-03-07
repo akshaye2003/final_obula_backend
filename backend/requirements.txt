@@ -1,0 +1,41 @@
+# Core API
+fastapi>=0.104.0
+uvicorn[standard]>=0.24.0
+python-multipart>=0.0.6
+pydantic>=2.5.0
+
+# Security
+PyJWT>=2.8.0
+python-dotenv>=1.0.0
+
+# Rate Limiting (Required for production)
+slowapi>=0.1.9
+
+# HTTP Client
+requests>=2.31.0
+httpx>=0.25.0
+
+# Payments (Optional)
+razorpay>=1.4.0
+
+# Video Processing (Core Pipeline)
+opencv-python>=4.8.0
+numpy>=1.24.0
+pillow>=10.0.0
+openai>=1.0.0
+
+# Audio Processing
+openai-whisper>=20231117
+
+# ML/DL (for mask generation)
+mediapipe>=0.10.0
+tensorflow>=2.13.0
+
+# File Handling
+ffmpeg-python>=0.2.0
+
+# Supabase (for RunPod worker and API)
+supabase>=2.0.0
+
+# RunPod (for serverless worker)
+runpod>=1.0.0

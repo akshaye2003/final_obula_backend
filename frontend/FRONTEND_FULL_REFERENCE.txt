@@ -1,0 +1,540 @@
+================================================================================
+OBULA FRONTEND – FULL REFERENCE
+================================================================================
+Generated reference for the entire Obula frontend (landing, 3D grid hero,
+components, styles, config). Use this as a single source for structure and copy.
+
+--------------------------------------------------------------------------------
+1. PROJECT STRUCTURE
+--------------------------------------------------------------------------------
+
+clipify/
+  index.html
+  package.json
+  vite.config.js
+  tailwind.config.js
+  postcss.config.js
+  eslint.config.js
+  FRONTEND_FULL_REFERENCE.txt   (this file)
+  FRONTEND_3D_GRID_HERO.txt     (3D grid–only notes)
+  public/
+    images/                     (e.g. clipify-idea-to-draft.png, clipify-editor-mockup.png)
+  src/
+    main.jsx                    (entry)
+    App.jsx                     (routes + providers)
+    index.css                   (global + Tailwind; see full content below)
+    pages/
+      Landing.jsx
+      SignIn.jsx
+      Upload.jsx
+      Pricing.jsx
+    components/
+      Header.jsx
+      CardIcon.jsx
+      LayeredCardIcon.jsx
+      DurationSlider.jsx
+      AspectRatioSelector.jsx
+      CaptionStyleForm.jsx
+      ProgressSteps.jsx
+      ProtectedRoute.jsx
+      UploadZone.jsx
+      VideoPreview.jsx
+      GoogleSignInButton.jsx
+    context/
+      AuthContext.jsx
+      ThemeContext.jsx
+    hooks/
+      useInView.js
+    api/
+      client.js
+      auth.js
+      upload.js
+
+--------------------------------------------------------------------------------
+2. ENTRY & APP
+--------------------------------------------------------------------------------
+
+--- main.jsx ---
+import { StrictMode } from 'react'
+import { createRoot } from 'react-dom/client'
+import './index.css'
+import App from './App.jsx'
+
+createRoot(document.getElementById('root')).render(
+  <StrictMode>
+    <App />
+  </StrictMode>,
+)
+
+--- App.jsx ---
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { AuthProvider } from './context/AuthContext.jsx';
+import { ThemeProvider } from './context/ThemeContext.jsx';
+import ProtectedRoute from './components/ProtectedRoute.jsx';
+import Landing from './pages/Landing.jsx';
+import SignIn from './pages/SignIn.jsx';
+import Upload from './pages/Upload.jsx';
+import Pricing from './pages/Pricing.jsx';
+
+export default function App() {
+  return (
+    <ThemeProvider>
+      <AuthProvider>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={<Landing />} />
+          <Route path="/signin" element={<SignIn />} />
+          <Route path="/pricing" element={<Pricing />} />
+          <Route path="/upload" element={<ProtectedRoute><Upload /></ProtectedRoute>} />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </BrowserRouter>
+    </AuthProvider>
+    </ThemeProvider>
+  );
+}
+
+ROUTES:
+  /         → Landing
+  /signin   → SignIn
+  /pricing  → Pricing
+  /upload   → Upload (protected)
+
+--------------------------------------------------------------------------------
+3. index.html
+--------------------------------------------------------------------------------
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Obula - Turn long videos into viral clips with AI B-roll, captions, and social-ready exports" />
+    <title>Obula - AI Clip Generator</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>
+
+--------------------------------------------------------------------------------
+4. tailwind.config.js
+--------------------------------------------------------------------------------
+
+/** @type {import('tailwindcss').Config} */
+export default {
+  darkMode: 'class',
+  content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"],
+  theme: {
+    extend: {
+      colors: {
+        primary: { DEFAULT: '#00AEEF', dark: '#0092CC', light: '#5DC9F5', muted: 'rgba(0, 174, 239, 0.1)' },
+        gradient: { start: '#06B6D4', mid: '#00AEEF', end: '#0891B2', dark: '#0E7490' },
+        accent: { purple: '#00AEEF', 'purple-dark': '#0092CC', 'purple-light': '#5DC9F5', lime: '#00AEEF', 'lime-dim': '#0092CC', coral: '#00AEEF', red: '#00AEEF' },
+      },
+      fontFamily: {
+        display: ['Plus Jakarta Sans', 'system-ui', 'sans-serif'],
+        body: ['Plus Jakarta Sans', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
+      },
+      borderRadius: { '4xl': '2rem' },
+    },
+  },
+  plugins: [],
+};
+
+--------------------------------------------------------------------------------
+5. LANDING PAGE – DATA & SECTIONS
+--------------------------------------------------------------------------------
+
+ENV: HAS_GOOGLE = !!import.meta.env.VITE_GOOGLE_CLIENT_ID
+
+CONSTANTS (Landing.jsx):
+  SMART_EXPAND_BY_TOPIC  – tutorial, product, fitness, interview, vlog, default (arrays of prompt snippets)
+  DETECT_TOPIC(text)     – returns topic key from text
+  SOLUTIONS_STACK        – [{ title, desc, cta, button, icon, bg, text, iconBg }] for Marketers, Creators, Podcasters, Educators
+  FEATURES               – [{ title, desc, icon }] AI Clipping, AI B-Roll, Auto Captions, Multi-Platform
+  TESTIMONIALS           – [{ quote, author, role }]
+  FAQ                    – [{ q, a }]
+
+STATE: videoUrl, prompt, duration, aspectRatios, audioOn, expanding, faqOpen, activeSolution, fileInputRef
+
+HOOKS: useInView for heroRef, ideaRef, featuresRef, solutionsRef, whatElseRef, createRef, testimonialRef, faqRef
+
+SECTIONS (in order):
+  1. Header
+  2. Hero (3D grid + gradient, badge, headline “Make a clip about anything”, bullets, input card, CTA, feature pills)
+  3. Trusted by creators & teams (checkmarks)
+  4. Solutions (tabs: Marketers, Creators, Podcasters, Educators; stacked cards + CardIcon; “What else can you do?” grid)
+  5. From idea to first draft (image + copy)
+  6. Features (gradient strip + floating card + feature grid)
+  7. Create (id="create") – textarea, Add video, aspect ratio, Keep audio, DurationSlider, Create clips
+  8. Testimonials (3 cards)
+  9. FAQ (accordion)
+  10. Final CTA (“Get started with Obula”)
+  11. Footer (Product, Solutions, Resources, Company links)
+
+--------------------------------------------------------------------------------
+6. HEADER (summary)
+--------------------------------------------------------------------------------
+
+  Sticky, backdrop blur. Nav: Tools (Clip Maker, Video Editor, Auto Captions, Resize Video), AI (B-Roll Generator, AI Clip Generator, Smart Expand), Solutions (For Marketers, Creators, Educators), Learn, Pricing. Theme toggle. CTAs: Sign in, Get started / Create clip (when auth’d). Mobile: hamburger + same links.
+
+--------------------------------------------------------------------------------
+7. FULL index.css (entire file)
+--------------------------------------------------------------------------------
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ===== 3D GRID HERO – futuristic, animated ===== */
+.hero-grid-3d {
+  perspective: 1200px;
+  perspective-origin: 50% 35%;
+  pointer-events: none;
+  animation: hero-grid-perspective 12s ease-in-out infinite;
+}
+@keyframes hero-grid-perspective {
+  0%, 100% { perspective-origin: 48% 33%; }
+  33% { perspective-origin: 52% 38%; }
+  66% { perspective-origin: 50% 35%; }
+}
+
+.hero-grid-plane {
+  position: absolute;
+  bottom: -25%;
+  left: 50%;
+  width: 220%;
+  height: 180%;
+  transform: translateX(-50%) rotateX(62deg) scale(2);
+  transform-style: preserve-3d;
+  transform-origin: center 90%;
+  background-image:
+    linear-gradient(to right, rgba(255,255,255,0.22) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255,255,255,0.22) 1px, transparent 1px);
+  background-size: 56px 56px;
+  background-position: 0 0;
+  mask-image: linear-gradient(to top, rgba(0,0,0,0.88), transparent 55%);
+  -webkit-mask-image: linear-gradient(to top, rgba(0,0,0,0.88), transparent 55%);
+  animation: hero-grid-drift 6s ease-in-out infinite, hero-grid-flow 4s linear infinite;
+  box-shadow: 0 0 80px rgba(0, 174, 239, 0.08);
+}
+.hero-grid-plane::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom, transparent 0%, rgba(0, 174, 239, 0.03) 50%, transparent 100%);
+  animation: hero-grid-sweep 3s ease-in-out infinite;
+  pointer-events: none;
+}
+@keyframes hero-grid-flow {
+  0% { background-position: 0 0; }
+  100% { background-position: 56px -56px; }
+}
+@keyframes hero-grid-sweep {
+  0%, 100% { opacity: 0; transform: translateY(-100%); }
+  50% { opacity: 1; transform: translateY(100%); }
+}
+@keyframes hero-grid-drift {
+  0%, 100% {
+    transform: translateX(-50%) rotateX(62deg) scale(2) translateY(0) translateZ(0);
+  }
+  25% {
+    transform: translateX(-51%) rotateX(61deg) scale(2.02) translateY(-4px) translateZ(10px);
+  }
+  50% {
+    transform: translateX(-50%) rotateX(63deg) scale(2) translateY(2px) translateZ(0);
+  }
+  75% {
+    transform: translateX(-49%) rotateX(62deg) scale(1.98) translateY(-2px) translateZ(-5px);
+  }
+}
+
+.hero-grid-plane-depth {
+  background-image:
+    linear-gradient(to right, rgba(255,255,255,0.12) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255,255,255,0.12) 1px, transparent 1px);
+  background-size: 112px 112px;
+  background-position: 0 0;
+  transform: translateX(-50%) rotateX(62deg) scale(2.1) translateY(15px);
+  opacity: 0.8;
+  mask-image: linear-gradient(to top, rgba(0,0,0,0.7), transparent 50%);
+  -webkit-mask-image: linear-gradient(to top, rgba(0,0,0,0.7), transparent 50%);
+  animation: hero-grid-drift-depth 5s ease-in-out infinite, hero-grid-flow-slow 8s linear infinite;
+  animation-delay: -1s, 0s;
+}
+@keyframes hero-grid-flow-slow {
+  0% { background-position: 0 0; }
+  100% { background-position: 112px -112px; }
+}
+@keyframes hero-grid-drift-depth {
+  0%, 100% { transform: translateX(-50%) rotateX(62deg) scale(2.1) translateY(15px) translateX(0); }
+  50% { transform: translateX(-50%) rotateX(62deg) scale(2.12) translateY(8px) translateX(3%); }
+}
+
+/* Neon accent grid – fast moving layer */
+.hero-grid-3d .hero-grid-plane-neon {
+  position: absolute;
+  bottom: -25%;
+  left: 50%;
+  width: 220%;
+  height: 180%;
+  transform: translateX(-50%) rotateX(62deg) scale(2.05) translateY(5px);
+  transform-origin: center 90%;
+  background-image:
+    linear-gradient(to right, rgba(0, 234, 255, 0.25) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(0, 234, 255, 0.25) 1px, transparent 1px);
+  background-size: 64px 64px;
+  background-position: 0 0;
+  mask-image: linear-gradient(to top, transparent, rgba(0,0,0,0.5) 40%);
+  -webkit-mask-image: linear-gradient(to top, transparent, rgba(0,0,0,0.5) 40%);
+  opacity: 0.9;
+  animation: hero-grid-flow-neon 2.5s linear infinite, hero-grid-pulse 2s ease-in-out infinite;
+  animation-delay: -0.5s, 0s;
+}
+@keyframes hero-grid-flow-neon {
+  0% { background-position: 0 0; }
+  100% { background-position: 64px 64px; }
+}
+@keyframes hero-grid-pulse {
+  0%, 100% { opacity: 0.6; filter: brightness(1); }
+  50% { opacity: 0.95; filter: brightness(1.2); }
+}
+
+/* Screen-space scan line */
+.hero-scan-line {
+  background: linear-gradient(
+    to bottom,
+    transparent 0%,
+    transparent 45%,
+    rgba(0, 234, 255, 0.12) 50%,
+    transparent 55%,
+    transparent 100%
+  );
+  background-size: 100% 200%;
+  animation: hero-scan 4s linear infinite;
+}
+@keyframes hero-scan {
+  0% { background-position: 0 -100%; }
+  100% { background-position: 0 100%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-grid-3d { animation: none; }
+  .hero-grid-plane,
+  .hero-grid-plane-depth,
+  .hero-grid-plane-neon { animation: none; }
+  .hero-grid-plane::after { animation: none; opacity: 0; }
+  .hero-scan-line { animation: none; opacity: 0; }
+}
+
+/* Hero gradient – bold, vivid */
+.hero-gradient {
+  position: relative;
+  background: linear-gradient(135deg, #be185d 0%, #7c3aed 35%, #ea580c 65%, #dc2626 100%);
+}
+.hero-gradient::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse 100% 70% at 20% 20%, rgba(255,255,255,0.15) 0%, transparent 45%),
+              radial-gradient(ellipse 80% 50% at 85% 80%, rgba(251,146,60,0.12) 0%, transparent 45%);
+  pointer-events: none;
+}
+.hero-overlay-subtle {
+  background: radial-gradient(ellipse 100% 80% at 50% 0%, rgba(255,255,255,0.08) 0%, transparent 50%);
+  pointer-events: none;
+}
+@keyframes gradient-shift {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+.hero-gradient-animated {
+  background-size: 200% 200%;
+  background-image: linear-gradient(135deg, #be185d 0%, #7c3aed 25%, #ea580c 50%, #dc2626 75%, #be185d 100%);
+  animation: gradient-shift 18s ease infinite;
+}
+.dark .hero-gradient { background: linear-gradient(165deg, #be185d 0%, #7e22ce 25%, #c2410c 55%, #b91c1c 100%); }
+.hero-title { color: #fff; text-shadow: 0 2px 8px rgba(0,0,0,0.25), 0 4px 20px rgba(0,0,0,0.2); }
+.hero-cta-text { color: rgba(255,255,255,0.95); text-shadow: 0 1px 4px rgba(0,0,0,0.2); }
+.hero-reveal { transition: opacity 0.6s cubic-bezier(0.16,1,0.3,1), transform 0.6s cubic-bezier(0.16,1,0.3,1); }
+.hero-reveal-delay-1 { transition-delay: 80ms; }
+.hero-reveal-delay-2 { transition-delay: 160ms; }
+@keyframes hero-emphasis {
+  0%, 100% { opacity: 1; filter: brightness(1); }
+  50% { opacity: 0.95; filter: brightness(1.05); }
+}
+.hero-emphasis { animation: hero-emphasis 3s ease-in-out infinite; }
+.hero-card-backplate {
+  background: rgba(255,255,255,0.6);
+  backdrop-filter: blur(24px);
+  box-shadow: 0 40px 80px -30px rgba(0,0,0,0.25), 0 20px 40px -20px rgba(0,0,0,0.15);
+}
+.dark .hero-card-backplate { background: rgba(0,0,0,0.3); box-shadow: 0 40px 80px -30px rgba(0,0,0,0.6); }
+.hero-input-card {
+  box-shadow: 0 24px 56px -16px rgba(0,0,0,0.25), 0 12px 32px -12px rgba(0,0,0,0.15), 0 0 0 1px rgba(0,0,0,0.06);
+  transition: box-shadow 0.4s, transform 0.4s;
+}
+.hero-input-card:hover { transform: translateY(-4px); box-shadow: 0 32px 72px -20px rgba(0,0,0,0.28); }
+.hero-attach-btn { transition: transform 0.2s, background-color 0.2s; }
+.hero-attach-btn:hover { transform: scale(1.02); }
+.hero-submit-btn { transition: transform 0.2s; }
+.hero-submit-btn:hover { transform: scale(1.06); }
+.hero-upload-link { position: relative; }
+.hero-upload-link::after { content: ''; position: absolute; left: 0; bottom: -2px; width: 0; height: 2px; background: currentColor; transition: width 0.3s; }
+.hero-upload-link:hover::after { width: 100%; }
+.feature-pill { transition: transform 0.25s, background-color 0.25s, border-color 0.25s; }
+.feature-pill:hover { transform: scale(1.05); }
+.clickup-card { transition: transform 0.35s, box-shadow 0.35s, border-color 0.35s; }
+/* Solutions stack */
+.stack-card { transition: transform 0.25s, box-shadow 0.25s; }
+.stack-card:hover { transform: translateY(-4px); box-shadow: 0 20px 40px -12px rgba(0,0,0,0.3); z-index: 50 !important; }
+.stack-back { opacity: 0.82; }
+.stack-back:hover { opacity: 0.95; }
+.shadow-stack-front { box-shadow: 0 20px 50px -12px rgba(0,0,0,0.35); }
+.shadow-stack-back { box-shadow: 0 12px 32px -10px rgba(0,0,0,0.2); }
+@media (min-width: 1024px) {
+  .stack-card { position: absolute; transition: top 0.35s, left 0.35s, transform 0.25s, box-shadow 0.25s, opacity 0.35s; }
+  .stack-card[data-offset="0"] { top: 0; left: 0; z-index: 50; }
+  .stack-card[data-offset="14"] { top: 14px; left: 14px; z-index: 30; }
+  .stack-card[data-offset="28"] { top: 28px; left: 28px; z-index: 20; }
+  .stack-card[data-offset="42"] { top: 42px; left: 42px; z-index: 10; }
+}
+.solutions-stack-orbs { isolation: isolate; }
+.solution-orb-1 { animation: float-blob 12s ease infinite; }
+.solution-orb-2 { animation: float-blob 15s ease infinite; animation-delay: -2s; }
+.solution-orb-3 { animation: float-blob 14s ease infinite; animation-delay: -5s; }
+.scroll-reveal-block { opacity: 0; transform: translateY(32px); transition: opacity 0.7s, transform 0.7s; }
+.scroll-reveal-block.is-visible { opacity: 1; transform: translateY(0); }
+.scroll-reveal-block.is-visible .reveal-child-1 { transition: opacity 0.5s 0.15s, transform 0.5s 0.15s; opacity: 1; transform: translateY(0); }
+.scroll-reveal-block.is-visible .reveal-child-2 { transition: opacity 0.5s 0.25s, transform 0.5s 0.25s; opacity: 1; transform: translateY(0); }
+.scroll-reveal-block.is-visible .reveal-child-3 { transition: opacity 0.5s 0.35s, transform 0.5s 0.35s; opacity: 1; transform: translateY(0); }
+.scroll-reveal-block.is-visible .reveal-child-4 { transition: opacity 0.5s 0.45s, transform 0.5s 0.45s; opacity: 1; transform: translateY(0); }
+.scroll-reveal-block .reveal-child-1, .scroll-reveal-block .reveal-child-2,
+.scroll-reveal-block .reveal-child-3, .scroll-reveal-block .reveal-child-4 { opacity: 0; transform: translateY(20px); }
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  @apply bg-[#F8F7F5] text-zinc-900 dark:bg-zinc-950 dark:text-white transition-colors duration-200;
+}
+
+.font-display {
+  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+}
+
+@keyframes pulse-subtle { 0%, 100% { opacity: 0.6; } 50% { opacity: 1; } }
+@keyframes glow { 0%, 100% { box-shadow: 0 0 20px rgba(207, 255, 0, 0.3); } 50% { box-shadow: 0 0 40px rgba(207, 255, 0, 0.5); } }
+@keyframes float { 0%, 100% { transform: translateY(0) translateX(0); } 33% { transform: translateY(-12px) translateX(8px); } 66% { transform: translateY(-6px) translateX(-6px); } }
+@keyframes float-reverse { 0%, 100% { transform: translateY(0) translateX(0); } 33% { transform: translateY(8px) translateX(-10px); } 66% { transform: translateY(12px) translateX(6px); } }
+@keyframes gradient-shift { 0%, 100% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+@keyframes fade-up { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes fade-up-lg { from { opacity: 0; transform: translateY(60px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes scale-in { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
+@keyframes blob { 0%, 100% { border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%; transform: translate(0, 0) scale(1); } 25% { border-radius: 30% 60% 70% 40% / 50% 60% 30% 60%; transform: translate(2%, -2%) scale(1.05); } 50% { border-radius: 50% 60% 30% 60% / 30% 60% 70% 40%; transform: translate(-1%, 1%) scale(0.95); } 75% { border-radius: 60% 40% 60% 30% / 70% 30% 50% 60%; transform: translate(1%, 2%) scale(1.02); } }
+@keyframes float-blob { 0%, 100% { border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%; transform: translate(0, 0) scale(1); } 25% { border-radius: 30% 60% 70% 40% / 50% 60% 30% 60%; transform: translate(5%, -8%) scale(1.05); } 50% { border-radius: 50% 60% 30% 60% / 30% 60% 70% 40%; transform: translate(-4%, 4%) scale(0.98); } 75% { border-radius: 60% 40% 60% 30% / 70% 30% 50% 60%; transform: translate(3%, 6%) scale(1.02); } }
+@keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
+@keyframes text-gradient { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+
+.animate-pulse-subtle { animation: pulse-subtle 2s ease-in-out infinite; }
+.animate-glow { animation: glow 2s ease-in-out infinite; }
+.animate-float { animation: float 8s ease-in-out infinite; }
+.animate-float-reverse { animation: float-reverse 10s ease-in-out infinite; }
+.animate-blob { animation: blob 12s ease-in-out infinite; }
+.animate-float-blob { animation: float-blob 14s ease-in-out infinite; }
+.animate-fade-up { animation: fade-up 0.7s ease-out forwards; }
+.animate-fade-up-lg { animation: fade-up-lg 0.8s ease-out forwards; }
+.animate-scale-in { animation: scale-in 0.6s ease-out forwards; }
+.animate-gradient-shift { background-size: 200% 200%; animation: gradient-shift 6s ease infinite; }
+
+.hero-stagger-1 { animation: fade-up 0.6s ease-out 0.1s both; }
+.hero-stagger-2 { animation: fade-up 0.6s ease-out 0.25s both; opacity: 0; }
+.hero-stagger-3 { animation: fade-up-lg 0.7s ease-out 0.4s both; opacity: 0; }
+.hero-stagger-4 { animation: fade-up-lg 0.7s ease-out 0.55s both; opacity: 0; }
+.hero-stagger-5 { animation: fade-up 0.6s ease-out 0.7s both; opacity: 0; }
+.hero-stagger-6 { animation: fade-up 0.6s ease-out 0.85s both; opacity: 0; }
+.hero-stagger-7 { animation: scale-in 0.5s ease-out 1s both; opacity: 0; }
+
+.section-reveal {
+  opacity: 0;
+  transform: translateY(40px);
+  transition: opacity 0.8s cubic-bezier(0.34, 1.56, 0.64, 1), transform 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.section-reveal.is-visible { opacity: 1; transform: translateY(0); }
+.section-reveal.is-visible .reveal-child-1 { animation: fade-up 0.5s ease-out 0.1s both; opacity: 0; }
+.section-reveal.is-visible .reveal-child-2 { animation: fade-up 0.5s ease-out 0.2s both; opacity: 0; }
+.section-reveal.is-visible .reveal-child-3 { animation: fade-up 0.5s ease-out 0.3s both; opacity: 0; }
+.section-reveal.is-visible .reveal-child-4 { animation: fade-up 0.5s ease-out 0.4s both; opacity: 0; }
+
+@keyframes draw-line { from { stroke-dashoffset: 1500; } to { stroke-dashoffset: 0; } }
+.section-reveal.is-visible .draw-on-visible { stroke-dasharray: 1500; animation: draw-line 2.5s ease-out forwards; }
+.section-reveal.is-visible .draw-delay-1 { animation-delay: 0.3s; }
+.section-reveal.is-visible .draw-delay-2 { animation-delay: 0.7s; }
+
+@keyframes dropdown-in { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes slide-down { from { opacity: 0; max-height: 0; } to { opacity: 1; max-height: 500px; } }
+.animate-dropdown-in { animation: dropdown-in 0.2s ease-out forwards; }
+.animate-slide-down { animation: slide-down 0.3s ease-out forwards; }
+
+@keyframes bounce-in { 0% { transform: scale(0.9); opacity: 0; } 60% { transform: scale(1.02); opacity: 1; } 100% { transform: scale(1); opacity: 1; } }
+@keyframes slide-up-spring { 0% { transform: translateY(20px); opacity: 0; } 70% { transform: translateY(-4px); opacity: 1; } 100% { transform: translateY(0); opacity: 1; } }
+@keyframes float-gentle { 0%, 100% { transform: translateY(0) scale(1); } 50% { transform: translateY(-8px) scale(1.02); } }
+@keyframes glow-pulse { 0%, 100% { box-shadow: 0 0 20px rgba(207, 255, 0, 0.2); } 50% { box-shadow: 0 0 40px rgba(207, 255, 0, 0.4); } }
+@keyframes shimmer-border { 0%, 100% { border-color: rgba(207, 255, 0, 0.3); } 50% { border-color: rgba(207, 255, 0, 0.8); } }
+.animate-bounce-in { animation: bounce-in 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
+.animate-slide-up-spring { animation: slide-up-spring 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
+.animate-float-gentle { animation: float-gentle 4s ease-in-out infinite; }
+.animate-glow-pulse { animation: glow-pulse 2s ease-in-out infinite; }
+
+html { scroll-behavior: smooth; }
+
+button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
+  outline: 2px solid rgba(207, 255, 0, 0.6);
+  outline-offset: 2px;
+}
+
+@keyframes border-glow {
+  0%, 100% { box-shadow: 0 0 20px rgba(207, 255, 0, 0.15), inset 0 0 20px rgba(207, 255, 0, 0.02); }
+  50% { box-shadow: 0 0 30px rgba(207, 255, 0, 0.25), inset 0 0 25px rgba(207, 255, 0, 0.04); }
+}
+@keyframes create-shimmer { 0% { background-position: -100% 0; } 100% { background-position: 200% 0; } }
+@keyframes sparkle { 0%, 100% { opacity: 0.6; transform: scale(1); } 50% { opacity: 1; transform: scale(1.1); } }
+.create-input-glow { animation: border-glow 3s ease-in-out infinite; }
+.create-input-glow:focus-within { animation: border-glow 1.2s ease-in-out infinite; }
+
+@keyframes slide-up-soft { from { transform: translateY(16px); opacity: 0.6; } to { transform: translateY(0); opacity: 1; } }
+.create-stagger-1 { animation: slide-up-soft 0.4s ease-out 0.05s both; }
+.create-stagger-2 { animation: slide-up-soft 0.4s ease-out 0.1s both; }
+.create-stagger-3 { animation: slide-up-soft 0.4s ease-out 0.15s both; }
+.create-stagger-4 { animation: slide-up-soft 0.4s ease-out 0.2s both; }
+.create-stagger-5 { animation: slide-up-soft 0.4s ease-out 0.25s both; }
+.create-stagger-6 { animation: slide-up-soft 0.4s ease-out 0.3s both; }
+.smart-expand-ready { animation: sparkle 2s ease-in-out infinite; }
+
+--------------------------------------------------------------------------------
+8. COMPONENTS & CONTEXT (list)
+--------------------------------------------------------------------------------
+
+  Components: Header, CardIcon, LayeredCardIcon, DurationSlider, AspectRatioSelector,
+              CaptionStyleForm, ProgressSteps, ProtectedRoute, UploadZone, VideoPreview,
+              GoogleSignInButton.
+
+  Context:   AuthContext (auth state, loginAsDev, logout),
+             ThemeContext (theme, setTheme, toggleTheme).
+
+  Hooks:     useInView (Intersection Observer for scroll reveals).
+
+  API:       client.js, auth.js, upload.js.
+
+================================================================================
+End of FRONTEND_FULL_REFERENCE.txt
+================================================================================

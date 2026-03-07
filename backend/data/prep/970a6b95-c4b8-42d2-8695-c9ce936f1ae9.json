@@ -1,0 +1,1085 @@
+{
+  "input_video": "C:\\Users\\aksha\\Downloads\\final_mvp_backend_final\\final_mvp_backend\\backend\\uploads\\a45ca9e3806d.mov",
+  "video_id": "a45ca9e3806d",
+  "user_id": "2ab54779-adb1-4829-9a51-9314aeeee73f",
+  "status": "completed",
+  "transcript_text": "Stop there was no way that this was actually gonna work But I recorded this video in under two minutes and I typed how I wanted it to look in Orbular and it was done before I could finish making my coffee And it only costed me 99 rupees and it came out like this Come on 99 for access",
+  "styled_words": [
+    {
+      "word": "Stop",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 0.0,
+      "end": 0.8399999737739563
+    },
+    {
+      "word": "there",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 0.8399999737739563,
+      "end": 1.0399999618530273
+    },
+    {
+      "word": "was",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 1.0399999618530273,
+      "end": 1.2799999713897705
+    },
+    {
+      "word": "no",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 1.2799999713897705,
+      "end": 1.559999942779541
+    },
+    {
+      "word": "way",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 1.559999942779541,
+      "end": 1.9199999570846558
+    },
+    {
+      "word": "that",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 1.9199999570846558,
+      "end": 2.240000009536743
+    },
+    {
+      "word": "this",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 2.240000009536743,
+      "end": 2.440000057220459
+    },
+    {
+      "word": "was",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 2.440000057220459,
+      "end": 2.5799999237060547
+    },
+    {
+      "word": "actually",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 2.5799999237060547,
+      "end": 2.9600000381469727
+    },
+    {
+      "word": "gonna",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 2.9600000381469727,
+      "end": 3.240000009536743
+    },
+    {
+      "word": "work",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 3.240000009536743,
+      "end": 3.559999942779541
+    },
+    {
+      "word": "But",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 3.559999942779541,
+      "end": 3.8399999141693115
+    },
+    {
+      "word": "I",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 3.8399999141693115,
+      "end": 4.079999923706055
+    },
+    {
+      "word": "recorded",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 4.079999923706055,
+      "end": 4.360000133514404
+    },
+    {
+      "word": "this",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 4.360000133514404,
+      "end": 4.639999866485596
+    },
+    {
+      "word": "video",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 4.639999866485596,
+      "end": 4.880000114440918
+    },
+    {
+      "word": "in",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 4.880000114440918,
+      "end": 5.159999847412109
+    },
+    {
+      "word": "under",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 5.159999847412109,
+      "end": 5.340000152587891
+    },
+    {
+      "word": "two",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 5.340000152587891,
+      "end": 5.579999923706055
+    },
+    {
+      "word": "minutes",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 5.579999923706055,
+      "end": 5.880000114440918
+    },
+    {
+      "word": "and",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 5.880000114440918,
+      "end": 6.460000038146973
+    },
+    {
+      "word": "I",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 6.460000038146973,
+      "end": 6.699999809265137
+    },
+    {
+      "word": "typed",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 6.699999809265137,
+      "end": 6.960000038146973
+    },
+    {
+      "word": "how",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 6.960000038146973,
+      "end": 7.199999809265137
+    },
+    {
+      "word": "I",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 7.199999809265137,
+      "end": 7.360000133514404
+    },
+    {
+      "word": "wanted",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 7.360000133514404,
+      "end": 7.539999961853027
+    },
+    {
+      "word": "it",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 7.539999961853027,
+      "end": 7.699999809265137
+    },
+    {
+      "word": "to",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 7.699999809265137,
+      "end": 7.840000152587891
+    },
+    {
+      "word": "look",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 7.840000152587891,
+      "end": 8.100000381469727
+    },
+    {
+      "word": "in",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 8.100000381469727,
+      "end": 8.5
+    },
+    {
+      "word": "Orbular",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 8.640000343322754,
+      "end": 9.15999984741211
+    },
+    {
+      "word": "and",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 9.15999984741211,
+      "end": 9.680000305175781
+    },
+    {
+      "word": "it",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 9.680000305175781,
+      "end": 9.779999732971191
+    },
+    {
+      "word": "was",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 9.779999732971191,
+      "end": 9.899999618530273
+    },
+    {
+      "word": "done",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 9.899999618530273,
+      "end": 10.100000381469727
+    },
+    {
+      "word": "before",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 10.100000381469727,
+      "end": 10.319999694824219
+    },
+    {
+      "word": "I",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 10.319999694824219,
+      "end": 10.460000038146973
+    },
+    {
+      "word": "could",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 10.460000038146973,
+      "end": 10.640000343322754
+    },
+    {
+      "word": "finish",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 10.640000343322754,
+      "end": 10.84000015258789
+    },
+    {
+      "word": "making",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 10.84000015258789,
+      "end": 11.0600004196167
+    },
+    {
+      "word": "my",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 11.0600004196167,
+      "end": 11.300000190734863
+    },
+    {
+      "word": "coffee",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 11.300000190734863,
+      "end": 11.739999771118164
+    },
+    {
+      "word": "And",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 12.119999885559082,
+      "end": 12.640000343322754
+    },
+    {
+      "word": "it",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 12.640000343322754,
+      "end": 12.84000015258789
+    },
+    {
+      "word": "only",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 12.84000015258789,
+      "end": 13.180000305175781
+    },
+    {
+      "word": "costed",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 13.180000305175781,
+      "end": 13.5600004196167
+    },
+    {
+      "word": "me",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 13.5600004196167,
+      "end": 13.680000305175781
+    },
+    {
+      "word": "99",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 13.680000305175781,
+      "end": 14.020000457763672
+    },
+    {
+      "word": "rupees",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 14.020000457763672,
+      "end": 14.399999618530273
+    },
+    {
+      "word": "and",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 14.399999618530273,
+      "end": 14.739999771118164
+    },
+    {
+      "word": "it",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 14.739999771118164,
+      "end": 15.0
+    },
+    {
+      "word": "came",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 15.0,
+      "end": 15.119999885559082
+    },
+    {
+      "word": "out",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 15.119999885559082,
+      "end": 15.319999694824219
+    },
+    {
+      "word": "like",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 15.319999694824219,
+      "end": 15.579999923706055
+    },
+    {
+      "word": "this",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 15.579999923706055,
+      "end": 16.239999771118164
+    },
+    {
+      "word": "Come",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 16.299999237060547,
+      "end": 16.81999969482422
+    },
+    {
+      "word": "on",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 16.81999969482422,
+      "end": 16.920000076293945
+    },
+    {
+      "word": "99",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 16.920000076293945,
+      "end": 17.239999771118164
+    },
+    {
+      "word": "for",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 17.239999771118164,
+      "end": 17.479999542236328
+    },
+    {
+      "word": "access",
+      "style": "regular",
+      "size_mult": 1.0,
+      "color": [
+        200,
+        220,
+        240
+      ],
+      "start": 17.479999542236328,
+      "end": 17.860000610351562
+    }
+  ],
+  "timed_captions": [
+    [
+      0.0,
+      1.2799999713897705,
+      [
+        "Stop there was"
+      ]
+    ],
+    [
+      1.2799999713897705,
+      2.240000009536743,
+      [
+        "no way that"
+      ]
+    ],
+    [
+      2.240000009536743,
+      2.9600000381469727,
+      [
+        "this was actually"
+      ]
+    ],
+    [
+      2.9600000381469727,
+      3.8399999141693115,
+      [
+        "gonna work But"
+      ]
+    ],
+    [
+      3.8399999141693115,
+      4.639999866485596,
+      [
+        "I recorded this"
+      ]
+    ],
+    [
+      4.639999866485596,
+      5.340000152587891,
+      [
+        "video in under"
+      ]
+    ],
+    [
+      5.340000152587891,
+      6.460000038146973,
+      [
+        "two minutes and"
+      ]
+    ],
+    [
+      6.460000038146973,
+      7.199999809265137,
+      [
+        "I typed how"
+      ]
+    ],
+    [
+      7.199999809265137,
+      7.699999809265137,
+      [
+        "I wanted it"
+      ]
+    ],
+    [
+      7.699999809265137,
+      8.5,
+      [
+        "to look in"
+      ]
+    ],
+    [
+      8.640000343322754,
+      9.779999732971191,
+      [
+        "Orbular and it"
+      ]
+    ],
+    [
+      9.779999732971191,
+      10.319999694824219,
+      [
+        "was done before"
+      ]
+    ],
+    [
+      10.319999694824219,
+      10.84000015258789,
+      [
+        "I could finish"
+      ]
+    ],
+    [
+      10.84000015258789,
+      11.739999771118164,
+      [
+        "making my coffee"
+      ]
+    ],
+    [
+      12.119999885559082,
+      13.180000305175781,
+      [
+        "And it only"
+      ]
+    ],
+    [
+      13.180000305175781,
+      14.020000457763672,
+      [
+        "costed me 99"
+      ]
+    ],
+    [
+      14.020000457763672,
+      15.0,
+      [
+        "rupees and it"
+      ]
+    ],
+    [
+      15.0,
+      15.579999923706055,
+      [
+        "came out like"
+      ]
+    ],
+    [
+      15.579999923706055,
+      16.920000076293945,
+      [
+        "this Come on"
+      ]
+    ],
+    [
+      16.920000076293945,
+      17.860000610351562,
+      [
+        "99 for access"
+      ]
+    ]
+  ],
+  "broll_placements": [
+    {
+      "timestamp_seconds": 5.0,
+      "duration": 2,
+      "theme": "recording video quickly",
+      "emotion": "energetic",
+      "description": "",
+      "enabled": true,
+      "selected_index": 0,
+      "clip_options": [
+        {
+          "clip_id": "movie_clips_24",
+          "filename": "movie_clips_24.mp4",
+          "description": "",
+          "emotion": "tense",
+          "energy": "high",
+          "lighting": "neutral",
+          "camera": "wide",
+          "setting": "office",
+          "visual_keywords": [
+            "office chaos",
+            "people moving quickly",
+            "busy workspace",
+            "desks and computers",
+            "fluorescent lighting",
+            "corporate hustle",
+            "multiple subjects",
+            "dynamic scene"
+          ],
+          "subject_presence": "person",
+          "score": 10,
+          "thumbnail_url": "/api/broll-thumbnail/movie_clips_24"
+        },
+        {
+          "clip_id": "movie_clips_3",
+          "filename": "movie_clips_3.mp4",
+          "description": "",
+          "emotion": "energetic",
+          "energy": "high",
+          "lighting": "neutral",
+          "camera": "mid",
+          "setting": "office",
+          "visual_keywords": [
+            "man on phone",
+            "busy office",
+            "papers on desk",
+            "business attire",
+            "daylight through windows",
+            "focused expressions",
+            "telephone conversation",
+            "indoor plants",
+            "office equipment",
+            "colleagues working"
+          ],
+          "subject_presence": "person",
+          "score": 9,
+          "thumbnail_url": "/api/broll-thumbnail/movie_clips_3"
+        },
+        {
+          "clip_id": "movie_clips_20",
+          "filename": "movie_clips_20.mp4",
+          "description": "",
+          "emotion": "energetic",
+          "energy": "high",
+          "lighting": "neutral",
+          "camera": "mid",
+          "setting": "office",
+          "visual_keywords": [
+            "group of men",
+            "business attire",
+            "office desk",
+            "papers and files",
+            "smiling and laughing",
+            "fluorescent lights",
+            "smoke",
+            "busy atmosphere",
+            "mid shot",
+            "natural window light"
+          ],
+          "subject_presence": "person",
+          "score": 9,
+          "thumbnail_url": "/api/broll-thumbnail/movie_clips_20"
+        },
+        {
+          "clip_id": "movie_clips_55",
+          "filename": "movie_clips_55.mp4",
+          "description": "",
+          "emotion": "energetic",
+          "energy": "high",
+          "lighting": "bright",
+          "camera": "mid",
+          "setting": "outdoor",
+          "visual_keywords": [
+            "dance performance",
+            "group choreography",
+            "colorful costumes",
+            "stage lights",
+            "energetic movement",
+            "festival atmosphere",
+            "rhythmic motion",
+            "celebration"
+          ],
+          "subject_presence": "person",
+          "score": 9,
+          "thumbnail_url": "/api/broll-thumbnail/movie_clips_55"
+        }
+      ]
+    },
+    {
+      "timestamp_seconds": 10.0,
+      "duration": 2,
+      "theme": "using Orbular",
+      "emotion": "neutral",
+      "description": "",
+      "enabled": true,
+      "selected_index": 0,
+      "clip_options": [
+        {
+          "clip_id": "movie_clips_67",
+          "filename": "movie_clips_67.mp4",
+          "description": "",
+          "emotion": "neutral",
+          "energy": "medium",
+          "lighting": "bright",
+          "camera": "mid",
+          "setting": "outdoor",
+          "visual_keywords": [
+            "shopping district",
+            "pedestrian street",
+            "storefronts",
+            "daytime commerce",
+            "urban retail",
+            "people browsing",
+            "commercial area",
+            "city life"
+          ],
+          "subject_presence": "person",
+          "score": 7,
+          "thumbnail_url": "/api/broll-thumbnail/movie_clips_67"
+        },
+        {
+          "clip_id": "movie_clips_83",
+          "filename": "movie_clips_83.mp4",
+          "description": "",
+          "emotion": "neutral",
+          "energy": "medium",
+          "lighting": "bright",
+          "camera": "mid",
+          "setting": "urban",
+          "visual_keywords": [
+            "coffee shop",
+            "barista working",
+            "customers waiting",
+            "urban cafe",
+            "morning rush",
+            "espresso machine",
+            "casual meeting",
+            "city life"
+          ],
+          "subject_presence": "person",
+          "score": 7,
+          "thumbnail_url": "/api/broll-thumbnail/movie_clips_83"
+        },
+        {
+          "clip_id": "movie_clips_5",
+          "filename": "movie_clips_5.mp4",
+          "description": "",
+          "emotion": "neutral",
+          "energy": "low",
+          "lighting": "neutral",
+          "camera": "closeup",
+          "setting": "neutral",
+          "visual_keywords": [
+            "newspaper closeup",
+            "business headline",
+            "text focus",
+            "neutral lighting",
+            "static shot",
+            "paper texture",
+            "newsprint",
+            "financial news",
+            "folded newspaper",
+            "blue headline"
+          ],
+          "subject_presence": "object",
+          "score": 4,
+          "thumbnail_url": "/api/broll-thumbnail/movie_clips_5"
+        },
+        {
+          "clip_id": "movie_clips_33",
+          "filename": "movie_clips_33.mp4",
+          "description": "",
+          "emotion": "neutral",
+          "energy": "low",
+          "lighting": "neutral",
+          "camera": "closeup",
+          "setting": "office",
+          "visual_keywords": [
+            "pen writing",
+            "signature",
+            "document",
+            "close detail",
+            "business paper",
+            "hand movement",
+            "official form",
+            "ink on paper"
+          ],
+          "subject_presence": "object",
+          "score": 4,
+          "thumbnail_url": "/api/broll-thumbnail/movie_clips_33"
+        }
+      ]
+    }
+  ]
+}

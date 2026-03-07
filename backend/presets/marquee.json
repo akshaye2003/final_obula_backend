@@ -1,0 +1,23 @@
+{
+  "name": "Marquee Scroll",
+  "description": "Cinematic scrolling text that moves across screen. Great for announcements or quotes.",
+  "font_size": 90,
+  "transparency": 0.95,
+  "color": [255, 255, 255],
+  "position": "center",
+  "animation": "marquee_scroll",
+  "words_per_line": 6,
+  "max_hook_words": 5,
+  "exclusive_hooks": false,
+  "hw_encode": false,
+  "mask_frame_skip": 5,
+  "smart_placement": false,
+  "font_regular": "fonts/Coolvetica Rg.otf",
+  "font_emphasis": "fonts/Runethia.otf",
+  "marquee_settings": {
+    "scroll_speed": 1.0,
+    "scroll_direction": "left_to_right",
+    "y_position": 0.5,
+    "shadow_size": 4
+  }
+}
