@@ -61,7 +61,11 @@ app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 # CORS configuration based on environment
 if ENV == "production":
-    allow_origins = ["https://obula.io", "https://www.obula.io"]
+    allow_origins = [
+        "https://obula.io",
+        "https://www.obula.io",
+        "https://obula-backend-vwk3.vercel.app",
+    ]
 else:
     # Development: allow Vite dev server + localhost + local network (for mobile testing)
     allow_origins = ["*"]
@@ -156,8 +160,14 @@ def _verify_supabase_jwt(token: str) -> Optional[dict]:
         # Fallback to API verification if JWT secret not configured
         return _verify_supabase_jwt_api(token)
     try:
-        # Decode and verify the token
-        payload = jwt.decode(token, jwt_secret, algorithms=["HS256"])
+        # Try base64 decoded secret first (Supabase format)
+        import base64
+        try:
+            secret_bytes = base64.b64decode(jwt_secret)
+            payload = jwt.decode(token, secret_bytes, algorithms=["HS256"])
+        except:
+            # Fall back to raw secret
+            payload = jwt.decode(token, jwt_secret, algorithms=["HS256"])
         print(f"[Auth] Verified user via JWT: {payload.get('email')}")
         return {
             "id": payload.get("sub", ""),
@@ -168,11 +178,12 @@ def _verify_supabase_jwt(token: str) -> Optional[dict]:
         print("[Auth] JWT token expired")
         return None
     except jwt.InvalidTokenError as e:
-        print(f"[Auth] Invalid JWT token: {e}")
-        return None
+        print(f"[Auth] Invalid JWT token: {e}, falling back to API")
+        # Fallback to API verification on JWT error
+        return _verify_supabase_jwt_api(token)
     except Exception as e:
-        print(f"[Auth] Exception verifying JWT: {e}")
-        return None
+        print(f"[Auth] Exception verifying JWT: {e}, falling back to API")
+        return _verify_supabase_jwt_api(token)
 
 def _verify_supabase_jwt_api(token: str) -> Optional[dict]:
     """Fallback: Verify token by calling Supabase /auth/v1/user."""
