@@ -1186,6 +1186,32 @@ JOBS: dict[str, dict] = {}
 JOB_LOCK = threading.Lock()
 JOBS_FILE = DATA_DIR / "jobs.json"
 
+def _load_jobs():
+    """Load jobs from disk on startup."""
+    global JOBS
+    if JOBS_FILE.exists():
+        try:
+            with open(JOBS_FILE, "r", encoding="utf-8") as f:
+                loaded = json.load(f)
+                # Only load jobs that aren't too old (24 hours)
+                cutoff = time.time() - (24 * 3600)
+                JOBS = {k: v for k, v in loaded.items() if v.get("created_at", 0) > cutoff}
+                print(f"[Jobs] Loaded {len(JOBS)} jobs from disk")
+        except Exception as e:
+            print(f"[Jobs] Failed to load jobs: {e}")
+            JOBS = {}
+
+def _save_jobs():
+    """Save jobs to disk."""
+    try:
+        with open(JOBS_FILE, "w", encoding="utf-8") as f:
+            json.dump(JOBS, f, indent=2)
+    except Exception as e:
+        print(f"[Jobs] Failed to save jobs: {e}")
+
+# Load jobs on module initialization
+_load_jobs()
+
 # Frontend sends these keys; backend also accepts legacy names for compatibility
 COLOR_GRADE_TO_LUT = {
     "vintage": "02_Film LUTs_Vintage.cube",
@@ -1304,7 +1330,9 @@ async def create_job(request: Request, body: ProcessBody, user: dict = Depends(r
             "from_prep_id": body.from_prep_id,
             "lock_id": body.lock_id,  # Store lock_id for download confirmation
             "settings": settings,  # Store all user settings for restoration
+            "created_at": time.time(),
         }
+        _save_jobs()
 
     def run():
         """Submit job to RunPod GPU worker - Railway NEVER processes videos locally."""
@@ -1472,6 +1500,7 @@ async def create_job(request: Request, body: ProcessBody, user: dict = Depends(r
                             output_video_url=output.get("video_url"),
                             thumbnail_url=output.get("thumbnail_url"),
                         )
+                        _save_jobs()
                         print(f"[Job {job_id}] Completed via RunPod")
                         return
                     elif runpod_status in ["FAILED", "CANCELLED", "TIMED_OUT"]:
@@ -1488,6 +1517,7 @@ async def create_job(request: Request, body: ProcessBody, user: dict = Depends(r
                     message=error_msg,
                     progress=0,
                 )
+                _save_jobs()
             # Release credits on failure
             if body.lock_id:
                 try:
@@ -1620,6 +1650,7 @@ async def runpod_webhook(body: RunPodWebhookBody):
                     "processing_time": body.processing_time,
                 }
             )
+            _save_jobs()
             print(f"[RunPod Webhook] Job {job_id} completed")
         else:
             job.update(
