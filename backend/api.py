@@ -1679,6 +1679,80 @@ async def create_job(request: Request, body: ProcessBody, user: dict = Depends(r
             "settings": settings,  # Store all user settings for restoration
         }
 
+def _run_with_runpod(job_id: str, body, user: dict) -> None:
+    """Offload video processing to RunPod GPU worker."""
+    import asyncio
+    
+    sb_url = os.environ.get("SUPABASE_URL", "").strip()
+    sb_key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY", "").strip()
+    
+    with JOB_LOCK:
+        JOBS[job_id].update(message="Sending to GPU worker...")
+    
+    # Build webhook URL for completion callback
+    railway_domain = os.environ.get("RAILWAY_PUBLIC_DOMAIN", "")
+    webhook_url = f"https://{railway_domain}/api/webhooks/runpod" if railway_domain else ""
+    
+    # Get prep data (styled words, captions, etc.)
+    prep_data = {}
+    if body.from_prep_id:
+        loaded_sw, loaded_tc, loaded_tx = _load_prep_data(body.from_prep_id)
+        if loaded_sw:
+            prep_data = {
+                "styled_words": loaded_sw,
+                "timed_captions": loaded_tc,
+                "transcript_text": loaded_tx,
+            }
+    
+    # Build payload for RunPod
+    job_payload = {
+        "job_id": job_id,
+        "video_id": body.video_id,
+        "user_id": user["id"],
+        "settings": body.model_dump(),
+        "prep_data": prep_data,
+        "webhook_url": webhook_url,
+        "supabase_url": sb_url,
+        "supabase_key": sb_key,
+    }
+    
+    # Submit to RunPod
+    runpod_job_id = asyncio.run(send_to_runpod(job_payload))
+    
+    with JOB_LOCK:
+        JOBS[job_id]["runpod_job_id"] = runpod_job_id
+        JOBS[job_id].update(message="Processing on GPU...", progress=10)
+    
+    # Poll for completion
+    while True:
+        time.sleep(5)
+        status = asyncio.run(get_runpod_status(runpod_job_id))
+        
+        with JOB_LOCK:
+            if JOBS.get(job_id, {}).get("cancel_requested"):
+                JOBS[job_id].update(status="cancelled", stage="cancelled", message="Cancelled")
+                return
+            
+            runpod_status = status.get("status")
+            
+            if runpod_status == "completed":
+                output = status.get("output", {})
+                JOBS[job_id].update(
+                    status="completed",
+                    stage="done",
+                    message="Done!",
+                    progress=100,
+                    output_video_url=output.get("video_url"),
+                    thumbnail_url=output.get("thumbnail_url"),
+                )
+                return
+            elif runpod_status in ["failed", "error"]:
+                raise Exception(status.get("error", "RunPod processing failed"))
+            else:
+                # Still processing - update progress
+                progress = min(95, JOBS[job_id].get("progress", 10) + 2)
+                JOBS[job_id].update(progress=progress)
+
     def run():
         input_path  = _find_upload(body.video_id)
         out_name    = f"processed_{body.video_id}_{uuid.uuid4().hex[:8]}.mp4"
@@ -1686,7 +1760,17 @@ async def create_job(request: Request, body: ProcessBody, user: dict = Depends(r
 
         with JOB_LOCK:
             JOBS[job_id].update(status="processing", stage="starting", progress=5, message="Starting pipeline...")
-
+        
+        # Check if RunPod is configured for GPU offloading
+        if RUNPOD_API_KEY and RUNPOD_ENDPOINT_ID:
+            try:
+                _run_with_runpod(job_id, body, user)
+                return
+            except Exception as e:
+                print(f"[Job {job_id}] RunPod failed, falling back to local: {e}")
+                with JOB_LOCK:
+                    JOBS[job_id].update(message="GPU worker failed, running locally...")
+        
         def progress_cb(stage, pct, weight):
             with JOB_LOCK:
                 if not JOBS.get(job_id):
@@ -1877,6 +1961,55 @@ async def confirm_download(job_id: str, body: DownloadConfirmBody, user: dict = 
     except Exception as e:
         print(f"[Confirm Download] Error: {e}")
         raise HTTPException(status_code=500, detail="Failed to process download")
+
+
+# =============================================================================
+# RUNPOD WEBHOOK
+# =============================================================================
+
+class RunPodWebhookBody(BaseModel):
+    event: str
+    job_id: str
+    success: bool
+    video_url: Optional[str] = None
+    thumbnail_url: Optional[str] = None
+    error: Optional[str] = None
+    processing_time: Optional[float] = None
+
+@app.post("/api/webhooks/runpod")
+async def runpod_webhook(body: RunPodWebhookBody):
+    """Handle completion webhook from RunPod GPU workers."""
+    job_id = body.job_id
+    
+    with JOB_LOCK:
+        job = JOBS.get(job_id)
+        if not job:
+            print(f"[RunPod Webhook] Job {job_id} not found")
+            return {"ok": False, "error": "Job not found"}
+        
+        if body.success:
+            job.update(
+                status="completed",
+                stage="done",
+                message="Done!",
+                progress=100,
+                output_video_url=body.video_url,
+                thumbnail_url=body.thumbnail_url,
+                runpod_metadata={
+                    "processing_time": body.processing_time,
+                }
+            )
+            print(f"[RunPod Webhook] Job {job_id} completed")
+        else:
+            job.update(
+                status="failed",
+                stage="failed",
+                message=body.error or "Processing failed on GPU worker",
+                progress=0,
+            )
+            print(f"[RunPod Webhook] Job {job_id} failed: {body.error}")
+    
+    return {"ok": True}
 
 
 # =============================================================================
