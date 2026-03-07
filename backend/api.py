@@ -474,21 +474,30 @@ async def upload_video(request: Request, file: UploadFile = File(...), user: dic
         path.unlink(missing_ok=True)
         raise HTTPException(status_code=500, detail="Upload failed")
 
-    # Enforce max 1080p resolution (1920×1080 or 1080×1920)
+    # Enforce max 1080p resolution using ffprobe (no cv2)
     try:
-        from scripts.video_utils import VideoUtils
-        w, h = VideoUtils.get_dimensions(str(path))
-        max_dim = max(w, h)
-        if max_dim > 1920:
-            path.unlink(missing_ok=True)
-            raise HTTPException(
-                status_code=400,
-                detail=f"Video resolution too high ({w}×{h}). Max input is 1080p (1920×1080). Please downscale your video first."
-            )
+        import subprocess
+        import json
+        cmd = [
+            "ffprobe", "-v", "error", "-select_streams", "v:0",
+            "-show_entries", "stream=width,height", "-of", "json", str(path)
+        ]
+        result = subprocess.run(cmd, capture_output=True, text=True, timeout=10)
+        data = json.loads(result.stdout)
+        if data.get("streams"):
+            w = data["streams"][0].get("width", 0)
+            h = data["streams"][0].get("height", 0)
+            max_dim = max(w, h)
+            if max_dim > 1920:
+                path.unlink(missing_ok=True)
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Video resolution too high ({w}×{h}). Max input is 1080p (1920×1920). Please downscale your video first."
+                )
     except HTTPException:
         raise
     except Exception as e:
-        # If we can't read dimensions, allow the upload (e.g. corrupted probe)
+        # If we can't read dimensions, allow the upload
         print(f"[Upload] Could not verify resolution: {e}")
 
     return {"video_id": vid, "filename": file.filename, "size_mb": round(total / 1024 / 1024, 2)}
@@ -565,93 +574,13 @@ async def create_prep_background(body: CreatePrepBody, user: dict = Depends(requ
         }, f, indent=2)
     
     def run_background_prep():
+        """Prep now just saves video metadata - transcription happens on RunPod."""
         try:
-            from scripts.pipeline import Pipeline
-            from scripts.broll_engine import BrollEngine
-            from scripts.video_utils import VideoUtils
-            
             with _prep_jobs_lock:
-                _prep_jobs[prep_id]["status"] = "transcribing"
-                _prep_jobs[prep_id]["progress"] = 10
+                _prep_jobs[prep_id]["status"] = "completed"
+                _prep_jobs[prep_id]["progress"] = 100
             
-            pipeline = Pipeline(api_key=os.environ.get("OPENAI_API_KEY", ""))
-            
-            # Step 1: Transcription + GPT styling (hooks, emphasis)
-            styled_words, timed_captions, transcript_text = pipeline._transcribe_and_style(str(input_path))
-            if styled_words is None:
-                styled_words = []
-            if timed_captions is None:
-                timed_captions = []
-            if transcript_text is None:
-                transcript_text = ""
-            
-            with _prep_jobs_lock:
-                _prep_jobs[prep_id]["status"] = "planning_broll"
-                _prep_jobs[prep_id]["progress"] = 60
-            
-            # Step 2: B-roll planning with GPT + clip selection
-            broll_placements = []
-            if transcript_text:
-                try:
-                    video_duration = VideoUtils.get_duration(str(input_path))
-                    video_width, video_height = VideoUtils.get_dimensions(str(input_path))
-                    broll_engine = BrollEngine(
-                        api_key=os.environ.get("OPENAI_API_KEY", ""),
-                        target_width=video_width,
-                        target_height=video_height
-                    )
-                    planned = broll_engine.plan_scenes(transcript_text, video_duration)
-                    
-                    for p in planned[:2]:
-                        placement = {
-                            "timestamp_seconds": p["timestamp_seconds"],
-                            "duration": p.get("duration", 3),
-                            "theme": p.get("theme", ""),
-                            "emotion": p.get("emotion", ""),
-                            "description": p.get("description", ""),
-                            "enabled": True,
-                            "selected_index": 0,
-                            "clip_options": []
-                        }
-                        
-                        # Get clip options for this placement
-                        try:
-                            scene_request = {
-                                "theme": placement["theme"],
-                                "emotion": placement["emotion"],
-                                "energy": p.get("energy", "medium"),
-                            }
-                            clip_options = broll_engine.get_clip_options(scene_request, num_options=4)
-                            
-                            # Generate thumbnails
-                            THUMB_DIR = DATA_DIR / "broll_thumbnails"
-                            THUMB_DIR.mkdir(exist_ok=True)
-                            
-                            for option in clip_options:
-                                clip_id = option["clip_id"]
-                                thumb_path = THUMB_DIR / f"{clip_id}.jpg"
-                                
-                                if not thumb_path.exists():
-                                    broll_engine.generate_thumbnail(option["path"], str(thumb_path))
-                                
-                                if thumb_path.exists():
-                                    option["thumbnail_url"] = f"/api/broll-thumbnail/{clip_id}"
-                                else:
-                                    option["thumbnail_url"] = None
-                                
-                                del option["path"]  # Remove path for security
-                            
-                            placement["clip_options"] = clip_options
-                        except Exception as clip_err:
-                            print(f"[Prep BG] Clip options error: {clip_err}")
-                        
-                        broll_placements.append(placement)
-                    
-                    print(f"[Prep BG] Generated {len(broll_placements)} B-roll placements with clips")
-                except Exception as e:
-                    print(f"[Prep BG] B-roll planning error: {e}")
-            
-            with _prep_jobs_lock:
+            # Save minimal prep data - transcription will be done on RunPod GPU
                 _prep_jobs[prep_id]["status"] = "saving"
                 _prep_jobs[prep_id]["progress"] = 90
             
@@ -732,81 +661,20 @@ async def create_prep(body: CreatePrepBody, user: dict = Depends(require_auth)):
     prep_id = str(uuid.uuid4())
     prep_path = PREP_DIR / f"{prep_id}.json"
 
-    def run_prep():
-        try:
-            from scripts.pipeline import Pipeline
-            from scripts.broll_engine import BrollEngine
-            from scripts.video_utils import VideoUtils
-            
-            pipeline = Pipeline(api_key=os.environ.get("OPENAI_API_KEY", ""))
-            styled_words, timed_captions, transcript_text = pipeline._transcribe_and_style(str(input_path))
-            
-            # Generate B-roll placements using GPT (Phase 1)
-            broll_placements = []
-            if transcript_text:
-                try:
-                    video_duration = VideoUtils.get_duration(str(input_path))
-                    video_width, video_height = VideoUtils.get_dimensions(str(input_path))
-                    broll_engine = BrollEngine(
-                        api_key=os.environ.get("OPENAI_API_KEY", ""),
-                        target_width=video_width,
-                        target_height=video_height
-                    )
-                    planned = broll_engine.plan_scenes(transcript_text, video_duration)
-                    
-                    # Format placements for EditClip
-                    for p in planned[:2]:  # Max 2 placements
-                        broll_placements.append({
-                            "timestamp_seconds": p["timestamp_seconds"],
-                            "duration": p.get("duration", 3),
-                            "theme": p.get("theme", ""),
-                            "emotion": p.get("emotion", ""),
-                            "description": p.get("description", ""),
-                            "enabled": True,
-                            "selected_index": 0,
-                            "clip_options": []
-                        })
-                    print(f"[Prep] Generated {len(broll_placements)} B-roll placements")
-                except Exception as e:
-                    print(f"[Prep] B-roll planning error: {e}")
-            
-            if not styled_words or not timed_captions:
-                with open(prep_path, "w", encoding="utf-8") as f:
-                    json.dump({
-                        "input_video": str(input_path),
-                        "video_id": body.video_id,
-                        "user_id": user["id"],
-                        "transcript_text": transcript_text or "",
-                        "styled_words": [],
-                        "timed_captions": [],
-                        "broll_placements": broll_placements,
-                    }, f, indent=2)
-            else:
-                # Add color to each word for EditClip
-                for w in styled_words:
-                    if "color" not in w:
-                        w["color"] = _PREP_STYLE_COLORS.get(w.get("style", "regular"), [200, 220, 240])
-                # timed_captions: list of [start, end, [lines]] to match prep format
-                tc_serializable = [[s, e, list(lines) if isinstance(lines, (list, tuple)) else [str(lines)]] for s, e, lines in timed_captions]
-                with open(prep_path, "w", encoding="utf-8") as f:
-                    json.dump({
-                        "input_video": str(input_path),
-                        "video_id": body.video_id,
-                        "user_id": user["id"],
-                        "transcript_text": transcript_text,
-                        "styled_words": styled_words,
-                        "timed_captions": tc_serializable,
-                        "broll_placements": broll_placements,
-                    }, f, indent=2)
-        except Exception as e:
-            import traceback
-            print(f"[Prep] Error: {e}")
-            print(traceback.format_exc())
-            prep_path.unlink(missing_ok=True)
-            raise
-
-    # Run synchronously for now (blocking) - prep is needed before EditClip loads
-    run_prep()
+    # Simplified prep - no local transcription (done on RunPod GPU)
+    # Just save the video path for EditClip
+    with open(prep_path, "w", encoding="utf-8") as f:
+        json.dump({
+            "input_video": str(input_path),
+            "video_id": body.video_id,
+            "user_id": user["id"],
+            "transcript_text": "",
+            "styled_words": [],
+            "timed_captions": [],
+            "broll_placements": [],
+        }, f, indent=2)
+    
+    print(f"[Prep] Created minimal prep {prep_id} - transcription will happen on RunPod")
     return {"prep_id": prep_id, "video_id": body.video_id}
 
 def _extract_video_id_from_path(input_path: str) -> str:
@@ -918,7 +786,7 @@ def _get_clip_options_for_placement(broll_engine, placement: dict, num_options: 
 
 @app.post("/api/prep/{prep_id}/broll-suggestions")
 async def generate_broll_suggestions(prep_id: str, user: dict = Depends(require_auth)):
-    """Generate B-roll suggestions using GPT based on transcript."""
+    """Generate B-roll suggestions - simplified, full processing on RunPod."""
     _validate_prep_id(prep_id)
     path = PREP_DIR / f"{prep_id}.json"
     if not path.exists():
@@ -928,68 +796,12 @@ async def generate_broll_suggestions(prep_id: str, user: dict = Depends(require_
         data = json.load(f)
     _check_prep_ownership(data, user)
     
-    transcript = data.get("transcript_text", "")
-    input_video = data.get("input_video", "")
-    
-    if not transcript or not input_video:
-        return {"broll_placements": data.get("broll_placements", [])}
-    
-    try:
-        from scripts.broll_engine import BrollEngine
-        from scripts.video_utils import VideoUtils
-        
-        video_duration = VideoUtils.get_duration(input_video)
-        video_width, video_height = VideoUtils.get_dimensions(input_video)
-        broll_engine = BrollEngine(
-            api_key=os.environ.get("OPENAI_API_KEY", ""),
-            target_width=video_width,
-            target_height=video_height
-        )
-        planned = broll_engine.plan_scenes(transcript, video_duration)
-        
-        # Format placements with clip options
-        broll_placements = []
-        for p in planned[:2]:  # Max 2 placements
-            placement = {
-                "timestamp_seconds": p["timestamp_seconds"],
-                "duration": p.get("duration", 3),
-                "theme": p.get("theme", ""),
-                "emotion": p.get("emotion", ""),
-                "description": p.get("description", ""),
-                "enabled": True,
-                "selected_index": 0,
-                "clip_options": []
-            }
-            
-            # Get clip options for this placement
-            try:
-                placement["clip_options"] = _get_clip_options_for_placement(
-                    broll_engine, placement, num_options=4
-                )
-            except Exception as e:
-                print(f"[B-roll Suggestions] Clip options error: {e}")
-                placement["clip_options"] = []
-            
-            broll_placements.append(placement)
-        
-        # Save to prep file
-        data["broll_placements"] = broll_placements
-        with open(path, "w", encoding="utf-8") as f:
-            json.dump(data, f, indent=2)
-        
-        print(f"[B-roll Suggestions] Generated {len(broll_placements)} placements with clips for {prep_id}")
-        return {"broll_placements": broll_placements}
-        
-    except Exception as e:
-        print(f"[B-roll Suggestions] Error: {e}")
-        import traceback
-        traceback.print_exc()
-        # Return existing placements on error
-        return {"broll_placements": data.get("broll_placements", [])}
+    # Return existing placements or empty list - B-roll planning happens on RunPod
+    return {"broll_placements": data.get("broll_placements", [])}
 
 @app.post("/api/prep/{prep_id}/regenerate-placement/{placement_index:int}")
 async def regenerate_placement(prep_id: str, placement_index: int, user: dict = Depends(require_auth)):
-    """Regenerate a single B-roll placement with new timestamp/theme from GPT."""
+    """Regenerate a single B-roll placement - simplified, full processing on RunPod."""
     _validate_prep_id(prep_id)
     path = PREP_DIR / f"{prep_id}.json"
     if not path.exists():
@@ -1000,83 +812,12 @@ async def regenerate_placement(prep_id: str, placement_index: int, user: dict = 
     _check_prep_ownership(data, user)
     
     placements = data.get("broll_placements", [])
-    if not (0 <= placement_index < len(placements)):
-        raise HTTPException(status_code=400, detail="Invalid placement index")
-    
-    transcript = data.get("transcript_text", "")
-    input_video = data.get("input_video", "")
-    
-    if not transcript or not input_video:
-        return {"broll_placements": placements}
-    
-    try:
-        from scripts.broll_engine import BrollEngine
-        from scripts.video_utils import VideoUtils
-        
-        video_duration = VideoUtils.get_duration(input_video)
-        video_width, video_height = VideoUtils.get_dimensions(input_video)
-        broll_engine = BrollEngine(
-            api_key=os.environ.get("OPENAI_API_KEY", ""),
-            target_width=video_width,
-            target_height=video_height
-        )
-        
-        # Generate new plan
-        planned = broll_engine.plan_scenes(transcript, video_duration)
-        
-        # If we have a new placement at this index, use it
-        # Otherwise shift the index to get a different one
-        if placement_index < len(planned):
-            new_placement = planned[placement_index]
-        elif planned:
-            # Try to get a different one
-            new_placement = planned[0]
-        else:
-            return {"broll_placements": placements}
-        
-        # Build updated placement
-        updated_placement = {
-            "timestamp_seconds": new_placement["timestamp_seconds"],
-            "duration": new_placement.get("duration", 3),
-            "theme": new_placement.get("theme", ""),
-            "emotion": new_placement.get("emotion", ""),
-            "description": new_placement.get("description", ""),
-            "enabled": placements[placement_index].get("enabled", True),
-            "selected_index": 0,
-            "clip_options": []
-        }
-        
-        # Get new clip options for this placement
-        try:
-            updated_placement["clip_options"] = _get_clip_options_for_placement(
-                broll_engine, updated_placement, num_options=4
-            )
-        except Exception as e:
-            print(f"[B-roll Regenerate] Clip options error: {e}")
-        
-        # Update the placement
-        placements[placement_index] = updated_placement
-        
-        # Save updated placements
-        data["broll_placements"] = placements
-        with open(path, "w", encoding="utf-8") as f:
-            json.dump(data, f, indent=2)
-        
-        print(f"[B-roll Regenerate] Updated placement {placement_index} with clips for {prep_id}")
-        return {"broll_placements": placements}
-        
-    except Exception as e:
-        print(f"[B-roll Regenerate] Error: {e}")
-        import traceback
-        traceback.print_exc()
-        return {"broll_placements": placements}
+    # Return existing placements - full B-roll processing happens on RunPod
+    return {"broll_placements": placements}
 
 @app.get("/api/prep/{prep_id}/broll-clips/{placement_index:int}")
 async def get_broll_clips(prep_id: str, placement_index: int, user: dict = Depends(require_auth)):
-    """
-    Get available clip options for a B-roll placement.
-    Returns top 4 matching clips with metadata for user selection.
-    """
+    """Get available clip options for a B-roll placement - simplified, processing on RunPod."""
     _validate_prep_id(prep_id)
     path = PREP_DIR / f"{prep_id}.json"
     if not path.exists():
@@ -1090,66 +831,17 @@ async def get_broll_clips(prep_id: str, placement_index: int, user: dict = Depen
     if not (0 <= placement_index < len(placements)):
         raise HTTPException(status_code=400, detail="Invalid placement index")
     
+    # Return placement's existing clip options or empty list
     placement = placements[placement_index]
-    
-    try:
-        from scripts.broll_engine import BrollEngine
-        from scripts.video_utils import VideoUtils
-        
-        # Build scene request from placement
-        scene_request = {
-            "theme": placement.get("theme", ""),
-            "emotion": placement.get("emotion", ""),
-            "energy": placement.get("energy", "medium"),
-        }
-        
-        # Get video dimensions to determine orientation
-        input_video = data.get("input_video", "")
-        video_width, video_height = VideoUtils.get_dimensions(input_video) if input_video else (1920, 1080)
-        
-        broll_engine = BrollEngine(
-            api_key=os.environ.get("OPENAI_API_KEY", ""),
-            target_width=video_width,
-            target_height=video_height
-        )
-        clip_options = broll_engine.get_clip_options(scene_request, num_options=4)
-        
-        # Generate/serve thumbnails
-        THUMB_DIR = DATA_DIR / "broll_thumbnails"
-        THUMB_DIR.mkdir(exist_ok=True)
-        
-        for option in clip_options:
-            clip_id = option["clip_id"]
-            thumb_path = THUMB_DIR / f"{clip_id}.jpg"
-            
-            # Generate thumbnail if doesn't exist
-            if not thumb_path.exists():
-                broll_engine.generate_thumbnail(option["path"], str(thumb_path))
-            
-            # Add thumbnail URL
-            if thumb_path.exists():
-                option["thumbnail_url"] = f"/api/broll-thumbnail/{clip_id}"
-            else:
-                option["thumbnail_url"] = None
-            
-            # Remove full path for security
-            del option["path"]
-        
-        return {
-            "placement_index": placement_index,
-            "clip_options": clip_options
-        }
-        
-    except Exception as e:
-        print(f"[B-roll Clips] Error: {e}")
-        import traceback
-        traceback.print_exc()
-        raise HTTPException(status_code=500, detail="Failed to get clips")
+    return {
+        "placement_index": placement_index,
+        "clip_options": placement.get("clip_options", [])
+    }
 
 @app.get("/api/broll-thumbnail/{clip_id}")
 async def get_broll_thumbnail(clip_id: str):
-    """Serve a B-roll clip thumbnail image. Extracts frame from video if needed."""
-    import cv2
+    """Serve a B-roll clip thumbnail image. Extracts frame from video using ffmpeg."""
+    import subprocess
     
     # Note: No auth required - movie clips are public assets
     
@@ -1178,30 +870,22 @@ async def get_broll_thumbnail(clip_id: str):
     
     print(f"[Thumbnail] Generating from: {video_path}")
     
-    # Extract frame using OpenCV
+    # Extract frame using ffmpeg (no cv2 needed)
     try:
-        cap = cv2.VideoCapture(str(video_path))
-        if not cap.isOpened():
-            raise HTTPException(status_code=500, detail="Cannot open video")
+        cmd = [
+            "ffmpeg", "-y", "-hide_banner", "-loglevel", "error",
+            "-ss", "0.5", "-i", str(video_path),
+            "-vframes", "1",
+            "-vf", "scale=320:-2",
+            str(thumb_path)
+        ]
+        subprocess.run(cmd, capture_output=True, timeout=10, check=True)
         
-        # Seek to 0.5 seconds
-        cap.set(cv2.CAP_PROP_POS_MSEC, 500)
-        ret, frame = cap.read()
-        cap.release()
-        
-        if not ret or frame is None:
-            raise HTTPException(status_code=500, detail="Cannot read frame")
-        
-        # Resize to thumbnail
-        h, w = frame.shape[:2]
-        target_h = 180
-        target_w = int(w * (target_h / h))
-        frame = cv2.resize(frame, (target_w, target_h))
-        
-        # Save and return
-        cv2.imwrite(str(thumb_path), frame)
-        print(f"[Thumbnail] Saved and serving: {thumb_path}")
-        return FileResponse(thumb_path, media_type="image/jpeg")
+        if thumb_path.exists():
+            print(f"[Thumbnail] Saved and serving: {thumb_path}")
+            return FileResponse(thumb_path, media_type="image/jpeg")
+        else:
+            raise HTTPException(status_code=500, detail="Thumbnail generation failed")
         
     except Exception as e:
         print(f"[Thumbnail] Error: {e}")
@@ -1221,8 +905,13 @@ def _generate_color_grade_previews(input_video: str) -> dict:
     result = {}
 
     try:
-        from scripts.video_utils import VideoUtils
-        duration = VideoUtils.get_duration(input_video)
+        # Get video duration using ffprobe (no cv2)
+        cmd = [
+            "ffprobe", "-v", "error", "-show_entries", "format=duration",
+            "-of", "default=noprint_wrappers=1:nokey=1", input_video
+        ]
+        result_cmd = subprocess.run(cmd, capture_output=True, text=True, timeout=10)
+        duration = float(result_cmd.stdout.strip())
         # Pick frame at 2 seconds or 10% into video, whichever is earlier
         seek_time = min(2.0, duration * 0.1) if duration > 0 else 1.0
     except Exception:
@@ -1294,10 +983,6 @@ async def get_color_grade_previews(prep_id: str, user: dict = Depends(require_au
 # =============================================================================
 # PIPELINE INTEGRATION
 # =============================================================================
-
-class _PipelineCancelled(Exception):
-    """Raised when the user cancels the job; pipeline stops at next progress update."""
-    pass
 
 
 def _hex_to_rgb(hex_str: str) -> Optional[List[int]]:
