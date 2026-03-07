@@ -1,3 +1,6 @@
+# Railway API Server Requirements
+# Lightweight - no GPU/ML packages (those are in requirements.runpod.txt)
+
 # Core API
 fastapi>=0.104.0
 uvicorn[standard]>=0.24.0
@@ -18,24 +21,16 @@ httpx>=0.25.0
 # Payments (Optional)
 razorpay>=1.4.0
 
-# Video Processing (Core Pipeline)
-opencv-python>=4.8.0
+# Image Processing (lightweight, no GPU needed)
 numpy>=1.24.0
 pillow>=10.0.0
 openai>=1.0.0
 
-# Audio Processing
-openai-whisper>=20231117
-
-# ML/DL (for mask generation)
-mediapipe>=0.10.0
-tensorflow>=2.13.0
-
 # File Handling
 ffmpeg-python>=0.2.0
 
-# Supabase (for RunPod worker and API)
+# Supabase (for database and storage)
 supabase>=2.0.0
 
-# RunPod (for serverless worker)
+# RunPod (for submitting jobs to GPU workers)
 runpod>=1.0.0
