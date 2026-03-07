@@ -22,6 +22,15 @@ import jwt
 from dotenv import load_dotenv
 load_dotenv(Path(__file__).resolve().parent / ".env")
 
+# Observability (structured logging, metrics, tracing)
+from observability import (
+    logger, metrics, health_checker, alert_manager,
+    set_request_id, get_request_id, set_user_id, get_user_id,
+    Timer, timed, create_span, capture_exception, send_alert,
+    init_observability, clear_context
+)
+init_observability()
+
 from fastapi import FastAPI, UploadFile, File, HTTPException, Depends, Header, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
@@ -58,6 +67,71 @@ MAX_UPLOAD_MB = int(os.environ.get("MAX_UPLOAD_MB", "500"))
 app = FastAPI(title="Obula API", version="1.0.0")
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+# Request ID middleware - sets up tracing context for each request
+@app.middleware("http")
+async def request_id_middleware(request: Request, call_next):
+    # Extract or generate request ID
+    request_id = request.headers.get("X-Request-ID") or str(uuid.uuid4())
+    set_request_id(request_id)
+    
+    # Start timing
+    start_time = time.time()
+    
+    # Log request start
+    logger.info(
+        "request_started",
+        method=request.method,
+        path=request.url.path,
+        client_ip=request.client.host if request.client else None,
+        user_agent=request.headers.get("user-agent")
+    )
+    
+    # Process request
+    try:
+        response = await call_next(request)
+        
+        # Add request ID to response
+        response.headers["X-Request-ID"] = request_id
+        
+        # Log completion
+        duration_ms = (time.time() - start_time) * 1000
+        logger.info(
+            "request_completed",
+            method=request.method,
+            path=request.url.path,
+            status_code=response.status_code,
+            duration_ms=duration_ms
+        )
+        
+        # Record metrics
+        metrics.increment("http_requests_total", labels={
+            "method": request.method,
+            "path": request.url.path,
+            "status": str(response.status_code)
+        })
+        metrics.timing("http_request_duration_ms", duration_ms, labels={
+            "method": request.method,
+            "path": request.url.path
+        })
+        
+        return response
+        
+    except Exception as e:
+        duration_ms = (time.time() - start_time) * 1000
+        logger.error(
+            "request_failed",
+            method=request.method,
+            path=request.url.path,
+            error_type=type(e).__name__,
+            error=str(e),
+            duration_ms=duration_ms
+        )
+        capture_exception(e, extra={"path": request.url.path, "method": request.method})
+        raise
+        
+    finally:
+        clear_context()
 
 # CORS configuration based on environment
 if ENV == "production":
@@ -329,7 +403,122 @@ async def auth_logout():
 
 @app.get("/api/health")
 async def health_check():
-    return {"status": "ok"}
+    """Comprehensive health check with all dependencies."""
+    checks = await health_checker.check_all()
+    
+    # Also include basic app info
+    checks["info"] = {
+        "version": "1.0.0",
+        "environment": os.getenv("RAILWAY_ENVIRONMENT_NAME", "development"),
+        "deployment_id": os.getenv("RAILWAY_DEPLOYMENT_ID", "unknown"),
+    }
+    
+    # Include recent metrics
+    checks["metrics"] = metrics.get_stats()
+    
+    status_code = 200 if checks["status"] == "healthy" else 503
+    return checks
+
+
+@app.get("/api/metrics")
+async def metrics_endpoint():
+    """Prometheus-compatible metrics endpoint."""
+    from fastapi.responses import PlainTextResponse
+    return PlainTextResponse(
+        content=metrics.render_prometheus(),
+        media_type="text/plain"
+    )
+
+
+# Register health checks for dependencies
+async def check_supabase():
+    """Check Supabase connectivity."""
+    try:
+        sb_url = os.getenv("SUPABASE_URL", "").strip()
+        sb_key = os.getenv("SUPABASE_SERVICE_ROLE_KEY", "").strip()
+        
+        if not sb_url or not sb_key:
+            return False, {"error": "Missing env vars"}
+        
+        r = requests.get(
+            f"{sb_url}/rest/v1/",
+            headers={"apikey": sb_key, "Authorization": f"Bearer {sb_key}"},
+            timeout=5
+        )
+        return r.status_code == 200, {"status_code": r.status_code}
+    except Exception as e:
+        return False, {"error": str(e)}
+
+
+async def check_openai():
+    """Check OpenAI API connectivity."""
+    try:
+        api_key = os.getenv("OPENAI_API_KEY", "")
+        if not api_key:
+            return False, {"error": "Missing OPENAI_API_KEY"}
+        
+        # Just check if we can make a simple request (list models)
+        r = requests.get(
+            "https://api.openai.com/v1/models",
+            headers={"Authorization": f"Bearer {api_key}"},
+            timeout=5
+        )
+        return r.status_code == 200, {"status_code": r.status_code}
+    except Exception as e:
+        return False, {"error": str(e)}
+
+
+async def check_runpod():
+    """Check RunPod connectivity."""
+    try:
+        api_key = os.getenv("RUNPOD_API_KEY", "").strip()
+        endpoint_id = os.getenv("RUNPOD_ENDPOINT_ID", "").strip()
+        
+        if not api_key:
+            return False, {"error": "Missing RUNPOD_API_KEY", "configured": False}
+        if not endpoint_id:
+            return False, {"error": "Missing RUNPOD_ENDPOINT_ID", "configured": False}
+        
+        # Check if endpoint exists
+        r = requests.get(
+            f"https://api.runpod.ai/v2/{endpoint_id}",
+            headers={"Authorization": f"Bearer {api_key}"},
+            timeout=10
+        )
+        return r.status_code == 200, {
+            "status_code": r.status_code,
+            "configured": True,
+            "endpoint_id": endpoint_id
+        }
+    except Exception as e:
+        return False, {"error": str(e), "configured": bool(api_key and endpoint_id)}
+
+
+async def check_disk_space():
+    """Check available disk space."""
+    try:
+        import shutil
+        stat = shutil.disk_usage(".")
+        free_gb = stat.free / (1024**3)
+        total_gb = stat.total / (1024**3)
+        used_pct = (stat.used / stat.total) * 100
+        
+        healthy = free_gb > 1.0  # At least 1GB free
+        
+        return healthy, {
+            "free_gb": round(free_gb, 2),
+            "total_gb": round(total_gb, 2),
+            "used_percent": round(used_pct, 1)
+        }
+    except Exception as e:
+        return False, {"error": str(e)}
+
+
+# Register all health checks
+health_checker.register("supabase", check_supabase)
+health_checker.register("openai", check_openai)
+health_checker.register("runpod", check_runpod)
+health_checker.register("disk_space", check_disk_space)
 
 # =============================================================================
 # STARTUP EVENT (for Railway)
@@ -412,12 +601,20 @@ def _validate_video_file(file_path: Path, declared_ext: str) -> bool:
 @app.post("/api/upload")
 @limiter.limit("10/minute")
 async def upload_video(request: Request, file: UploadFile = File(...), user: dict = Depends(require_auth)):
+    set_user_id(user.get("id", "unknown"))
+    
+    logger.info("upload_started", filename=file.filename, user_id=user.get("id"))
+    metrics.increment("uploads_started")
+    
     if not file.filename:
+        logger.warning("upload_no_file")
         raise HTTPException(status_code=400, detail="No file provided")
     
     # Validate extension
     ext = Path(file.filename).suffix.lower()
     if ext not in ALLOWED_VIDEO_EXTENSIONS:
+        logger.warning("upload_invalid_extension", extension=ext)
+        metrics.increment("uploads_failed", labels={"reason": "invalid_extension"})
         raise HTTPException(status_code=400, detail="Invalid video format")
 
     # Generate UUID filename (never use original filename)
@@ -426,6 +623,7 @@ async def upload_video(request: Request, file: UploadFile = File(...), user: dic
     max_bytes = MAX_UPLOAD_MB * 1024 * 1024
     total = 0
     first_chunk = True
+    start_time = time.time()
 
     try:
         with open(path, "wb") as f:
@@ -439,6 +637,7 @@ async def upload_video(request: Request, file: UploadFile = File(...), user: dic
                     first_chunk = False
                     if len(chunk) < 12:
                         path.unlink(missing_ok=True)
+                        logger.warning("upload_too_small")
                         raise HTTPException(status_code=400, detail="File too small or corrupted")
                     
                     # Quick magic bytes check
@@ -455,22 +654,38 @@ async def upload_video(request: Request, file: UploadFile = File(...), user: dic
                     
                     if not is_valid:
                         path.unlink(missing_ok=True)
+                        logger.warning("upload_invalid_magic_bytes", extension=ext)
+                        metrics.increment("uploads_failed", labels={"reason": "invalid_magic_bytes"})
                         raise HTTPException(status_code=400, detail="Invalid video file content")
                 
                 total += len(chunk)
                 if total > max_bytes:
                     path.unlink(missing_ok=True)
+                    logger.warning("upload_too_large", size_mb=total/(1024*1024))
+                    metrics.increment("uploads_failed", labels={"reason": "too_large"})
                     raise HTTPException(status_code=413, detail=f"File too large. Max {MAX_UPLOAD_MB}MB")
                 f.write(chunk)
         
         # Final validation
         if not _validate_video_file(path, ext):
             path.unlink(missing_ok=True)
+            logger.warning("upload_validation_failed")
+            metrics.increment("uploads_failed", labels={"reason": "validation_failed"})
             raise HTTPException(status_code=400, detail="File content does not match declared format")
+        
+        upload_duration_ms = (time.time() - start_time) * 1000
+        logger.info("upload_completed", 
+                   video_id=vid, 
+                   size_mb=round(total/(1024*1024), 2),
+                   duration_ms=upload_duration_ms)
+        metrics.increment("uploads_completed")
+        metrics.timing("upload_duration_ms", upload_duration_ms)
             
     except HTTPException:
         raise
     except Exception as e:
+        logger.error("upload_exception", error=str(e), error_type=type(e).__name__)
+        capture_exception(e, extra={"video_id": vid})
         path.unlink(missing_ok=True)
         raise HTTPException(status_code=500, detail="Upload failed")
 
@@ -548,9 +763,13 @@ _prep_jobs_lock = threading.Lock()
 @app.post("/api/prep/background")
 async def create_prep_background(body: CreatePrepBody, user: dict = Depends(require_auth)):
     """Start prep in background - returns immediately with prep_id. Runs transcription + masks + B-roll planning."""
+    set_user_id(user["id"])
     input_path = _find_upload(body.video_id)
     prep_id = str(uuid.uuid4())
     prep_path = PREP_DIR / f"{prep_id}.json"
+    
+    logger.info("prep_background_started", prep_id=prep_id, video_id=body.video_id)
+    metrics.increment("prep_started")
     
     # Initialize status
     with _prep_jobs_lock:
@@ -560,8 +779,6 @@ async def create_prep_background(body: CreatePrepBody, user: dict = Depends(requ
             "video_id": body.video_id,
             "user_id": user["id"],
         }
-    
-    # Create empty prep file with status
     with open(prep_path, "w", encoding="utf-8") as f:
         json.dump({
             "input_video": str(input_path),
@@ -657,17 +874,31 @@ async def create_prep_background(body: CreatePrepBody, user: dict = Depends(requ
             with _prep_jobs_lock:
                 _prep_jobs[prep_id]["status"] = "completed"
                 _prep_jobs[prep_id]["progress"] = 100
-                
-            print(f"[Prep BG] Completed: {prep_id} ({len(styled_words)} words)")
+            
+            prep_duration_ms = (time.time() - prep_start_time) * 1000
+            logger.info("prep_background_completed", 
+                       prep_id=prep_id,
+                       word_count=len(styled_words),
+                       caption_count=len(timed_captions),
+                       transcript_length=len(transcript_text),
+                       duration_ms=prep_duration_ms)
+            metrics.increment("prep_completed")
+            metrics.timing("prep_duration_ms", prep_duration_ms)
             
         except Exception as e:
             import traceback
-            print(f"[Prep BG] Error: {e}")
-            print(traceback.format_exc())
+            logger.error("prep_background_failed", 
+                        prep_id=prep_id,
+                        error=str(e),
+                        error_type=type(e).__name__,
+                        traceback=traceback.format_exc())
+            capture_exception(e, extra={"prep_id": prep_id, "video_id": body.video_id})
             with _prep_jobs_lock:
                 _prep_jobs[prep_id]["status"] = "failed"
                 _prep_jobs[prep_id]["error"] = str(e)
+            metrics.increment("prep_failed", labels={"error_type": type(e).__name__})
     
+    prep_start_time = time.time()
     # Start in background thread
     threading.Thread(target=run_background_prep, daemon=True).start()
     
@@ -1283,11 +1514,23 @@ class ProcessBody(BaseModel):
 @app.post("/api/jobs")
 @limiter.limit("5/minute")
 async def create_job(request: Request, body: ProcessBody, user: dict = Depends(require_auth)):
+    set_user_id(user["id"])
+    job_start_time = time.time()
+    
+    logger.info("job_creation_started", 
+               user_id=user["id"],
+               video_id=body.video_id,
+               lock_id=body.lock_id,
+               from_prep_id=body.from_prep_id)
+    metrics.increment("jobs_started")
+    
     # NEW CREDIT SYSTEM: Verify lock exists instead of deducting credits
     # Credits are locked during upload and only deducted on download confirmation
     sb_url = os.environ.get("SUPABASE_URL", "").strip()
     
     if not body.lock_id:
+        logger.warning("job_no_lock_id")
+        metrics.increment("jobs_failed", labels={"reason": "no_lock_id"})
         raise HTTPException(status_code=400, detail="Credit lock required. Please start from upload.")
     
     # Verify the lock exists and is valid
@@ -1499,9 +1742,17 @@ async def create_job(request: Request, body: ProcessBody, user: dict = Depends(r
                             progress=100,
                             output_video_url=output.get("video_url"),
                             thumbnail_url=output.get("thumbnail_url"),
+                            completed_at=time.time(),
                         )
                         _save_jobs()
-                        print(f"[Job {job_id}] Completed via RunPod")
+                        job_duration = (time.time() - job_start_time) * 1000
+                        logger.info("job_completed", 
+                                   job_id=job_id,
+                                   runpod_job_id=runpod_job_id,
+                                   duration_ms=job_duration,
+                                   has_output=bool(output.get("video_url")))
+                        metrics.increment("jobs_completed")
+                        metrics.timing("job_duration_ms", job_duration)
                         return
                     elif runpod_status in ["FAILED", "CANCELLED", "TIMED_OUT"]:
                         error_msg = status_data.get("error", "GPU processing failed")
@@ -1509,15 +1760,25 @@ async def create_job(request: Request, body: ProcessBody, user: dict = Depends(r
                         
         except Exception as e:
             error_msg = str(e)
-            print(f"[Job {job_id}] ERROR: {error_msg}")
+            job_duration = (time.time() - job_start_time) * 1000
+            logger.error("job_failed", 
+                        job_id=job_id,
+                        error=error_msg,
+                        error_type=type(e).__name__,
+                        duration_ms=job_duration)
+            capture_exception(e, extra={"job_id": job_id, "video_id": body.video_id})
+            metrics.increment("jobs_failed", labels={"error_type": type(e).__name__})
+            
             with JOB_LOCK:
                 JOBS[job_id].update(
                     status="failed",
                     stage="failed",
                     message=error_msg,
                     progress=0,
+                    failed_at=time.time(),
                 )
                 _save_jobs()
+            
             # Release credits on failure
             if body.lock_id:
                 try:
