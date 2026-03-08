@@ -1,24 +1,37 @@
 """
 B-Roll Engine - Generates B-roll suggestions from transcript.
+
+This module extracts visual keywords from transcripts and searches
+stock video APIs (Pexels, Pixabay) for relevant B-roll footage.
 """
 
 import os
 import re
+import asyncio
 import requests
-from typing import List, Dict, Any
-from observability import logger, metrics
+from typing import List, Dict, Any, Optional
+from pathlib import Path
 
 # API Keys
 PEXELS_API_KEY = os.getenv("PEXELS_API_KEY", "")
 PIXABAY_API_KEY = os.getenv("PIXABAY_API_KEY", "")
 
-# Keywords that work well for B-roll
+# Keywords that work well for B-roll (visual nouns)
 VISUAL_KEYWORDS = {
-    "nature": ["nature", "forest", "mountain", "ocean", "beach", "sunset", "sunrise"],
-    "urban": ["city", "street", "building", "car", "traffic", "downtown"],
-    "people": ["person", "people", "crowd", "meeting", "office", "working"],
-    "objects": ["laptop", "phone", "coffee", "book", "desk", "computer"],
-    "abstract": ["technology", "data", "charts", "light", "dark", "color"]
+    "nature": ["nature", "forest", "mountain", "ocean", "beach", "sunset", "sunrise", 
+               "tree", "river", "lake", "sky", "cloud", "flower", "garden"],
+    "urban": ["city", "street", "building", "car", "traffic", "downtown", "road",
+              "highway", "bridge", "skyscraper", "office", "apartment"],
+    "people": ["person", "people", "crowd", "meeting", "office", "working", "talking",
+               "walking", "running", "dancing", "eating", "drinking", "shopping"],
+    "objects": ["laptop", "phone", "computer", "coffee", "book", "desk", "chair",
+                "table", "camera", "microphone", "headphones", "keyboard", "screen"],
+    "food": ["food", "meal", "restaurant", "cooking", "kitchen", "dinner", "lunch",
+             "breakfast", "coffee", "pizza", "burger", "salad"],
+    "travel": ["travel", "airport", "airplane", "train", "bus", "hotel", "map",
+               "passport", "luggage", "suitcase", "vacation", "tourism"],
+    "abstract": ["technology", "data", "charts", "graph", "light", "dark", "color",
+                 "energy", "power", "success", "growth", "innovation"]
 }
 
 
@@ -26,18 +39,23 @@ def extract_keywords(transcript: str, styled_words: List[Dict]) -> List[Dict]:
     """
     Extract visual keywords from transcript with timestamps.
     
-    Returns: [{"word": "beach", "timestamp": 5.2, "confidence": 0.9}]
+    Args:
+        transcript: Full transcript text
+        styled_words: List of word objects with timing
+        
+    Returns:
+        List of keyword dicts: [{"word": "beach", "timestamp": 5.2, "confidence": 0.9}]
     """
     keywords = []
-    
-    # Simple keyword extraction based on visual nouns
     visual_words = set()
+    
+    # Build set of all visual keywords
     for category in VISUAL_KEYWORDS.values():
         visual_words.update(category)
     
     # Check each word in styled_words
     for word_data in styled_words:
-        word = word_data.get("word", "").lower().strip(".,!?")
+        word = word_data.get("word", "").lower().strip(".,!?;:'\"")
         
         if word in visual_words:
             keywords.append({
@@ -47,11 +65,31 @@ def extract_keywords(transcript: str, styled_words: List[Dict]) -> List[Dict]:
                 "category": _get_category(word)
             })
     
-    # Deduplicate nearby keywords (within 3 seconds)
+    # Also check for multi-word phrases in transcript
+    transcript_lower = transcript.lower()
+    for category, words in VISUAL_KEYWORDS.items():
+        for word in words:
+            if " " in word and word in transcript_lower:
+                # Find timestamp by searching nearby words
+                idx = transcript_lower.find(word)
+                if idx > 0:
+                    # Rough estimate: divide position by average chars per second
+                    estimated_time = idx / 15  # ~15 chars per second
+                    keywords.append({
+                        "word": word,
+                        "timestamp": estimated_time,
+                        "confidence": 0.7,
+                        "category": category
+                    })
+    
+    # Sort by timestamp
+    keywords.sort(key=lambda x: x["timestamp"])
+    
+    # Deduplicate nearby keywords (within 5 seconds)
     filtered = []
     last_time = -10
-    for kw in sorted(keywords, key=lambda x: x["timestamp"]):
-        if kw["timestamp"] - last_time > 3:
+    for kw in keywords:
+        if kw["timestamp"] - last_time > 5:
             filtered.append(kw)
             last_time = kw["timestamp"]
     
@@ -68,9 +106,18 @@ def _get_category(word: str) -> str:
 
 
 async def search_pexels(keyword: str, per_page: int = 5) -> List[Dict]:
-    """Search Pexels for videos."""
+    """
+    Search Pexels API for stock videos.
+    
+    Args:
+        keyword: Search term
+        per_page: Number of results to return
+        
+    Returns:
+        List of clip dicts with video info
+    """
     if not PEXELS_API_KEY:
-        logger.warning("Pexels API key not configured")
+        print(f"[B-roll] Pexels API key not configured")
         return []
     
     try:
@@ -86,7 +133,7 @@ async def search_pexels(keyword: str, per_page: int = 5) -> List[Dict]:
         )
         
         if not response.ok:
-            logger.error("Pexels API error", status=response.status_code)
+            print(f"[B-roll] Pexels API error: {response.status_code}")
             return []
         
         data = response.json()
@@ -103,34 +150,37 @@ async def search_pexels(keyword: str, per_page: int = 5) -> List[Dict]:
             if not video_files:
                 continue
             
-            best = video_files[0]
+            best_file = video_files[0]
             
             clips.append({
-                "id": f"pexels_{video['id']}",
+                "id": f"pexels_{video.get('id')}",
                 "source": "pexels",
-                "external_id": str(video["id"]),
-                "keyword": keyword,
-                "preview_url": video.get("image"),
-                "video_url": best.get("link"),
+                "url": best_file.get("link"),
+                "width": best_file.get("width"),
+                "height": best_file.get("height"),
                 "duration": video.get("duration"),
-                "width": best.get("width"),
-                "height": best.get("height"),
-                "author": {
-                    "name": video.get("user", {}).get("name"),
-                    "url": video.get("user", {}).get("url")
-                }
+                "thumbnail": video.get("image"),
+                "description": video.get("url", ""),  # Pexels page URL
             })
         
-        metrics.increment("broll_search_pexels", labels={"keyword": keyword})
         return clips
         
     except Exception as e:
-        logger.error("Pexels search failed", error=str(e))
+        print(f"[B-roll] Pexels search error: {e}")
         return []
 
 
 async def search_pixabay(keyword: str, per_page: int = 5) -> List[Dict]:
-    """Search Pixabay for videos."""
+    """
+    Search Pixabay API for stock videos (backup source).
+    
+    Args:
+        keyword: Search term
+        per_page: Number of results to return
+        
+    Returns:
+        List of clip dicts
+    """
     if not PIXABAY_API_KEY:
         return []
     
@@ -140,7 +190,8 @@ async def search_pixabay(keyword: str, per_page: int = 5) -> List[Dict]:
             params={
                 "key": PIXABAY_API_KEY,
                 "q": keyword,
-                "per_page": per_page
+                "per_page": per_page,
+                "orientation": "horizontal"
             },
             timeout=10
         )
@@ -151,111 +202,91 @@ async def search_pixabay(keyword: str, per_page: int = 5) -> List[Dict]:
         data = response.json()
         clips = []
         
-        for hit in data.get("hits", []):
+        for video in data.get("hits", []):
             clips.append({
-                "id": f"pixabay_{hit['id']}",
+                "id": f"pixabay_{video.get('id')}",
                 "source": "pixabay",
-                "external_id": str(hit["id"]),
-                "keyword": keyword,
-                "preview_url": hit.get("picture_id"),
-                "video_url": hit.get("videos", {}).get("large", {}).get("url"),
-                "duration": hit.get("duration"),
-                "width": hit.get("videos", {}).get("large", {}).get("width"),
-                "height": hit.get("videos", {}).get("large", {}).get("height"),
-                "author": {
-                    "name": hit.get("user"),
-                    "url": f"https://pixabay.com/users/{hit['user']}-{hit['user_id']}"
-                }
+                "url": video.get("videos", {}).get("large", {}).get("url"),
+                "width": video.get("videos", {}).get("large", {}).get("width"),
+                "height": video.get("videos", {}).get("large", {}).get("height"),
+                "duration": video.get("duration"),
+                "thumbnail": video.get("picture_id"),
+                "description": video.get("pageURL", ""),
             })
         
         return clips
         
     except Exception as e:
-        logger.error("Pixabay search failed", error=str(e))
+        print(f"[B-roll] Pixabay search error: {e}")
         return []
 
 
-async def generate_broll_suggestions(prep_id: str, transcript_text: str, styled_words: List[Dict]) -> List[Dict]:
+async def generate_broll_suggestions(
+    prep_id: str,
+    transcript_text: str,
+    styled_words: List[Dict]
+) -> List[Dict]:
     """
-    Generate B-roll suggestions for a prep session.
+    Generate B-roll suggestions for a video.
     
-    Returns: [{
-        "timestamp": 5.0,
-        "keyword": "beach",
-        "clips": [...]
-    }]
+    Args:
+        prep_id: Prep session ID
+        transcript_text: Full transcript
+        styled_words: Word-level timing data
+        
+    Returns:
+        List of placement suggestions with clips
     """
-    logger.info("broll_generation_started", prep_id=prep_id)
-    metrics.increment("broll_generation_started")
+    print(f"[B-roll] Generating suggestions for prep {prep_id}")
+    print(f"[B-roll] Transcript length: {len(transcript_text)}")
+    print(f"[B-roll] Styled words: {len(styled_words)}")
     
     # Extract keywords
     keywords = extract_keywords(transcript_text, styled_words)
+    print(f"[B-roll] Found {len(keywords)} visual keywords: {[k['word'] for k in keywords]}")
     
     if not keywords:
-        logger.info("no_keywords_found", prep_id=prep_id)
+        print("[B-roll] No visual keywords found")
         return []
     
-    # Search for clips for each keyword
-    suggestions = []
+    # Generate placements for each keyword
+    placements = []
     
-    for kw in keywords:
-        # Search both sources
-        pexels_clips = await search_pexels(kw["word"])
-        pixabay_clips = await search_pixabay(kw["word"])
+    for i, keyword_data in enumerate(keywords):
+        keyword = keyword_data["word"]
+        timestamp = keyword_data["timestamp"]
         
-        all_clips = pexels_clips + pixabay_clips
+        print(f"[B-roll] Searching for '{keyword}' at {timestamp:.1f}s...")
         
-        if all_clips:
-            suggestions.append({
-                "timestamp": kw["timestamp"],
-                "keyword": kw["word"],
-                "confidence": kw["confidence"],
-                "clips": all_clips[:5]  # Top 5 clips
-            })
+        # Search for clips
+        clips = await search_pexels(keyword, per_page=5)
+        
+        # Fallback to Pixabay if Pexels returns nothing
+        if not clips:
+            clips = await search_pixabay(keyword, per_page=5)
+        
+        if clips:
+            placement = {
+                "id": f"placement_{i}",
+                "timestamp": timestamp,
+                "keyword": keyword,
+                "category": keyword_data["category"],
+                "clips": clips[:3],  # Top 3 clips
+                "selected_clip_id": clips[0]["id"] if clips else None
+            }
+            placements.append(placement)
+            print(f"[B-roll] Found {len(clips)} clips for '{keyword}'")
+        else:
+            print(f"[B-roll] No clips found for '{keyword}'")
+        
+        # Small delay to be nice to APIs
+        await asyncio.sleep(0.5)
     
-    logger.info("broll_generation_completed", 
-               prep_id=prep_id,
-               keyword_count=len(keywords),
-               suggestion_count=len(suggestions))
-    
-    metrics.increment("broll_generation_completed")
-    
-    return suggestions
+    print(f"[B-roll] Generated {len(placements)} placements")
+    return placements
 
 
-def download_broll_clip(clip_id: str, source: str, external_id: str, video_url: str) -> str:
-    """
-    Download a B-roll clip to local storage.
-    
-    Returns: Local file path
-    """
-    import hashlib
-    
-    # Create unique filename
-    clip_hash = hashlib.md5(f"{source}_{external_id}".encode()).hexdigest()[:12]
-    local_path = f"data/broll/{clip_hash}.mp4"
-    
-    # Check if already cached
-    if os.path.exists(local_path):
-        logger.info("broll_clip_cached", clip_id=clip_id)
-        return local_path
-    
-    # Download
-    try:
-        os.makedirs("data/broll", exist_ok=True)
-        
-        response = requests.get(video_url, stream=True, timeout=30)
-        response.raise_for_status()
-        
-        with open(local_path, "wb") as f:
-            for chunk in response.iter_content(chunk_size=8192):
-                f.write(chunk)
-        
-        logger.info("broll_clip_downloaded", clip_id=clip_id, path=local_path)
-        metrics.increment("broll_clip_downloaded")
-        
-        return local_path
-        
-    except Exception as e:
-        logger.error("broll_download_failed", clip_id=clip_id, error=str(e))
-        raise
+# Backwards compatibility with existing code
+async def get_broll_suggestions(prep_id: str, transcript_text: str, styled_words: List[Dict]) -> List[Dict]:
+    """Alias for generate_broll_suggestions."""
+    return await generate_broll_suggestions(prep_id, transcript_text, styled_words)

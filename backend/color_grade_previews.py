@@ -1,18 +1,25 @@
 """
 Color Grade Preview Generator - Creates preview frames for each color grade.
+
+This module extracts frames from videos, applies color grading LUTs,
+and uploads the results to Supabase Storage for caching.
 """
 
 import os
 import subprocess
 import tempfile
 from pathlib import Path
-from typing import Dict, List
+from typing import Dict, List, Optional
 import requests
-
-from observability import logger, metrics, Timer
+import asyncio
 
 # Available color grades with their LUT files
 COLOR_GRADES = {
+    "original": {
+        "lut": None,
+        "display_name": "Original",
+        "description": "No color grading applied"
+    },
     "vintage": {
         "lut": "color_grading/02_Film LUTs_Vintage.cube",
         "display_name": "Vintage",
@@ -54,7 +61,7 @@ def extract_frame(video_path: str, timestamp: float = 1.0, output_path: str = No
         video_path: Path to input video
         timestamp: Time in seconds (default: 1.0)
         output_path: Where to save frame (default: temp file)
-    
+        
     Returns:
         Path to extracted frame
     """
@@ -81,9 +88,7 @@ def extract_frame(video_path: str, timestamp: float = 1.0, output_path: str = No
         )
         
         if result.returncode != 0:
-            logger.error("ffmpeg_extract_frame_failed", 
-                        error=result.stderr,
-                        video_path=video_path)
+            print(f"[Color Preview] FFmpeg error: {result.stderr}")
             raise Exception(f"FFmpeg failed: {result.stderr}")
         
         if not os.path.exists(output_path):
@@ -92,30 +97,35 @@ def extract_frame(video_path: str, timestamp: float = 1.0, output_path: str = No
         return output_path
         
     except subprocess.TimeoutExpired:
-        logger.error("ffmpeg_extract_frame_timeout", video_path=video_path)
+        print("[Color Preview] FFmpeg timeout")
         raise
 
 
-def apply_color_grade(input_frame: str, output_frame: str, grade: str) -> str:
+def apply_color_grade(input_frame: str, output_frame: str, grade: str) -> bool:
     """
-    Apply color grade to a frame using FFmpeg and LUT.
+    Apply a color grade LUT to a frame.
     
     Args:
-        input_frame: Path to input frame
-        output_frame: Path for output
-        grade: Color grade name (vintage, cinematic, etc.)
-    
+        input_frame: Path to input image
+        output_frame: Path to save graded image
+        grade: Color grade key (vintage, cinematic, etc.)
+        
     Returns:
-        Path to graded frame
+        True if successful
     """
+    if grade == "original":
+        # Just copy the file
+        import shutil
+        shutil.copy(input_frame, output_frame)
+        return True
+    
     grade_info = COLOR_GRADES.get(grade)
     if not grade_info:
-        raise ValueError(f"Unknown color grade: {grade}")
+        print(f"[Color Preview] Unknown grade: {grade}")
+        return False
     
-    lut_path = grade_info.get("lut")
-    
+    # Handle black & white specially
     if grade == "bw":
-        # Black & white - no LUT needed
         cmd = [
             "ffmpeg",
             "-y",
@@ -124,152 +134,209 @@ def apply_color_grade(input_frame: str, output_frame: str, grade: str) -> str:
             "-q:v", "2",
             output_frame
         ]
-    elif lut_path and os.path.exists(lut_path):
+    else:
         # Apply LUT
+        lut_path = grade_info["lut"]
+        if not lut_path or not Path(lut_path).exists():
+            print(f"[Color Preview] LUT not found: {lut_path}")
+            return False
+        
+        # Escape path for FFmpeg
+        lut_escaped = str(lut_path).replace("\\", "/").replace(":", "\\:")
+        
         cmd = [
             "ffmpeg",
             "-y",
             "-i", input_frame,
-            "-vf", f"lut3d='{lut_path}'",
+            "-vf", f"lut3d=file='{lut_escaped}'",
             "-q:v", "2",
             output_frame
         ]
-    else:
-        # No LUT available, just copy
-        logger.warning("lut_not_found", grade=grade, lut_path=lut_path)
-        cmd = ["cp", input_frame, output_frame]
     
     try:
-        result = subprocess.run(
-            cmd,
-            capture_output=True,
-            text=True,
-            timeout=30
-        )
+        result = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
         
         if result.returncode != 0:
-            logger.error("ffmpeg_color_grade_failed",
-                        grade=grade,
-                        error=result.stderr)
-            raise Exception(f"Color grading failed: {result.stderr}")
+            print(f"[Color Preview] Failed to apply {grade}: {result.stderr}")
+            return False
         
-        return output_frame
+        return os.path.exists(output_frame)
         
     except subprocess.TimeoutExpired:
-        logger.error("ffmpeg_color_grade_timeout", grade=grade)
-        raise
+        print(f"[Color Preview] Timeout applying {grade}")
+        return False
+
+
+def upload_to_supabase(
+    file_path: str,
+    storage_path: str,
+    sb_url: str,
+    sb_key: str
+) -> Optional[str]:
+    """
+    Upload a file to Supabase Storage.
+    
+    Args:
+        file_path: Local file path
+        storage_path: Destination path in Supabase (e.g., "previews/video123/vintage.jpg")
+        sb_url: Supabase project URL
+        sb_key: Supabase service role key
+        
+    Returns:
+        Public URL of uploaded file, or None if failed
+    """
+    try:
+        with open(file_path, "rb") as f:
+            upload_resp = requests.post(
+                f"{sb_url}/storage/v1/object/previews/{storage_path}",
+                headers={
+                    "apikey": sb_key,
+                    "Authorization": f"Bearer {sb_key}",
+                    "Content-Type": "image/jpeg",
+                    "x-upsert": "true"
+                },
+                data=f,
+                timeout=30
+            )
+        
+        if not upload_resp.ok:
+            print(f"[Color Preview] Upload failed: {upload_resp.status_code}")
+            print(f"[Color Preview] Response: {upload_resp.text[:200]}")
+            return None
+        
+        # Get public URL
+        public_url = f"{sb_url}/storage/v1/object/public/previews/{storage_path}"
+        return public_url
+        
+    except Exception as e:
+        print(f"[Color Preview] Upload error: {e}")
+        return None
 
 
 async def generate_color_grade_previews(
     video_path: str,
     video_id: str,
-    supabase_client
+    sb_url: str,
+    sb_key: str
 ) -> Dict[str, str]:
     """
-    Generate color grade preview frames for a video.
+    Generate color grade previews for a video and upload to Supabase.
     
     Args:
-        video_path: Local path to video file
-        video_id: Video ID for naming
-        supabase_client: Supabase client for storage
-    
+        video_path: Path to local video file
+        video_id: Video ID (for storage path)
+        sb_url: Supabase project URL
+        sb_key: Supabase service role key
+        
     Returns:
-        Dict mapping grade name to preview URL
+        Dict mapping grade name to public URL
+        
+    Example:
+        {
+            "original": "https://.../previews/video123/original.jpg",
+            "vintage": "https://.../previews/video123/vintage.jpg",
+            ...
+        }
     """
-    previews = {}
+    print(f"[Color Preview] Generating for video: {video_id}")
     
-    with Timer("generate_color_grade_previews", video_id=video_id):
-        # Extract base frame
-        with tempfile.NamedTemporaryFile(suffix=".jpg", delete=False) as base_frame:
-            base_frame_path = base_frame.name
+    if not os.path.exists(video_path):
+        print(f"[Color Preview] Video not found: {video_path}")
+        return {}
+    
+    # Create temp directory for processing
+    with tempfile.TemporaryDirectory() as tmpdir:
+        # Step 1: Extract frame
+        print("[Color Preview] Extracting frame...")
+        frame_path = os.path.join(tmpdir, "frame.jpg")
         
         try:
-            extract_frame(video_path, timestamp=1.0, output_path=base_frame_path)
-            
-            # Generate preview for each grade
-            for grade_name in COLOR_GRADES.keys():
-                try:
-                    with tempfile.NamedTemporaryFile(suffix=".jpg", delete=False) as output:
-                        output_path = output.name
-                    
-                    # Apply color grade
-                    apply_color_grade(base_frame_path, output_path, grade_name)
-                    
-                    # Upload to Supabase
-                    storage_path = f"{video_id}/{grade_name}.jpg"
-                    
-                    with open(output_path, "rb") as f:
-                        upload_result = supabase_client.storage \
-                            .from_("previews") \
-                            .upload(storage_path, f, {"content-type": "image/jpeg"})
-                    
-                    # Get public URL
-                    preview_url = supabase_client.storage \
-                        .from_("previews") \
-                        .get_public_url(storage_path)
-                    
-                    previews[grade_name] = preview_url
-                    
-                    logger.info("color_grade_preview_generated",
-                              video_id=video_id,
-                              grade=grade_name,
-                              url=preview_url)
-                    
-                    metrics.increment("color_grade_preview_generated", 
-                                    labels={"grade": grade_name})
-                    
-                    # Cleanup temp file
-                    os.unlink(output_path)
-                    
-                except Exception as e:
-                    logger.error("color_grade_preview_failed",
-                               video_id=video_id,
-                               grade=grade_name,
-                               error=str(e))
-                    continue
-            
-        finally:
-            # Cleanup base frame
-            if os.path.exists(base_frame_path):
-                os.unlink(base_frame_path)
-    
-    return previews
-
-
-def get_available_color_grades() -> List[Dict]:
-    """Get list of available color grades with metadata."""
-    return [
-        {
-            "id": grade_id,
-            "display_name": info["display_name"],
-            "description": info["description"]
-        }
-        for grade_id, info in COLOR_GRADES.items()
-    ]
-
-
-# For testing
-if __name__ == "__main__":
-    import asyncio
-    from supabase import create_client
-    
-    # Test with sample video
-    test_video = "test_video.mp4"
-    
-    if os.path.exists(test_video):
-        sb = create_client(
-            os.getenv("SUPABASE_URL"),
-            os.getenv("SUPABASE_SERVICE_ROLE_KEY")
-        )
+            extract_frame(video_path, timestamp=1.0, output_path=frame_path)
+        except Exception as e:
+            print(f"[Color Preview] Frame extraction failed: {e}")
+            return {}
         
-        previews = asyncio.run(generate_color_grade_previews(
-            test_video,
-            "test-video-id",
-            sb
-        ))
+        # Step 2: Generate each color grade
+        previews = {}
         
-        print("Generated previews:")
+        for grade_key, grade_info in COLOR_GRADES.items():
+            print(f"[Color Preview] Processing {grade_key}...")
+            
+            # Apply color grade
+            output_path = os.path.join(tmpdir, f"{grade_key}.jpg")
+            
+            if not apply_color_grade(frame_path, output_path, grade_key):
+                print(f"[Color Preview] Failed to apply {grade_key}")
+                continue
+            
+            # Upload to Supabase
+            storage_path = f"{video_id}/{grade_key}.jpg"
+            public_url = upload_to_supabase(output_path, storage_path, sb_url, sb_key)
+            
+            if public_url:
+                previews[grade_key] = public_url
+                print(f"[Color Preview] Uploaded {grade_key}: {public_url[:60]}...")
+            else:
+                print(f"[Color Preview] Failed to upload {grade_key}")
+            
+            # Small delay between uploads
+            await asyncio.sleep(0.1)
+        
+        print(f"[Color Preview] Generated {len(previews)} previews")
+        return previews
+
+
+async def save_previews_to_database(
+    video_id: str,
+    previews: Dict[str, str],
+    sb_url: str,
+    sb_key: str
+) -> bool:
+    """
+    Save preview URLs to database.
+    
+    Args:
+        video_id: Video ID
+        previews: Dict of grade -> URL
+        sb_url: Supabase project URL
+        sb_key: Supabase service role key
+        
+    Returns:
+        True if successful
+    """
+    headers = {
+        "apikey": sb_key,
+        "Authorization": f"Bearer {sb_key}",
+        "Content-Type": "application/json"
+    }
+    
+    try:
         for grade, url in previews.items():
-            print(f"  {grade}: {url}")
-    else:
-        print(f"Test video not found: {test_video}")
+            data = {
+                "video_id": video_id,
+                "color_grade": grade,
+                "storage_path": f"{video_id}/{grade}.jpg",
+                "public_url": url
+            }
+            
+            resp = requests.post(
+                f"{sb_url}/rest/v1/color_grade_previews",
+                headers=headers,
+                json=data,
+                timeout=5
+            )
+            
+            if not resp.ok:
+                print(f"[Color Preview] DB insert failed for {grade}: {resp.text}")
+        
+        return True
+        
+    except Exception as e:
+        print(f"[Color Preview] DB error: {e}")
+        return False
+
+
+# Backwards compatibility
+def generate_color_grade_previews_sync(*args, **kwargs):
+    """Synchronous wrapper for backwards compatibility."""
+    return asyncio.run(generate_color_grade_previews(*args, **kwargs))
