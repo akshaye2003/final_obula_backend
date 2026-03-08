@@ -709,7 +709,12 @@ class Pipeline:
         interpolator = MaskInterpolator(frame_skip=frame_skip)
         estimated_masks = interpolator.estimate_total_masks(total_frames)
         
-        mp_selfie_segmentation = mp.solutions.selfie_segmentation
+        # MediaPipe selfie segmentation (legacy API)
+        try:
+            mp_selfie_segmentation = mp.solutions.selfie_segmentation
+        except AttributeError:
+            print("ERROR: MediaPipe solutions API not available. Install: pip install mediapipe==0.9.3.0")
+            return None
         
         # Morphological kernels for mask post-processing
         close_kernel  = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (25, 25))

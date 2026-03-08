@@ -20,7 +20,7 @@ openai-whisper>=20231117
 # ML/CV (GPU-enabled)
 torch>=2.0.0
 torchvision>=0.15.0
-mediapipe>=0.10.0
+mediapipe==0.9.3.0  # Last version with mp.solutions API
 
 # HTTP requests
 requests>=2.31.0
