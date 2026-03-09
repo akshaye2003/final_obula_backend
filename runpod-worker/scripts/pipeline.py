@@ -626,7 +626,7 @@ class Pipeline:
         """Auto-generate masks using MediaPipe (with caching and frame skip)."""
         if not self.mediapipe_available:
             print("ERROR: MediaPipe not installed. Cannot generate masks.")
-            print("Install: pip install mediapipe")
+            print("Install: pip install mediapipe==0.10.3")
             return None
         
         import mediapipe as mp

@@ -2,7 +2,19 @@
   "permissions": {
     "allow": [
       "Bash(python:*)",
-      "Bash(ffprobe:*)"
+      "Bash(ffprobe:*)",
+      "Bash(grep:*)",
+      "Bash(A=\"C:/Users/aksha/Downloads/final_mvp_backend_final/final_mvp_backend\")",
+      "Read(//c/Users/aksha/Downloads/final_mvp_backend_final/final_mvp_backend/**)",
+      "Bash(B=\"C:/Users/aksha/Music/Documents/Zypit/OBULA/final_mvp_backend \\(3\\)/final_mvp_backend\")",
+      "Bash(diff:*)",
+      "Bash(wc:*)",
+      "Bash(ls:*)",
+      "Bash(find .:*)",
+      "Bash(rm:*)",
+      "Bash(source:*)",
+      "Bash(DOCKER_USERNAME=obulaxzypit bash:*)",
+      "Bash(docker push:*)"
     ]
   }
 }

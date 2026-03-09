@@ -806,13 +806,26 @@ async def create_prep_background(body: CreatePrepBody, user: dict = Depends(requ
             # Step 1: Transcribe using OpenAI Whisper API (cloud, not local)
             try:
                 client = openai.OpenAI(api_key=os.environ.get("OPENAI_API_KEY", ""))
-                with open(input_path, "rb") as audio_file:
+
+                # Extract compressed audio to stay under OpenAI's 25MB limit
+                import subprocess, tempfile
+                audio_tmp = tempfile.NamedTemporaryFile(suffix=".mp3", delete=False)
+                audio_tmp.close()
+                subprocess.run([
+                    "ffmpeg", "-y", "-i", str(input_path),
+                    "-vn", "-ar", "16000", "-ac", "1", "-b:a", "32k",
+                    audio_tmp.name
+                ], capture_output=True, timeout=120)
+                transcribe_path = audio_tmp.name
+
+                with open(transcribe_path, "rb") as audio_file:
                     transcript = client.audio.transcriptions.create(
                         model="whisper-1",
                         file=audio_file,
                         response_format="verbose_json",
                         timestamp_granularities=["word"]
                     )
+                os.unlink(transcribe_path)
                 
                 # Extract transcript text
                 transcript_text = transcript.text or ""
@@ -952,6 +965,18 @@ async def create_prep(body: CreatePrepBody, user: dict = Depends(require_auth)):
     # Transcribe using OpenAI Whisper API
     try:
         client = openai.OpenAI(api_key=os.environ.get("OPENAI_API_KEY", ""))
+
+        # Extract compressed audio to stay under OpenAI's 25MB limit
+        import subprocess, tempfile
+        audio_tmp = tempfile.NamedTemporaryFile(suffix=".mp3", delete=False)
+        audio_tmp.close()
+        subprocess.run([
+            "ffmpeg", "-y", "-i", str(input_path),
+            "-vn", "-ar", "16000", "-ac", "1", "-b:a", "32k",
+            audio_tmp.name
+        ], capture_output=True, timeout=120)
+        input_path = audio_tmp.name
+
         with open(input_path, "rb") as audio_file:
             transcript = client.audio.transcriptions.create(
                 model="whisper-1",
@@ -959,9 +984,10 @@ async def create_prep(body: CreatePrepBody, user: dict = Depends(require_auth)):
                 response_format="verbose_json",
                 timestamp_granularities=["word"]
             )
-        
+        os.unlink(audio_tmp.name)
+
         transcript_text = transcript.text or ""
-        
+
         # Convert words to styled_words
         if hasattr(transcript, 'words') and transcript.words:
             for word_info in transcript.words:
