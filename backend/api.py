@@ -852,7 +852,69 @@ async def create_prep_background(body: CreatePrepBody, user: dict = Depends(requ
                         timed_captions.append([start, end, [text]])
                 
                 print(f"[Prep BG] Transcribed {len(styled_words)} words")
-                
+
+                # Step 1b: GPT hook/emphasis styling
+                if styled_words and transcript_text:
+                    try:
+                        with _prep_jobs_lock:
+                            _prep_jobs[prep_id]["progress"] = 60
+                            _prep_jobs[prep_id]["message"] = "Analyzing speech for emphasis..."
+
+                        words_list = [w["word"] for w in styled_words]
+                        words_joined = " ".join(words_list)
+
+                        gpt_client = openai.OpenAI(api_key=os.environ.get("OPENAI_API_KEY", ""))
+                        gpt_resp = gpt_client.chat.completions.create(
+                            model="gpt-4o-mini",
+                            messages=[
+                                {
+                                    "role": "system",
+                                    "content": (
+                                        "You are a video caption editor. Given a list of words from a speech, "
+                                        "identify which words should be styled as:\n"
+                                        "- 'hook': the very first strong/attention-grabbing word or phrase (max 3 words at start)\n"
+                                        "- 'emphasis': key words that deserve extra visual emphasis\n"
+                                        "- 'regular': all other words\n\n"
+                                        "Return ONLY a JSON array of style strings, one per word, in the same order. "
+                                        "Example: [\"hook\", \"regular\", \"emphasis\", \"regular\", ...]"
+                                    ),
+                                },
+                                {
+                                    "role": "user",
+                                    "content": f"Words: {words_joined}\n\nReturn JSON array of styles:",
+                                },
+                            ],
+                            temperature=0.3,
+                            max_tokens=min(4000, len(words_list) * 12),
+                        )
+
+                        import re as _re
+                        raw = gpt_resp.choices[0].message.content.strip()
+                        # Extract JSON array from response
+                        match = _re.search(r'\[.*\]', raw, _re.DOTALL)
+                        if match:
+                            styles = json.loads(match.group())
+                            if len(styles) == len(styled_words):
+                                color_map = {
+                                    "hook": [255, 60, 60],
+                                    "emphasis": [255, 220, 50],
+                                    "regular": [200, 220, 240],
+                                }
+                                for i, w in enumerate(styled_words):
+                                    s = styles[i] if styles[i] in color_map else "regular"
+                                    w["style"] = s
+                                    w["color"] = color_map[s]
+                                hook_count = sum(1 for s in styles if s == "hook")
+                                emphasis_count = sum(1 for s in styles if s == "emphasis")
+                                print(f"[Prep BG] GPT styled: {hook_count} hook, {emphasis_count} emphasis words")
+                            else:
+                                print(f"[Prep BG] GPT style count mismatch ({len(styles)} vs {len(styled_words)}), using regular")
+                        else:
+                            print(f"[Prep BG] GPT style parse failed, using regular")
+
+                    except Exception as e:
+                        print(f"[Prep BG] GPT styling error (non-fatal): {e}")
+
             except Exception as e:
                 print(f"[Prep BG] Transcription error: {e}")
                 transcript_text = ""
@@ -1640,12 +1702,24 @@ async def create_job(request: Request, body: ProcessBody, user: dict = Depends(r
                     video_url = f"{sb_url}/storage/v1/object/public/videos/{storage_path}"
                     print(f"[Job {job_id}] Uploaded to Supabase: {video_url}")
                 else:
-                    raise Exception(f"Upload failed: {upload_resp.status_code}")
-                    
+                    error_body = upload_resp.text[:500]
+                    raise Exception(f"Upload failed: {upload_resp.status_code} - {error_body}")
+
             except Exception as e:
                 print(f"[Job {job_id}] Supabase upload error: {e}")
-                # Fallback: Use direct file path if upload fails
                 video_url = None
+
+            # Fail early if we couldn't get a video URL — no point sending to RunPod
+            if not video_url:
+                with JOB_LOCK:
+                    JOBS[job_id].update(
+                        status="failed",
+                        stage="failed",
+                        message="Failed to upload video to cloud storage. Please try again.",
+                        progress=0,
+                    )
+                print(f"[Job {job_id}] Aborting: no video_url after Supabase upload attempt")
+                return
             
             with JOB_LOCK:
                 JOBS[job_id].update(progress=15, message="Sending to GPU worker...")
