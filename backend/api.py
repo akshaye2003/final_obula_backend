@@ -841,23 +841,15 @@ async def create_prep_background(body: CreatePrepBody, user: dict = Depends(requ
                             "color": [200, 220, 240]
                         })
                 
-                # Build timed_captions from sentences
-                if transcript_text:
-                    sentences = transcript_text.replace("! ", "!.").replace("? ", "?.").split(". ")
-                    current_time = 0
-                    for sentence in sentences:
-                        sentence = sentence.strip()
-                        if not sentence:
-                            continue
-                        # Estimate timing (3 words per second)
-                        word_count = len(sentence.split())
-                        duration = word_count / 3.0
-                        timed_captions.append([
-                            current_time,
-                            current_time + duration,
-                            [sentence]
-                        ])
-                        current_time += duration
+                # Build timed_captions: groups of 4 words using actual Whisper word timings
+                if styled_words:
+                    chunk_size = 4
+                    for i in range(0, len(styled_words), chunk_size):
+                        chunk = styled_words[i:i + chunk_size]
+                        start = chunk[0]["start"]
+                        end = chunk[-1]["end"]
+                        text = " ".join(w["word"] for w in chunk)
+                        timed_captions.append([start, end, [text]])
                 
                 print(f"[Prep BG] Transcribed {len(styled_words)} words")
                 
@@ -999,22 +991,15 @@ async def create_prep(body: CreatePrepBody, user: dict = Depends(require_auth)):
                     "color": [200, 220, 240]
                 })
         
-        # Build timed_captions
-        if transcript_text:
-            sentences = transcript_text.replace("! ", "!.").replace("? ", "?.").split(". ")
-            current_time = 0
-            for sentence in sentences:
-                sentence = sentence.strip()
-                if not sentence:
-                    continue
-                word_count = len(sentence.split())
-                duration = word_count / 3.0
-                timed_captions.append([
-                    current_time,
-                    current_time + duration,
-                    [sentence]
-                ])
-                current_time += duration
+        # Build timed_captions: groups of 4 words using actual Whisper word timings
+        if styled_words:
+            chunk_size = 4
+            for i in range(0, len(styled_words), chunk_size):
+                chunk = styled_words[i:i + chunk_size]
+                start = chunk[0]["start"]
+                end = chunk[-1]["end"]
+                text = " ".join(w["word"] for w in chunk)
+                timed_captions.append([start, end, [text]])
         
         print(f"[Prep] Transcribed {len(styled_words)} words for {prep_id}")
         
