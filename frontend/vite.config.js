@@ -3,12 +3,12 @@ import react from '@vitejs/plugin-react'
 
 // https://vite.dev/config/
 export default defineConfig({
+  base: '/',
   plugins: [react()],
   build: {
     rollupOptions: {
       output: {
         manualChunks: {
-          // react-router-dom removed - caused router context issues in lazy-loaded chunks
           'vendor-motion': ['framer-motion'],
           'vendor-axios': ['axios'],
         },
