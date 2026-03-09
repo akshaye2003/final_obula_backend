@@ -1682,9 +1682,36 @@ async def create_job(request: Request, body: ProcessBody, user: dict = Depends(r
             
             storage_path = f"jobs/{job_id}/input.mp4"
             video_url = None
-            
+
             try:
-                with open(input_path, "rb") as f:
+                import tempfile, subprocess as _sp
+
+                # Compress video if over 40MB to stay under Supabase's 50MB storage limit
+                upload_path = input_path
+                file_size_mb = os.path.getsize(input_path) / (1024 * 1024)
+                compressed_tmp = None
+
+                if file_size_mb > 40:
+                    print(f"[Job {job_id}] File is {file_size_mb:.1f}MB, compressing before upload...")
+                    compressed_tmp = tempfile.NamedTemporaryFile(suffix=".mp4", delete=False)
+                    compressed_tmp.close()
+                    try:
+                        _sp.run([
+                            "ffmpeg", "-y", "-i", str(input_path),
+                            "-vf", "scale='min(1280,iw)':-2",
+                            "-c:v", "libx264", "-crf", "28", "-preset", "fast",
+                            "-c:a", "aac", "-b:a", "128k",
+                            "-movflags", "+faststart",
+                            compressed_tmp.name
+                        ], capture_output=True, timeout=300, check=True)
+                        compressed_size_mb = os.path.getsize(compressed_tmp.name) / (1024 * 1024)
+                        print(f"[Job {job_id}] Compressed to {compressed_size_mb:.1f}MB")
+                        upload_path = compressed_tmp.name
+                    except Exception as compress_err:
+                        print(f"[Job {job_id}] Compression failed, uploading original: {compress_err}")
+                        upload_path = input_path
+
+                with open(upload_path, "rb") as f:
                     upload_resp = requests.post(
                         f"{sb_url}/storage/v1/object/videos/{storage_path}",
                         headers={
@@ -1696,9 +1723,15 @@ async def create_job(request: Request, body: ProcessBody, user: dict = Depends(r
                         data=f,
                         timeout=300,
                     )
-                
+
+                # Clean up compressed temp file
+                if compressed_tmp:
+                    try:
+                        os.unlink(compressed_tmp.name)
+                    except Exception:
+                        pass
+
                 if upload_resp.ok:
-                    # Get public URL for the uploaded video
                     video_url = f"{sb_url}/storage/v1/object/public/videos/{storage_path}"
                     print(f"[Job {job_id}] Uploaded to Supabase: {video_url}")
                 else:
