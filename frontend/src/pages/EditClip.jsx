@@ -470,10 +470,10 @@ function HookPreviewOverlay({ redHook, hookYPercent, hookHorizontal, hookSize, h
       className="absolute left-0 right-0 flex pointer-events-none"
       style={{
         position: 'absolute',
-        top: `${hookYPercent}%`,
+        top: `${hookYPercent * 0.9 + 5}%`,
         left: 0,
         right: 0,
-        transform: 'translateY(-50%)',
+        transform: 'translateY(0)',
         paddingLeft: '5%',
         paddingRight: '5%',
         justifyContent,
