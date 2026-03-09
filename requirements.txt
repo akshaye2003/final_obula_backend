@@ -1,0 +1,30 @@
+# Railway API Server Requirements
+# Lightweight - NO GPU/ML packages (processing is done on RunPod)
+
+# Core API
+fastapi>=0.104.0
+uvicorn[standard]>=0.24.0
+python-multipart>=0.0.6
+pydantic>=2.5.0
+
+# Security
+PyJWT>=2.8.0
+python-dotenv>=1.0.0
+
+# Rate Limiting (Required for production)
+slowapi>=0.1.9
+
+# HTTP Client
+requests>=2.31.0
+
+# OpenAI (for transcription - cloud API, no local ML)
+openai>=1.0.0
+
+# Payments (Optional)
+razorpay>=1.4.0
+
+# Supabase (for database and storage)
+supabase>=2.0.0
+
+# Note: Video processing (cv2, mediapipe, whisper, torch) runs on RunPod GPU workers
+# Railway handles API, auth, transcription (via OpenAI API), and job orchestration
