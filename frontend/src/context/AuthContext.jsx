@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabase.js';
 import { setTokenGetter } from '../api/client.js';
+import { getCreditsStatus } from '../api/credits.js';
 
 const AuthContext = createContext(null);
 
@@ -29,7 +30,29 @@ export function AuthProvider({ children }) {
         .eq('id', userId)
         .maybeSingle();
       if (import.meta.env.DEV) console.log('[AuthContext] profiles result:', profileRow, 'error:', profileErr);
-      setProfile(profileRow ?? null);
+
+      // Fetch credit status to get locked credits (from locked_credits table via API)
+      let creditStatus = null;
+      try {
+        creditStatus = await getCreditsStatus();
+      } catch (creditErr) {
+        if (import.meta.env.DEV) console.error('[AuthContext] getCreditsStatus error:', creditErr);
+      }
+
+      // Calculate locked credits from active locks returned by API
+      // Note: overal.sql stores locked credits in locked_credits table, not profiles column
+      const lockedCredits = creditStatus?.locked_credits ?? 
+        (creditStatus?.active_locks?.reduce((sum, lock) => sum + (lock.amount || 0), 0) ?? 0);
+      const totalCredits = profileRow?.credits ?? 0;
+      
+      // Merge locked_credits into profile
+      const mergedProfile = {
+        ...profileRow,
+        locked_credits: lockedCredits,
+        available_credits: creditStatus?.available_credits ?? Math.max(0, totalCredits - lockedCredits),
+      };
+      
+      setProfile(mergedProfile ?? null);
     } catch (err) {
       if (import.meta.env.DEV) console.error('[AuthContext] loadUser error:', err);
     } finally {

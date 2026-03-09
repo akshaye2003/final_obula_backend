@@ -1904,7 +1904,7 @@ async def create_job(request: Request, body: ProcessBody, user: dict = Depends(r
             if body.lock_id:
                 try:
                     requests.post(
-                        f"{sb_url}/rest/v1/rpc/release_credits",
+                        f"{sb_url}/rest/v1/rpc/release_credit_locks",
                         headers=_sb_headers(),
                         json={"lock_id": body.lock_id},
                         timeout=5,
@@ -1968,7 +1968,7 @@ async def confirm_download(job_id: str, body: DownloadConfirmBody, user: dict = 
     try:
         # Deduct the locked credits
         r = requests.post(
-            f"{sb_url}/rest/v1/rpc/deduct_locked_credits",
+            f"{sb_url}/rest/v1/rpc/deduct_credit_locks",
             headers=_sb_headers(),
             json={"lock_id": body.lock_id},
             timeout=5,
@@ -2238,7 +2238,7 @@ async def release_credits_api(lock_id: str, user: dict = Depends(require_auth)):
     
     try:
         r = requests.post(
-            f"{sb_url}/rest/v1/rpc/release_credits",
+            f"{sb_url}/rest/v1/rpc/release_credit_locks",
             headers=_sb_headers(),
             json={"lock_id": lock_id},
             timeout=5,
@@ -2258,7 +2258,7 @@ async def deduct_credits_api(lock_id: str, user: dict = Depends(require_auth)):
     
     try:
         r = requests.post(
-            f"{sb_url}/rest/v1/rpc/deduct_locked_credits",
+            f"{sb_url}/rest/v1/rpc/deduct_credit_locks",
             headers=_sb_headers(),
             json={"lock_id": lock_id},
             timeout=5,

@@ -28,15 +28,26 @@ class HookRenderer:
         >>> frame = renderer.composite_hook(frame, layer, mask)
     """
     
-    def __init__(self, hook_color: Tuple[int, int, int] = None):
+    def __init__(self, hook_color: Tuple[int, int, int] = None, font_scale: float = 1.0,
+                 y_position: float = None, position: str = 'center',
+                 mask_quality: str = 'medium'):
         """Initialize hook renderer with font manager.
-        
+
         Args:
             hook_color: RGB color tuple for hook text (default: bright red)
+            font_scale: Multiplier for max font size (1.0=normal, 2.0=double)
+            y_position: Vertical position as fraction (0.0=top, 1.0=bottom). None = auto.
+            position: Horizontal alignment: 'left', 'center', or 'right'
+            mask_quality: Mask edge refinement: 'off', 'light', 'medium', 'strong', 'maximum'
         """
         self.font_manager = FontManager()
         self.font_cache = {}
         self.hook_color = hook_color or (255, 25, 0)  # Default bright red
+        self.font_scale = max(1.0, float(font_scale))
+        self.y_position = y_position  # None = auto from aspect ratio
+        self.position = position if position in ('left', 'center', 'right') else 'center'
+        _valid_quality = ('off', 'light', 'medium', 'strong', 'maximum')
+        self.mask_quality = mask_quality if mask_quality in _valid_quality else 'medium'
     
     def create_hook_layer(self, frame_shape: Tuple[int, ...], text: str,
                          width: int, height: int) -> np.ndarray:
@@ -80,44 +91,59 @@ class HookRenderer:
         draw = ImageDraw.Draw(pil_layer)
         
         # Find optimal font size (cache per text/width)
-        cache_key = f"hook_impact_{text}_{width}"
+        cache_key = f"hook_impact_{text}_{width}_{self.font_scale}_{self.position}"
         
         if cache_key not in self.font_cache:
             # ASPECT RATIO AWARE FONT SIZING
             aspect_ratio = width / height if height > 0 else 1.0
-            impact_path = "impact.ttf"
-            
-            # Adjust max font size based on aspect ratio
+
+            # Find best available font — prefer Impact, fall back to Coolvetica
+            import os
+            font_candidates = [
+                "/usr/share/fonts/truetype/msttcorefonts/Impact.ttf",
+                "/usr/share/fonts/truetype/impact.ttf",
+                "impact.ttf",
+                "/app/fonts/Coolvetica Rg.otf",
+                "/app/fonts/Runethia.otf",
+                "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
+            ]
+            hook_font_path = None
+            for fp in font_candidates:
+                if os.path.exists(fp):
+                    hook_font_path = fp
+                    break
+
+            # Adjust max font size based on aspect ratio (scaled by font_scale)
             if aspect_ratio < 0.8:  # Vertical (9:16, 4:5)
-                max_font = 300
+                max_font = int(300 * self.font_scale)
                 min_font = 60
             elif aspect_ratio < 1.1:  # Square (1:1)
-                max_font = 350
+                max_font = int(350 * self.font_scale)
                 min_font = 70
             else:  # Horizontal (16:9, 21:9)
-                max_font = 400
+                max_font = int(400 * self.font_scale)
                 min_font = 80
-            
+
             best_size = min_font
-            for size in range(max_font, min_font, -5):
-                try:
-                    test_font = ImageFont.truetype(impact_path, size)
-                    max_w = max(draw.textbbox((0, 0), l, font=test_font)[2] for l in lines)
-                    # Leave some margin (90% of width for vertical, 95% for horizontal)
-                    max_width_pct = 0.90 if aspect_ratio < 0.8 else 0.95
-                    if max_w <= width * max_width_pct:
-                        best_size = size
-                        break
-                except:
-                    continue
-            
-            self.font_cache[cache_key] = best_size
-        
-        font_size = self.font_cache[cache_key]
-        
+            if hook_font_path:
+                for size in range(max_font, min_font, -5):
+                    try:
+                        test_font = ImageFont.truetype(hook_font_path, size)
+                        max_w = max(draw.textbbox((0, 0), l, font=test_font)[2] for l in lines)
+                        max_width_pct = 0.90 if aspect_ratio < 0.8 else 0.95
+                        if max_w <= width * max_width_pct:
+                            best_size = size
+                            break
+                    except:
+                        continue
+
+            self.font_cache[cache_key] = (best_size, hook_font_path)
+
+        font_size, hook_font_path = self.font_cache[cache_key]
+
         # Load font
         try:
-            font = ImageFont.truetype("impact.ttf", font_size)
+            font = ImageFont.truetype(hook_font_path, font_size) if hook_font_path else ImageFont.load_default()
         except:
             font = ImageFont.load_default()
         
@@ -130,33 +156,78 @@ class HookRenderer:
         # ASPECT RATIO AWARE POSITIONING
         aspect_ratio = width / height if height > 0 else 1.0
         
-        # Adjust Y position based on aspect ratio
-        # Vertical videos need higher position to avoid being too low
-        if aspect_ratio < 0.8:  # 9:16, 4:5, 2:3 vertical
-            y_percent = 0.08  # 8% from top
+        # Y position: use user setting if provided, else auto from aspect ratio
+        if self.y_position is not None:
+            y_percent = float(self.y_position)
+        elif aspect_ratio < 0.8:  # 9:16 vertical
+            y_percent = 0.08
         elif aspect_ratio < 1.1:  # 1:1 square
-            y_percent = 0.06  # 6% from top
-        else:  # 16:9, 21:9 horizontal
-            y_percent = 0.05  # 5% from top
-        
-        # Position at calculated percentage of screen
+            y_percent = 0.06
+        else:  # 16:9 horizontal
+            y_percent = 0.05
+
         total_height = sum(line_heights) + line_gap * (len(lines) - 1)
         start_y = int(height * y_percent) + line_heights[0]
-        
+
         # Use configured hook color (default is bright red)
         hook_color_rgb = self.hook_color
-        
+
         # Draw each line
         for i, (line, line_w, line_h) in enumerate(zip(lines, line_widths, line_heights)):
-            x = (width - line_w) // 2
+            # X position: left / center / right
+            if self.position == 'left':
+                x = int(width * 0.05)
+            elif self.position == 'right':
+                x = max(0, int(width * 0.95) - line_w)
+            else:  # center
+                x = (width - line_w) // 2
             y = start_y + i * (line_h + line_gap)
             text_y = y - line_h
-            
+
             draw.text((x, text_y), line, font=font, fill=hook_color_rgb)
         
         # Convert back to OpenCV BGR
         return cv2.cvtColor(np.array(pil_layer), cv2.COLOR_RGB2BGR)
     
+    def _refine_mask(self, mask: np.ndarray) -> np.ndarray:
+        """Refine mask edges based on self.mask_quality setting.
+
+        off     → no change
+        light   → small gaussian blur (soften edges slightly)
+        medium  → blur + 1 erosion pass (default, clean cutout)
+        strong  → blur + 2 erosion passes + 1 dilation (smooth but tight)
+        maximum → 3 erosion passes + sharpen (sharpest person boundary)
+        """
+        if self.mask_quality == 'off':
+            return mask
+
+        m = mask.copy()
+        if m.ndim == 3:
+            m = m[:, :, 0]
+
+        if self.mask_quality == 'light':
+            m = cv2.GaussianBlur(m, (5, 5), 0)
+
+        elif self.mask_quality == 'medium':
+            m = cv2.GaussianBlur(m, (7, 7), 0)
+            kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3, 3))
+            m = cv2.erode(m, kernel, iterations=1)
+
+        elif self.mask_quality == 'strong':
+            m = cv2.GaussianBlur(m, (9, 9), 0)
+            kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5, 5))
+            m = cv2.erode(m, kernel, iterations=2)
+            m = cv2.dilate(m, kernel, iterations=1)
+
+        elif self.mask_quality == 'maximum':
+            kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5, 5))
+            m = cv2.erode(m, kernel, iterations=3)
+            # Sharpen the edges
+            m = cv2.GaussianBlur(m, (3, 3), 0)
+            _, m = cv2.threshold(m, 100, 255, cv2.THRESH_BINARY)
+
+        return m
+
     def composite_hook(self, frame: np.ndarray, hook_layer: np.ndarray,
                       mask_uint8: np.ndarray) -> np.ndarray:
         """
@@ -186,23 +257,26 @@ class HookRenderer:
         if hook_layer.shape[:2] != (frame_h, frame_w):
             hook_layer = cv2.resize(hook_layer, (frame_w, frame_h))
         
-        # Create background visibility mask
+        # Refine mask edges based on quality setting
+        mask_uint8 = self._refine_mask(mask_uint8)
+
+        # Build alpha for hook text: fully visible in background, min 40% opacity behind person
         if mask_uint8.ndim == 2:
-            bg_visibility = (mask_uint8 <= 128).astype(np.uint8)
+            person_mask = (mask_uint8 > 128).astype(np.float32)
         else:
-            bg_visibility = (mask_uint8[:, :, 0] <= 128).astype(np.uint8)
-        
-        # Apply mask to hook layer
-        text_layer_masked = hook_layer * bg_visibility[:, :, np.newaxis]
-        
-        # Find where hook text exists
-        has_text = (text_layer_masked.sum(axis=2) > 0)
-        
-        # Composite onto frame
-        result = frame.copy()
-        result[has_text] = text_layer_masked[has_text]
-        
-        return result
+            person_mask = (mask_uint8[:, :, 0] > 128).astype(np.float32)
+
+        # Where text exists: alpha = 1.0 in background, 0.4 behind person
+        has_text = (hook_layer.sum(axis=2) > 0)
+        alpha = np.where(person_mask > 0, 0.4, 1.0)  # 40% opacity behind person, full elsewhere
+        alpha_3ch = alpha[:, :, np.newaxis]
+
+        result = frame.copy().astype(np.float32)
+        hook_f = hook_layer.astype(np.float32)
+        # Blend only where text exists
+        mask_3ch = has_text[:, :, np.newaxis]
+        result = np.where(mask_3ch, result * (1 - alpha_3ch) + hook_f * alpha_3ch, result)
+        return np.clip(result, 0, 255).astype(np.uint8)
     
     def create_simple_hook(self, frame: np.ndarray, text: str,
                           position: str = 'center') -> np.ndarray:

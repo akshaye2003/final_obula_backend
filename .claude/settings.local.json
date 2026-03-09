@@ -14,7 +14,8 @@
       "Bash(rm:*)",
       "Bash(source:*)",
       "Bash(DOCKER_USERNAME=obulaxzypit bash:*)",
-      "Bash(docker push:*)"
+      "Bash(docker push:*)",
+      "Bash(docker:*)"
     ]
   }
 }

@@ -275,14 +275,36 @@ def process_video(job_input: Dict[str, Any]) -> Dict[str, Any]:
             config["position"] = job_input["position"]
         if job_input.get("y_position"):
             config["y_position"] = float(job_input["y_position"])
+        # Translate caption_position string ("top"/"middle"/"bottom") -> y_position float
+        caption_position = job_input.get("caption_position")
+        if caption_position and not job_input.get("y_position"):
+            _pos_map = {"top": 0.20, "middle": 0.72, "bottom": 0.85}
+            if caption_position in _pos_map:
+                config["y_position"] = _pos_map[caption_position]
         if job_input.get("words_per_line"):
             config["words_per_line"] = int(job_input["words_per_line"])
-        
+
         # Red hook settings
         if job_input.get("enable_red_hook"):
             hook_size = job_input.get("hook_size", 1)
             config["max_hook_words"] = max(1, int(hook_size))
             config["exclusive_hooks"] = True
+            # hook_size also controls visual font scale (1=normal, 2=bigger, 3=huge)
+            config["hook_font_scale"] = min(3.0, max(1.0, float(hook_size)))
+            # Hook vertical position (0.0=top, 1.0=bottom)
+            if job_input.get("hook_y_position") is not None:
+                config["hook_y_position"] = float(job_input["hook_y_position"])
+                print(f"[HookSettings] hook_y_position: {config['hook_y_position']}")
+            # Hook horizontal alignment (left / center / right)
+            hook_pos = job_input.get("hook_position", "center")
+            if hook_pos in ("left", "center", "right"):
+                config["hook_position"] = hook_pos
+                print(f"[HookSettings] hook_position: {hook_pos}")
+            # Mask quality (off / light / medium / strong / maximum)
+            hook_mq = job_input.get("hook_mask_quality", "medium")
+            if hook_mq in ("off", "light", "medium", "strong", "maximum"):
+                config["hook_mask_quality"] = hook_mq
+                print(f"[HookSettings] hook_mask_quality: {hook_mq}")
         
         # Step 3: Process video
         print("[Step 3/5] Running pipeline...")

@@ -57,6 +57,7 @@ class SplitCaptionRenderer:
         self.single_side_mode = False
         self.active_side = 'left'
         self.vertical_captions = False
+        self.y_position = 0.82  # configurable: 0=top, 1=bottom
 
     def load_fonts(self, font_size: int):
         try:
@@ -78,7 +79,7 @@ class SplitCaptionRenderer:
                                total_frames: int, sample_every: int = 10):
         if frame_h > frame_w:
             self.portrait_mode = True
-            caption_y = int(frame_h * 0.82)
+            caption_y = int(frame_h * self.y_position)
             left_x = int(frame_w * 0.05)
             left_max = int(frame_w * 0.95)
             right_x = frame_w + 1000
@@ -264,8 +265,14 @@ class CaptionRenderer:
         self.emphasis_color = kwargs.get('emphasis_color', (255, 200, 80))  # default gold
         self.regular_color = kwargs.get('regular_color', (255, 255, 255))  # default white
         
-        # Initialize hook renderer with custom hook color
-        self.hook_renderer = HookRenderer(hook_color=self.hook_color)
+        # Initialize hook renderer with custom hook color, font scale, position, mask quality
+        self.hook_renderer = HookRenderer(
+            hook_color=self.hook_color,
+            font_scale=kwargs.get('hook_font_scale', 1.0),
+            y_position=kwargs.get('hook_y_position', None),
+            position=kwargs.get('hook_position', 'center'),
+            mask_quality=kwargs.get('hook_mask_quality', 'medium'),
+        )
 
         self.adaptive_erosion = adaptive_erosion
         self.smart_placement = smart_placement
@@ -289,6 +296,7 @@ class CaptionRenderer:
             )
             self.split_renderer.single_side_mode = self.single_side_mode
             self.split_renderer.vertical_captions = kwargs.get('vertical_captions', False)
+            self.split_renderer.y_position = kwargs.get('y_position', 0.82)
 
         self.styled_mode = (animation in ['styled', 'styled_layout', 'caption_renderer'])
         self.centered_styled_mode = (animation == 'centered_styled')

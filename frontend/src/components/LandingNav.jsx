@@ -101,12 +101,32 @@ function ProfileDropdown({ profile, isAdmin, onClose, onSignOut, isMobile }) {
 
         {/* Credits bar */}
         <div className={`rounded-xl bg-white/[0.04] border border-white/[0.06] ${isMobile ? 'mt-1.5 p-1.5 rounded-lg' : 'mt-4 p-3'}`}>
+          {/* Total Credits */}
           <div className={`flex items-center justify-between ${isMobile ? 'mb-0.5' : 'mb-1.5'}`}>
-            <span className={`text-white/50 ${isMobile ? 'text-[10px]' : 'text-xs'}`}>Credits</span>
+            <span className={`text-white/50 ${isMobile ? 'text-[10px]' : 'text-xs'}`}>Total Credits</span>
             <span className={`font-bold ${(profile?.credits ?? 0) > 0 ? 'text-primary' : 'text-yellow-400'} ${isMobile ? 'text-[11px]' : 'text-sm'}`}>
               {profile?.credits ?? 0}
             </span>
           </div>
+          
+          {/* Locked Credits - only show if > 0 */}
+          {(profile?.locked_credits ?? 0) > 0 && (
+            <div className={`flex items-center justify-between ${isMobile ? 'mb-0.5' : 'mb-1'}`}>
+              <span className={`text-white/40 ${isMobile ? 'text-[10px]' : 'text-xs'}`}>Locked (in use)</span>
+              <span className={`font-medium text-amber-400 ${isMobile ? 'text-[10px]' : 'text-xs'}`}>
+                {profile?.locked_credits}
+              </span>
+            </div>
+          )}
+          
+          {/* Available Credits */}
+          <div className={`flex items-center justify-between ${isMobile ? 'mb-0.5' : 'mb-1.5'}`}>
+            <span className={`text-white/60 ${isMobile ? 'text-[10px]' : 'text-xs'}`}>Available</span>
+            <span className={`font-medium text-green-400 ${isMobile ? 'text-[10px]' : 'text-xs'}`}>
+              {profile?.available_credits ?? Math.max(0, (profile?.credits ?? 0) - (profile?.locked_credits ?? 0))}
+            </span>
+          </div>
+          
           <div className={`rounded-full bg-white/[0.06] overflow-hidden ${isMobile ? 'h-0.5' : 'h-1.5'}`}>
             <div
               className="h-full rounded-full bg-primary transition-all"
@@ -225,11 +245,11 @@ export default function LandingNav({ visible = true }) {
                 <Link
                   to="/pricing"
                   className={`flex items-center px-2 py-1.5 rounded-lg text-xs font-semibold leading-none transition-colors touch-manipulation ${
-                    (profile?.credits ?? 0) > 0 ? 'text-primary/90' : 'text-yellow-400'
+                    (profile?.available_credits ?? profile?.credits ?? 0) > 0 ? 'text-primary/90' : 'text-yellow-400'
                   }`}
-                  title="Buy more credits"
+                  title={`${profile?.available_credits ?? profile?.credits ?? 0} available${(profile?.locked_credits ?? 0) > 0 ? `, ${profile?.locked_credits} locked` : ''}`}
                 >
-                  {profile?.credits ?? 0} cr
+                  {profile?.available_credits ?? profile?.credits ?? 0} cr
                 </Link>
                 <div className="relative">
                   <button
@@ -297,11 +317,14 @@ export default function LandingNav({ visible = true }) {
                   <Link
                     to="/pricing"
                     className={`flex items-center justify-center min-w-[44px] h-full px-3 rounded-lg text-sm font-semibold leading-none transition-colors touch-manipulation whitespace-nowrap ${
-                      (profile?.credits ?? 0) > 0 ? 'text-primary/90 hover:text-primary' : 'text-yellow-400 hover:text-yellow-300'
+                      (profile?.available_credits ?? profile?.credits ?? 0) > 0 ? 'text-primary/90 hover:text-primary' : 'text-yellow-400 hover:text-yellow-300'
                     }`}
-                    title="Buy more credits"
+                    title={`${profile?.available_credits ?? profile?.credits ?? 0} available${(profile?.locked_credits ?? 0) > 0 ? `, ${profile?.locked_credits} locked` : ''}`}
                   >
-                    {profile?.credits ?? 0} credit{(profile?.credits ?? 0) !== 1 ? 's' : ''}
+                    {profile?.available_credits ?? profile?.credits ?? 0} cr
+                    {(profile?.locked_credits ?? 0) > 0 && (
+                      <span className="ml-1 text-amber-400 text-xs">({profile?.locked_credits} locked)</span>
+                    )}
                   </Link>
                   <a
                     href="https://www.zypit.in/"

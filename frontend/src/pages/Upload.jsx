@@ -700,16 +700,35 @@ export default function Upload() {
             </div>
             
             <div className="space-y-3 mb-6">
+              {/* Total Credits */}
               <div className="flex justify-between items-center py-2 border-b border-white/5">
-                <span className="text-white/60 text-sm">Available Credits</span>
-                <span className="text-white font-medium">{creditStatus?.available_credits || creditStatus?.available || 0}</span>
+                <span className="text-white/60 text-sm">Total Credits</span>
+                <span className="text-white font-medium">{creditStatus?.total_credits || creditStatus?.total || 0}</span>
               </div>
+              
+              {/* Currently Locked - only show if > 0 */}
+              {(creditStatus?.locked_credits || creditStatus?.locked || 0) > 0 && (
+                <div className="flex justify-between items-center py-2 border-b border-white/5">
+                  <span className="text-white/50 text-sm">Currently Locked</span>
+                  <span className="text-amber-400 font-medium">{creditStatus?.locked_credits || creditStatus?.locked || 0}</span>
+                </div>
+              )}
+              
+              {/* Available */}
+              <div className="flex justify-between items-center py-2 border-b border-white/5">
+                <span className="text-white/60 text-sm">Available</span>
+                <span className="text-green-400 font-medium">{creditStatus?.available_credits || creditStatus?.available || 0}</span>
+              </div>
+              
+              {/* To Lock */}
               <div className="flex justify-between items-center py-2 border-b border-white/5">
                 <span className="text-white/60 text-sm">To Lock</span>
                 <span className="text-amber-400 font-medium">-100</span>
               </div>
-              <div className="flex justify-between items-center py-2">
-                <span className="text-white/80 text-sm font-medium">Remaining</span>
+              
+              {/* Remaining After */}
+              <div className="flex justify-between items-center py-2 bg-white/[0.03] rounded-lg px-3 -mx-3">
+                <span className="text-white/80 text-sm font-medium">Remaining After</span>
                 <span className="text-white font-semibold">{(creditStatus?.available_credits || creditStatus?.available || 0) - 100}</span>
               </div>
             </div>

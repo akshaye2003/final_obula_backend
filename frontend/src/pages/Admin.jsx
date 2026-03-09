@@ -670,7 +670,7 @@ function CreditEconomy() {
 // ============================================
 // 5. USER MANAGER COMPONENT
 // ============================================
-function UserManager({ currentUser }) {
+function UserManager({ currentUser, showRoleControls }) {
   const [profiles, setProfiles] = useState([]);
   const [videoStats, setVideoStats] = useState({});
   const [loading, setLoading] = useState(true);
@@ -925,16 +925,20 @@ function UserManager({ currentUser }) {
                         {profile.created_at ? fmt(profile.created_at) : '-'}
                       </td>
                       <td className="px-6 py-4">
-                        <select
-                          value={profile.role || 'user'}
-                          onChange={(e) => changeRole(profile.id, e.target.value)}
-                          disabled={updatingId === profile.id || profile.id === currentUser?.id}
-                          className="bg-white/[0.05] border border-white/10 rounded-lg px-3 py-1.5 text-white/70 text-xs focus:outline-none focus:border-primary disabled:opacity-40 disabled:cursor-not-allowed transition"
-                        >
-                          {ROLES.map((r) => (
-                            <option key={r} value={r} className="bg-[#1a1a1a]">{r}</option>
-                          ))}
-                        </select>
+                        {showRoleControls ? (
+                          <select
+                            value={profile.role || 'user'}
+                            onChange={(e) => changeRole(profile.id, e.target.value)}
+                            disabled={updatingId === profile.id || profile.id === currentUser?.id}
+                            className="bg-white/[0.05] border border-white/10 rounded-lg px-3 py-1.5 text-white/70 text-xs focus:outline-none focus:border-primary disabled:opacity-40 disabled:cursor-not-allowed transition"
+                          >
+                            {ROLES.map((r) => (
+                              <option key={r} value={r} className="bg-[#1a1a1a]">{r}</option>
+                            ))}
+                          </select>
+                        ) : (
+                          <span className="text-white/50 text-xs">{profile.role || 'user'}</span>
+                        )}
                       </td>
                     </tr>
                   );
@@ -1165,8 +1169,36 @@ export default function Admin() {
   const { user: currentUser, signOut } = useAuth();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('revenue');
+  const [profile, setProfile] = useState(null);
+  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
 
-  const tabs = [
+  // Check user role on mount
+  useEffect(() => {
+    const checkRole = async () => {
+      if (!currentUser?.id) return;
+      
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', currentUser.id)
+        .single();
+
+      const { data: superAdminData } = await supabase.rpc('is_super_admin');
+
+      setProfile(profileData);
+      setIsSuperAdmin(superAdminData);
+    };
+
+    checkRole();
+  }, [currentUser]);
+
+  // Any admin sees the panel
+  const showAdminPanel = profile?.role === 'admin';
+
+  // Only super admin sees the role management section
+  const showRoleControls = isSuperAdmin;
+
+  const allTabs = [
     { id: 'revenue', label: 'Revenue', icon: '💰' },
     { id: 'users', label: 'Users', icon: '👥' },
     { id: 'videos', label: 'Videos', icon: '🎬' },
@@ -1174,6 +1206,9 @@ export default function Admin() {
     { id: 'manage', label: 'Manage', icon: '⚙️' },
     { id: 'feedbacks', label: 'Feedbacks', icon: '💬' },
   ];
+
+  // Filter tabs based on role - only show Manage tab for admins
+  const tabs = allTabs.filter(tab => tab.id !== 'manage' || showAdminPanel);
 
   const handleSignOut = async () => {
     await signOut();
@@ -1238,7 +1273,7 @@ export default function Admin() {
             {activeTab === 'users' && <UserEngagement />}
             {activeTab === 'videos' && <VideoAnalytics />}
             {activeTab === 'credits' && <CreditEconomy />}
-            {activeTab === 'manage' && <UserManager currentUser={currentUser} />}
+            {activeTab === 'manage' && <UserManager currentUser={currentUser} showRoleControls={showRoleControls} />}
             {activeTab === 'feedbacks' && <FeedbackManager />}
           </m.div>
         </AnimatePresence>
