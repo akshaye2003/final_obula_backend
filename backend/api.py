@@ -1773,6 +1773,8 @@ async def create_job(request: Request, body: ProcessBody, user: dict = Depends(r
             webhook_url = f"https://{railway_domain}/api/webhooks/runpod" if railway_domain else ""
             
             # Build job payload for RunPod
+            # Spread all user settings at top level so handler.py can read them directly
+            user_settings = body.model_dump()
             job_payload = {
                 "input": {
                     "job_id": job_id,
@@ -1783,8 +1785,9 @@ async def create_job(request: Request, body: ProcessBody, user: dict = Depends(r
                     "supabase_url": sb_url,
                     "supabase_key": sb_key,
                     "webhook_url": webhook_url,
-                    "settings": body.model_dump(),
                     "prep_data": prep_data,
+                    # Spread user settings flat so handler.py can read preset, enable_red_hook, etc.
+                    **user_settings,
                 }
             }
             

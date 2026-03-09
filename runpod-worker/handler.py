@@ -197,17 +197,31 @@ def process_video(job_input: Dict[str, Any]) -> Dict[str, Any]:
         transcript_text = prep_data.get("transcript_text") or job_input.get("transcript_text", "")
         preset = job_input.get("preset", "dynamic_smart")
         enable_broll = job_input.get("enable_broll", False)
-        noise_isolate = job_input.get("noise_isolate", False)
-        lut_name = job_input.get("lut_name")
+        # Support both field names
+        noise_isolate = job_input.get("noise_isolate") or job_input.get("enable_noise_isolation", False)
+        lut_name = job_input.get("lut_name") or job_input.get("color_grade_lut")
         aspect_ratio = job_input.get("aspect_ratio")
         rounded_corners = job_input.get("rounded_corners", "medium")
-        
-        # Watermark options
+
+        # Map color_grade_lut name to actual .cube filename
+        LUT_MAP = {
+            "vintage": "01_Film Emulation LUTs_Vintage.cube",
+            "cinematic": "04_Film Emulation LUTs_Cinematic.cube",
+            "frosted": "05_Film Emulation LUTs_Frosted.cube",
+            "foliage": "07_Film Emulation LUTs_Foliage.cube",
+            "cross_process": "02_Film Emulation LUTs_Cross Process.cube",
+            "bw": "08_Film Emulation LUTs_B&W.cube",
+        }
+        if lut_name and lut_name in LUT_MAP:
+            lut_name = LUT_MAP[lut_name]
+
+        # Watermark options — support both flat fields and nested watermark dict
         watermark = job_input.get("watermark", {})
-        watermark_text = watermark.get("text") if watermark.get("enabled") else None
-        watermark_image = watermark.get("image") if watermark.get("enabled") else None
-        watermark_position = watermark.get("position", "bottom-right")
-        watermark_opacity = watermark.get("opacity", 0.6)
+        watermark_enabled = watermark.get("enabled") or job_input.get("enable_watermark", False)
+        watermark_text = (watermark.get("text") or job_input.get("watermark_text")) if watermark_enabled else None
+        watermark_image = (watermark.get("image") or job_input.get("watermark_image")) if watermark_enabled else None
+        watermark_position = watermark.get("position") or job_input.get("watermark_position", "bottom-right")
+        watermark_opacity = watermark.get("opacity") or job_input.get("watermark_opacity", 0.6)
         
         # Supabase config
         supabase_url = job_input.get("supabase_url", os.environ.get("SUPABASE_URL", ""))
