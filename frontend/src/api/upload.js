@@ -84,6 +84,11 @@ export async function processVideo(body) {
 }
 
 export function getOutputVideoURL(outputPath) {
+  // If it's already a full URL (e.g. Supabase public URL from RunPod), return as-is
+  if (outputPath.startsWith('http://') || outputPath.startsWith('https://')) {
+    return outputPath;
+  }
+  // Otherwise it's a relative path served by the API
   const base = getApiBaseURL();
   const url = `${base}${outputPath.startsWith('/') ? '' : '/'}${outputPath}`;
   const token = getRawToken();

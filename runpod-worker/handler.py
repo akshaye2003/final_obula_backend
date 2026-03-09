@@ -190,9 +190,11 @@ def process_video(job_input: Dict[str, Any]) -> Dict[str, Any]:
         if not video_url:
             return {"success": False, "error": "No video_url provided"}
         
-        styled_words = job_input.get("styled_words", [])
-        timed_captions = job_input.get("timed_captions", [])
-        transcript_text = job_input.get("transcript_text", "")
+        # Captions come nested in prep_data (from API) or flat (legacy)
+        prep_data = job_input.get("prep_data", {})
+        styled_words = prep_data.get("styled_words") or job_input.get("styled_words", [])
+        timed_captions = prep_data.get("timed_captions") or job_input.get("timed_captions", [])
+        transcript_text = prep_data.get("transcript_text") or job_input.get("transcript_text", "")
         preset = job_input.get("preset", "dynamic_smart")
         enable_broll = job_input.get("enable_broll", False)
         noise_isolate = job_input.get("noise_isolate", False)
