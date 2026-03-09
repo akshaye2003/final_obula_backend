@@ -286,11 +286,16 @@ def process_video(job_input: Dict[str, Any]) -> Dict[str, Any]:
 
         # Red hook settings
         if job_input.get("enable_red_hook"):
-            hook_size = job_input.get("hook_size", 1)
-            config["max_hook_words"] = max(1, int(hook_size))
+            hook_size = job_input.get("hook_size") or 1.0  # Guard against None
+            try:
+                hook_size = float(hook_size)
+            except (TypeError, ValueError):
+                hook_size = 1.0
+            config["max_hook_words"] = 3  # Always allow up to 3 words per hook phrase
             config["exclusive_hooks"] = True
-            # hook_size also controls visual font scale (1=normal, 2=bigger, 3=huge)
-            config["hook_font_scale"] = min(3.0, max(1.0, float(hook_size)))
+            # hook_size controls visual font scale (1.0=large, 2.0=bigger, 3.0=huge)
+            config["hook_font_scale"] = min(3.0, max(0.5, hook_size))
+            print(f"[HookSettings] hook_size={hook_size} → hook_font_scale={config['hook_font_scale']} (max_font ~{int(500 * config['hook_font_scale'])}px vertical)")
             # Hook vertical position (0.0=top, 1.0=bottom)
             if job_input.get("hook_y_position") is not None:
                 config["hook_y_position"] = float(job_input["hook_y_position"])
@@ -305,6 +310,26 @@ def process_video(job_input: Dict[str, Any]) -> Dict[str, Any]:
             if hook_mq in ("off", "light", "medium", "strong", "maximum"):
                 config["hook_mask_quality"] = hook_mq
                 print(f"[HookSettings] hook_mask_quality: {hook_mq}")
+            
+            # AUTO-CONVERT: If enable_red_hook is true but no words have style="hook",
+            # auto-mark the first word(s) as hooks so red hook always appears
+            if styled_words:
+                has_any_hooks = any(w.get("style") == "hook" for w in styled_words)
+                if not has_any_hooks:
+                    hook_word_count = config["max_hook_words"]
+                    converted = 0
+                    for i, word_data in enumerate(styled_words):
+                        if converted >= hook_word_count:
+                            break
+                        # Only convert if it's not punctuation
+                        word_text = word_data.get("word", "").strip()
+                        if word_text and len(word_text) > 1:
+                            word_data["style"] = "hook"
+                            word_data["color"] = [255, 200, 80]  # Gold color for hook style
+                            converted += 1
+                            print(f"[HookAutoConvert] Word {i} '{word_text}' -> style='hook'")
+                    if converted > 0:
+                        print(f"[HookAutoConvert] Converted {converted} word(s) to hook style (enable_red_hook=true but no hooks found)")
         
         # Step 3: Process video
         print("[Step 3/5] Running pipeline...")
