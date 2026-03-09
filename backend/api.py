@@ -1774,7 +1774,8 @@ async def create_job(request: Request, body: ProcessBody, user: dict = Depends(r
             
             # Build job payload for RunPod
             # Spread all user settings at top level so handler.py can read them directly
-            user_settings = body.model_dump()
+            user_settings = body.model_dump(exclude_none=True)
+            print(f"[Job {job_id}] enable_red_hook={user_settings.get('enable_red_hook')} hook_size={user_settings.get('hook_size')} hook_color={user_settings.get('hook_color')}")
             job_payload = {
                 "input": {
                     "job_id": job_id,
