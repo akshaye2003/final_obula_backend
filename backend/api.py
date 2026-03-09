@@ -68,6 +68,15 @@ app = FastAPI(title="Obula API", version="1.0.0")
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
+@app.get("/")
+async def root():
+    return {
+        "message": "🎬 Obula API is running!",
+        "version": "1.0.0",
+        "docs": "/docs",
+        "health": "/health"
+    }
+
 # Request ID middleware - sets up tracing context for each request
 @app.middleware("http")
 async def request_id_middleware(request: Request, call_next):
